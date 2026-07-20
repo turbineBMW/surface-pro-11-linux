@@ -10,20 +10,22 @@ git fetch /path/to/surface-pro-11-linux/kernel/sp11-sanitized2.bundle \
   refs/heads/sp11-sanitized2:refs/heads/sp11-sanitized2
 git fetch /path/to/surface-pro-11-linux/kernel/sp11-camera-review.bundle \
   refs/heads/sp11-camera-review:refs/heads/sp11-camera-review
-git switch sp11-camera-review
+git fetch /path/to/surface-pro-11-linux/kernel/sp11-touch-spi-autoload.bundle \
+  refs/heads/fix/touch-spi-autoload:refs/heads/fix/touch-spi-autoload
+git switch fix/touch-spi-autoload
 git rev-parse HEAD^{commit} HEAD^{tree}
 ```
 
 The final command must print:
 
 ```text
-675d89b381d8b730a3f2eff1086875481ee5b515
-03c278405e6d2fd0ffa1fd4cad860ef45c7adbbc
+86fc94c58a89a56c7ceb57b42c6025b2569da56d
+4624d85595964242c26d7042106d068cbbdd9977
 ```
 
 The bundles are incremental: the sanitized bundle requires Linux `v7.1.3`,
-and the camera bundle requires the sanitized tip. `kernel/README.md` also
-documents cumulative-patch reconstruction.
+the camera bundle requires the sanitized tip, and the touch autoload correction
+requires the camera tip. `kernel/README.md` also documents patch reconstruction.
 
 ## Build
 
@@ -37,7 +39,7 @@ configuration, and builds with Clang/LLVM and `W=1`:
   --jobs "$(nproc)"
 ```
 
-The resulting kernel release is `7.1.3-sp11-camera-review4`. Primary outputs:
+The resulting kernel release is `7.1.3-sp11-camera-review5`. Primary outputs:
 
 ```text
 /path/to/build/arch/arm64/boot/Image
@@ -45,19 +47,45 @@ The resulting kernel release is `7.1.3-sp11-camera-review4`. Primary outputs:
 /path/to/build/Module.symvers
 ```
 
+The helper derives `SOURCE_DATE_EPOCH` and `KBUILD_BUILD_TIMESTAMP` from the
+reviewed source commit and fixes the build identity to
+`sp11@reproducible #1`. Builds in different directories should therefore
+produce byte-identical Image, DTB, configuration, `Module.symvers`, and module
+content when the declared toolchain and other inputs match. Treat any mismatch
+as a failed reproducibility check; do not publish the artifacts.
+
+Review5 intentionally retains review4's byte-identical merged configuration:
+the touch correction changes source only and requires no configuration change.
+Consequently, `camera-review.config.fragment` still records
+`CONFIG_LOCALVERSION="-sp11-camera-review4"`. The helper's enforced
+`KERNELRELEASE=7.1.3-sp11-camera-review5` is the authoritative release identity
+and must not be omitted when building or installing review5 artifacts.
+
+The helper also requires Python 3.14.6 and invokes it with `-S` so host or user
+site packages cannot change Kconfig feature visibility. In particular, the
+optional `lxml` package otherwise changes whether
+`CONFIG_DRM_MSM_VALIDATE_XML` is emitted in `.config`, even when the option
+remains disabled. Disabling site packages reproduces the reviewed config hash
+and the Kconfig feature visibility present during both clean builds.
+
 To stage modules without touching the host system:
 
 ```sh
 make -C /path/to/linux O=/path/to/build \
-  KERNELRELEASE=7.1.3-sp11-camera-review4 \
-  LOCALVERSION= LLVM=1 \
+  KERNELRELEASE=7.1.3-sp11-camera-review5 \
+  LOCALVERSION= LLVM=1 PYTHON3="python3 -S" \
   INSTALL_MOD_PATH=/path/to/stage modules_install
 ```
 
-Compare the source commit/tree, release, config, compiler, Image, DTB, and
-module ABI with `kernel/BUILDINFO` and `docs/CAMERA-REVIEW.md`. Toolchain or
-timestamp differences can prevent byte-identical output even when the source
-and configuration match.
+`modules_install` creates `build` and sometimes `source` symlinks that can
+contain absolute local paths. Remove those symlinks from a release staging tree
+or replace them with package-managed, non-private paths, then scan every staged
+symlink and archive member before packaging.
+
+Compare the source commit/tree, release, config, compiler, reproducible build
+identity, Image, DTB, and module ABI with `kernel/BUILDINFO` and
+`docs/CAMERA-REVIEW.md`. A different declared toolchain remains a distinct
+build input and needs its own identity and validation.
 
 Do not install the experimental kernel as the only bootable kernel. There is no
 supported binary installer in this source preview; see `INSTALL.md`.

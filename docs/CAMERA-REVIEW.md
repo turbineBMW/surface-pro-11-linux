@@ -180,6 +180,20 @@ the exact `7.1.3-sp11-camera-review4` vermagic. Wi-Fi remained associated,
 Bluetooth remained unblocked, and the post-test kernel log contained no camera
 error, warning, oops, or call trace.
 
+A later input regression check corrected the earlier statement that review4
+had working touch. Review2, review3, review4, and the byte-identical review4
+rebuild all enumerated the touchscreen as `spi:g6-touch-digitizer`, but the
+reviewed `spi_hid_of` module advertised only
+`spi:microsoft,g6-touch-digitizer`. It therefore did not autoload. Explicitly
+loading the existing module on the reproducible review4 boot bound `spi0.0`,
+restored the physical touchscreen and stylus, started `sp11-iptsd`, and created
+both virtual IPTSD devices. The focused correction is the single commit in
+`sp11-touch-spi-autoload.bundle`. A one-shot corrected review5 boot passed a
+strict checker that did not call `modprobe`: the SPI device bound automatically,
+the physical and virtual touch/pen devices appeared, and `sp11-iptsd` was
+active. The maintainer then physically confirmed touch, multitouch, pen hover,
+strokes, and eraser operation.
+
 This qualifies the branch for experimental source publication. It does not
 authorize a binary or ISO release, claim upstream readiness, or close the
 remaining endurance, suspend, concurrent-use, and broader regression gates.
