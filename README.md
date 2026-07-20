@@ -32,6 +32,8 @@ copyright notices, exact source revisions, and the detailed research boundary
 are preserved in [NOTICE.md](NOTICE.md),
 [docs/PROVENANCE.md](docs/PROVENANCE.md), and
 [docs/CAMERA-REVIEW.md](docs/CAMERA-REVIEW.md).
+The unrelated public-repository root and final object-graph checks are recorded
+in [docs/PUBLICATION.md](docs/PUBLICATION.md).
 
 AI tools materially assisted development, cleanup, and validation. The scope
 and limits of that assistance are disclosed in

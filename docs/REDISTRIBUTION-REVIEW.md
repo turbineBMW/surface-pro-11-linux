@@ -71,15 +71,15 @@ Practical8 commit, tree, Image, DTB, module, archive, or checksum values.
 - [x] Add an SPDX/copyright manifest for every release file and pass `reuse lint`.
 - [x] Include no kernel, module, userspace binary, firmware, initramfs, payload,
   disk image, ISO, biometric model, or private capture.
-- [ ] Verify that no firmware, Windows package, trace, private capture, host identifier, or credential is present in every object and archive of the fresh repository.
+- [x] Verify that no firmware, Windows package, trace, private capture, host identifier, or credential is present in every object and archive of the fresh repository.
 - [x] Rebuild on a clean tree and record compiler, binutils, source, config, and artifact hashes.
 - [x] Remove or replace every camera item previously marked `LEGAL REVIEW` from the fresh source history.
 - [x] Revalidate the fresh camera implementation on Surface Pro 11 hardware and record bounded front, rear, IR, Wi-Fi, and Bluetooth results.
 - [x] Disclose material AI assistance without representing an AI-generated
   human DCO certification.
-- [ ] Create a fresh local single-root repository and verify that its complete
+- [x] Create a fresh local single-root repository and verify that its complete
   object graph contains no withdrawn Practical8 patch or bundle.
-- [ ] Create a brand-new GitHub repository from that audited history; do not
+- [x] Create a brand-new GitHub repository from that audited history; do not
   change the existing private repository to public.
 - [x] Delete the retained `v0.1.0-alpha` release asset and withdrawn tag, or
   otherwise prove they cannot become public when repository visibility changes.

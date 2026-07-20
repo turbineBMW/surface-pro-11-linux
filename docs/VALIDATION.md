@@ -45,11 +45,11 @@ v4l2loopback binaries, biometric data, and captures are not distributed.
 - [x] no prebuilt executable, kernel, module, firmware, initramfs, payload,
   disk image, ISO, biometric model, or private capture is tracked;
 - [x] a binary-release guard remains active;
-- [ ] a fresh single-root repository contains only the allowlisted source tree;
-- [ ] every object and embedded Git bundle in that fresh repository passes the
+- [x] a fresh single-root repository contains only the allowlisted source tree;
+- [x] every object and embedded Git bundle in that fresh repository passes the
   withdrawn-content, privacy, and secret audit;
-- [ ] a `git archive` from the fresh root passes the path and content audit;
-- [ ] the public GitHub repository is created from that fresh history and has
+- [x] a `git archive` from the fresh root passes the path and content audit;
+- [x] the GitHub repository is created from that fresh history and has
   no inherited repository network containing the withdrawn history.
 
 ## Future binary/ISO validation
