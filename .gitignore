@@ -1,0 +1,7 @@
+/release/*.tar.zst
+/release/*.tar.gz
+/release/*.img
+/release/SHA256SUMS
+/work/
+*.swp
+*~

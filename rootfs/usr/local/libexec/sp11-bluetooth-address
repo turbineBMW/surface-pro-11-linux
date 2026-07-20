@@ -1,0 +1,79 @@
+#!/bin/bash
+
+# Configure the Surface Pro 11 Bluetooth controller from the firmware-provided
+# MAC address.  WCN7850 appears as an unconfigured HCI controller until its
+# public address is supplied through the BlueZ management interface.
+
+set -euo pipefail
+
+hci_name="${1:-hci0}"
+
+if [[ ! "$hci_name" =~ ^hci[0-9]+$ ]]; then
+	printf 'Invalid Bluetooth controller name: %s\n' "$hci_name" >&2
+	exit 2
+fi
+
+for command_name in btmgmt find grep od sed sleep tr; do
+	if ! command -v "$command_name" >/dev/null 2>&1; then
+		printf 'Required command is unavailable: %s\n' "$command_name" >&2
+		exit 1
+	fi
+done
+
+efi_path="$(find /sys/firmware/efi/efivars -maxdepth 1 \
+	-name 'MacAddressEmulationAddress-*' -print -quit)"
+if [[ -z "$efi_path" ]]; then
+	echo 'MacAddressEmulationAddress EFI variable is unavailable' >&2
+	exit 1
+fi
+
+# efivarfs prepends a four-byte attributes field to the six address bytes.
+efi_hex="$(od -An -tx1 -j4 -N6 "$efi_path" | tr -d ' \n' | \
+	tr '[:lower:]' '[:upper:]')"
+first_octet="${efi_hex:0:2}"
+
+if [[ ${#efi_hex} -ne 12 || "$efi_hex" == 000000000000 || \
+	"$efi_hex" == FFFFFFFFFFFF ]] || (( (16#$first_octet & 1) != 0 )); then
+	echo 'Firmware EFI variable does not contain a valid unicast address' >&2
+	exit 1
+fi
+
+public_address="$(sed -E \
+	's/(..)(..)(..)(..)(..)(..)/\1:\2:\3:\4:\5:\6/' <<<"$efi_hex")"
+
+# The standard Bluetooth udev rule starts bluetooth.target only after hci0 is
+# present.  Leave a short bounded poll for the management event to arrive.
+for ((attempt = 0; attempt < 50; attempt++)); do
+	if btmgmt info 2>/dev/null | grep -q "^${hci_name}:"; then
+		printf '%s is already configured\n' "$hci_name"
+		exit 0
+	fi
+
+	if btmgmt config 2>/dev/null | \
+		grep -q "^${hci_name}:.*Unconfigured controller"; then
+		btmgmt --index "$hci_name" public-addr "$public_address"
+
+		# Set Public Address completes before the controller's asynchronous
+		# reset, firmware reload, and configured-index event have finished.
+		# WCN7850 takes about two seconds on this machine, so wait for the
+		# resulting primary index instead of treating that interval as failure.
+		for ((ready_attempt = 0; ready_attempt < 100; ready_attempt++)); do
+			if btmgmt info 2>/dev/null | grep -q "^${hci_name}:"; then
+				printf 'Configured %s public address from the firmware EFI variable\n' \
+					"$hci_name"
+				exit 0
+			fi
+
+			sleep 0.1
+		done
+
+		echo 'Controller remained unconfigured after setting its address' >&2
+		exit 1
+	fi
+
+	sleep 0.1
+done
+
+printf '%s did not appear in the Bluetooth management interface\n' \
+	"$hci_name" >&2
+exit 1

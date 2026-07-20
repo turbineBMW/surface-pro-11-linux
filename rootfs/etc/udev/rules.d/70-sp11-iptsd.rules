@@ -1,0 +1,15 @@
+SUBSYSTEM!="hidraw", GOTO="sp11_iptsd_end"
+ACTION=="remove", GOTO="sp11_iptsd_end"
+
+# Cache successful eligibility so later change events can restore the systemd
+# tag and wants without probing an active digitizer again.  If the property is
+# missing (for example after an old rule was replaced), re-check it once.
+ENV{SP11_IPTSD_ELIGIBLE}!="1", \
+	PROGRAM="/usr/local/libexec/sp11-iptsd-check-device --quiet $env{DEVNAME}", \
+	ENV{SP11_IPTSD_ELIGIBLE}="1"
+
+ENV{SP11_IPTSD_ELIGIBLE}=="1", TAG+="systemd", \
+	PROGRAM="/usr/bin/systemd-escape --path $env{DEVNAME}", \
+	ENV{SYSTEMD_WANTS}+="sp11-iptsd@$result.service"
+
+LABEL="sp11_iptsd_end"

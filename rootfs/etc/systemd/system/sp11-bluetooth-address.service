@@ -1,0 +1,25 @@
+[Unit]
+Description=Configure Surface Pro 11 Bluetooth public address
+Documentation=https://wiki.debian.org/InstallingDebianOn/Thinkpad/X13s
+After=sys-subsystem-bluetooth-devices-hci0.device
+Before=bluetooth.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/sp11-bluetooth-address hci0
+CapabilityBoundingSet=CAP_NET_ADMIN
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectControlGroups=yes
+ProtectHome=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectSystem=strict
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RestrictAddressFamilies=AF_BLUETOOTH AF_UNIX
+RestrictRealtime=yes
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=bluetooth.target

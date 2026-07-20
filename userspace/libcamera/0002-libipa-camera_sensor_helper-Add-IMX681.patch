@@ -1,0 +1,36 @@
+From 8c9ba205b4a7ba0755447839f659a34248b88a05 Mon Sep 17 00:00:00 2001
+From: turbinebmw <turbine.bmw@gmail.com>
+Date: Sun, 12 Jul 2026 19:20:01 +0000
+Subject: [PATCH 2/3] libipa: camera_sensor_helper: Add IMX681
+
+Convert the Sony reciprocal analogue-gain code to real gain and report the measured 64-code 10-bit black pedestal.
+---
+ src/ipa/libipa/camera_sensor_helper.cpp | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/src/ipa/libipa/camera_sensor_helper.cpp b/src/ipa/libipa/camera_sensor_helper.cpp
+index e3e3e53..2fd9cb5 100644
+--- a/src/ipa/libipa/camera_sensor_helper.cpp
++++ b/src/ipa/libipa/camera_sensor_helper.cpp
+@@ -642,6 +642,18 @@ public:
+ };
+ REGISTER_CAMERA_SENSOR_HELPER("imx477", CameraSensorHelperImx477)
+ 
++class CameraSensorHelperImx681 : public CameraSensorHelper
++{
++public:
++	CameraSensorHelperImx681()
++	{
++		/* The black pedestal is 64 at 10 bits. */
++		blackLevel_ = 4096;
++		gain_ = AnalogueGainLinear{ 0, 1024, -1, 1024 };
++	}
++};
++REGISTER_CAMERA_SENSOR_HELPER("imx681", CameraSensorHelperImx681)
++
+ class CameraSensorHelperImx708 : public CameraSensorHelper
+ {
+ public:
+-- 
+2.55.0
+

@@ -1,0 +1,9 @@
+*.bundle binary
+
+# These are exact generated/replay artifacts. Preserve their bytes and do not
+# treat upstream or generated whitespace as repository-authored style errors.
+kernel/Module.symvers -whitespace
+kernel/*.patch -whitespace
+userspace/**/*.patch -whitespace
+rootfs/etc/systemd/system/sp11-iptsd@.service -whitespace
+LICENSES/*.txt -whitespace

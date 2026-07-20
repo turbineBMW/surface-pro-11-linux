@@ -1,0 +1,27 @@
+[Unit]
+Description=Surface Pro 11 power-profile CPU frequency limits
+Documentation=file:///usr/local/share/doc/sp11-power-profile-cpufreq/README.md
+After=power-profiles-daemon.service
+Wants=power-profiles-daemon.service
+
+[Service]
+Type=simple
+Environment=SP11_POWER_SAVER_MAX_KHZ=2515200
+ExecStart=/usr/local/libexec/sp11-power-profile-cpufreq --watch
+ExecStopPost=-/usr/local/libexec/sp11-power-profile-cpufreq --restore
+Restart=on-failure
+RestartSec=2s
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ProtectControlGroups=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+
+[Install]
+WantedBy=graphical.target

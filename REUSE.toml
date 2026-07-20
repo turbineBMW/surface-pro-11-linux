@@ -1,0 +1,101 @@
+version = 1
+SPDX-PackageName = "surface-pro-11-linux-experimental"
+SPDX-PackageSupplier = "turbinebmw <turbine.bmw@gmail.com>"
+SPDX-PackageDownloadLocation = "https://github.com/turbineBMW/surface-pro-11-linux"
+
+[[annotations]]
+path = [
+  ".gitattributes",
+  ".gitignore",
+  "*.md",
+  "docs/**",
+  "kernel/README.md",
+  "rootfs/README.md",
+  "rootfs/etc/**",
+  "rootfs/usr/lib/**",
+  "rootfs/usr/local/**",
+  "scripts/**",
+  "userspace/**/README.md",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 turbinebmw"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = ["kernel/BUILDINFO", "kernel/config", "kernel/Module.symvers"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 turbinebmw"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = "kernel/camera-review.config.fragment"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 turbinebmw"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = [
+  "kernel/sp11-sanitized2.bundle",
+  "kernel/sp11-sanitized2.patch",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = [
+  "1991-2026 Linux kernel contributors",
+  "2021 Microsoft Corporation",
+  "2026 Google LLC",
+  "2026 turbinebmw",
+]
+SPDX-License-Identifier = "GPL-2.0-only AND BSD-2-Clause AND BSD-3-Clause"
+
+[[annotations]]
+path = [
+  "kernel/sp11-camera-review.bundle",
+  "kernel/sp11-camera-review.patch",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = [
+  "1991-2026 Linux kernel contributors",
+  "2021-2023 Qualcomm Innovation Center, Inc.",
+  "2024 STMicroelectronics SA",
+  "2026 turbinebmw",
+]
+SPDX-License-Identifier = "GPL-2.0-only AND BSD-2-Clause AND BSD-3-Clause"
+
+[[annotations]]
+path = "userspace/iptsd/LICENSE.upstream"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "1989, 1991 Free Software Foundation, Inc."
+SPDX-License-Identifier = "GPL-2.0-only"
+
+[[annotations]]
+path = [
+  "userspace/libcamera/0001-libcamera-camera_sensor_properties-Add-IMX681.patch",
+  "userspace/libcamera/0002-libipa-camera_sensor_helper-Add-IMX681.patch",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = [
+  "2017-2026 libcamera contributors",
+  "2026 turbinebmw",
+]
+SPDX-License-Identifier = "LGPL-2.1-or-later"
+
+[[annotations]]
+path = [
+  "userspace/libcamera/0003-ipa-simple-Add-initial-IMX681-tuning-data.patch",
+  "userspace/libcamera/sp11-imx681.bundle",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = [
+  "2017-2026 libcamera contributors",
+  "2026 turbinebmw",
+]
+SPDX-License-Identifier = "LGPL-2.1-or-later AND CC0-1.0"
+
+[[annotations]]
+path = "userspace/power-profiles-daemon/0001-sp11-use-platform-profile-class.patch"
+precedence = "aggregate"
+SPDX-FileCopyrightText = [
+  "Power Profiles Daemon contributors",
+  "2026 turbinebmw",
+]
+SPDX-License-Identifier = "GPL-3.0-only"
