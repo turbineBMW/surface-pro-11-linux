@@ -1,0 +1,39 @@
+[Unit]
+Description=Bounded Surface Pro 11 IR camera bridge
+Documentation=file:///usr/local/share/doc/sp11-howdy/README.md
+After=systemd-modules-load.service
+
+[Service]
+Type=notify
+Environment=SP11_IR_SINK=/dev/video42
+Environment=SP11_IR_EXPOSURE=1200
+Environment=SP11_EXPECTED_KERNEL_RELEASE=7.1.3-sp11-camera-review4
+EnvironmentFile=-/etc/sp11-ir-bridge.conf
+ExecStartPre=/usr/local/libexec/sp11-ir-light-off --require-led
+ExecStart=/usr/local/libexec/sp11-ir-bridge --sink ${SP11_IR_SINK} --exposure ${SP11_IR_EXPOSURE} --expected-kernel-release ${SP11_EXPECTED_KERNEL_RELEASE} --timeout 14
+ExecStopPost=/usr/local/libexec/sp11-ir-light-off
+RuntimeMaxSec=15
+TimeoutStartSec=10
+TimeoutStopSec=3
+KillMode=control-group
+Restart=no
+User=root
+
+CapabilityBoundingSet=
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHome=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=no
+ProtectSystem=strict
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+SystemCallArchitectures=native
+UMask=0077
