@@ -39,6 +39,15 @@ AI tools materially assisted development, cleanup, and validation. The scope
 and limits of that assistance are disclosed in
 [docs/AI-ASSISTANCE.md](docs/AI-ASSISTANCE.md).
 
+## Licensing
+
+This repository is an aggregate. The top-level MIT license applies to original
+project integration scripts and documentation; it does not relicense Linux,
+libcamera, Power Profiles Daemon, iptsd, or other imported and modified work.
+Kernel artifacts retain their compatible GPL-2.0 and per-file licenses,
+libcamera changes retain LGPL/CC0 terms, and the PPD patch retains GPL-3.0.
+See [docs/LICENSING.md](docs/LICENSING.md) and the file-level REUSE metadata.
+
 ## Tested target
 
 - Product: Microsoft Surface Pro, 11th Edition
