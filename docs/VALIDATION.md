@@ -78,6 +78,11 @@ strokes, and eraser operation.
 - [x] a local Howdy proof of concept succeeds through a separately built
   v4l2loopback test module;
 - [x] the post-test kernel log contains no camera warning, oops, or call trace;
+- [x] a lid-triggered suspend with logind's opt-in watchdog override remains in
+  genuine suspend-to-idle for more than four minutes and wakes on lid open
+  without restarting logind;
+- [x] the same override loads persistently after reboot and a second
+  lid-triggered cycle again passes the former three-minute failure boundary;
 - [x] a short power-button press requests genuine suspend-to-idle rather than
   shutdown or reboot, and a second short press wakes the machine; logind, the
   compositor, one-finger touchpad movement, Wi-Fi, Bluetooth, and iptsd remain
