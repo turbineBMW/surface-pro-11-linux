@@ -45,11 +45,6 @@ Separately, the attached Flex Keyboard touchpad has once resumed with contact
 counting offset by one finger. Detaching and reattaching the keyboard restored
 normal operation. An automatic software reset remains unqualified.
 
-An earlier lid-resume path also left `SW_TABLET_MODE=1` while the lid reported
-open, causing libinput to suppress the attached keyboard and touchpad. A
-host-only state-specific healer corrected the tested machine, but that helper
-has not completed public source review and is not included in this tree.
-
 ## Power profiles
 
 The SAM/EC platform-profile path is real, but a short CPU workload showed no
