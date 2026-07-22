@@ -83,6 +83,10 @@ strokes, and eraser operation.
   without restarting logind;
 - [x] the same override loads persistently after reboot and a second
   lid-triggered cycle again passes the former three-minute failure boundary;
+- [x] a short power-button press requests genuine suspend-to-idle rather than
+  shutdown or reboot, and a second short press wakes the machine; logind, the
+  compositor, one-finger touchpad movement, Wi-Fi, Bluetooth, and iptsd remain
+  healthy after resume;
 - [ ] concurrent cameras, repeated stream cycling, camera suspend/resume, and
   extended endurance remain unqualified;
 - [x] the Flex Keyboard controller-identity override survives a fresh boot;

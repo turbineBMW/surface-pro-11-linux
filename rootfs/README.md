@@ -8,6 +8,7 @@ machine:
 - dynamic iptsd udev/service/sleep lifecycle
 - Surface platform-profile module loading and patched PPD selection
 - measurable power-saver cpufreq companion and sleep hook target
+- short power-button press mapped to suspend through logind
 - CC0 IMX681 simple-pipeline tuning data
 - source-review-only bounded VD55G0-to-v4l2loopback IR bridge and independent
   illuminator-off helper (feature branch; bounded on-device validation passed)
