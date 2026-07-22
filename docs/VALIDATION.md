@@ -90,8 +90,48 @@ strokes, and eraser operation.
   HID interfaces immediately after Bluetooth returns from s2idle;
 - [ ] the broader non-camera regression matrix remains incomplete.
 
-Details and exact artifact hashes are in `CAMERA-REVIEW.md`. Howdy tools,
+Details and exact artifact hashes are in `CAMERA-REVIEW.md`. Howdy itself,
 v4l2loopback binaries, biometric data, and captures are not distributed.
+
+## Howdy/IR source review
+
+- [x] generic camera compliance/regression tooling remains outside the focused
+  Howdy integration;
+- [x] no machine-specific home path, automatic package/AUR install, PAM edit,
+  biometric model, image/raw output mode, or capture is present;
+- [x] the bridge uses argument-vector subprocess calls rather than shell command
+  construction and fails closed on platform, kernel, media graph, sink, LED,
+  and brightness-scale mismatches;
+- [x] the bridge limits itself to 14 seconds; systemd independently limits the
+  service to 15 seconds and runs a separate IR-off helper before and after it;
+- [x] hardware-independent Y10P conversion and LED fail-closed tests pass;
+- [x] Python/shell syntax, ShellCheck, `reuse lint`, `git diff --check`, and the
+  static source-publication audit pass;
+- [x] the maintainer selected MIT for the new public integration and the frozen
+  legacy files without explicit licenses remain excluded;
+- [x] a focused public-tree target-hardware run confirmed the media graph,
+  first-frame readiness, exact loopback format, changing frames, bounded
+  timeout, normal stop cleanup, forced-kill cleanup, and post-test kernel log;
+- [ ] Howdy packaging, model inputs, permissions, and current security posture
+  remain unreviewed; PAM integration remains explicitly out of scope.
+
+The 2026-07-19 target run used the exact reviewed kernel and v4l2loopback 0.15.4.
+An eight-second direct run delivered 12 loopback frames with 12 distinct frame
+hashes without saving frame data. Normal timeout and SIGTERM both returned the
+IR brightness to zero. The first hardened `Type=notify` run exposed a readiness
+bug: a capability-free child `systemd-notify` process could not notify under
+the default `NotifyAccess=main`. The bridge now sends `READY=1` directly from
+its main process. A no-light hardened run then reached readiness and exited
+normally; a subsequent SIGKILL run recorded main status 9 while `ExecStopPost`
+exited 0 and returned brightness from 255 to zero. No residual process,
+temporary staging, capture, new camera warning, oops, or call trace remained.
+
+On 2026-07-20, the same bridge with its kernel-release gate retargeted to the
+integrated review5 kernel completed two bounded previews using a separately
+built review5 v4l2loopback 0.15.4 module. Both reached readiness, returned
+brightness to zero, left no bridge/FFmpeg/media-graph process behind, and added
+no kernel warning. The maintainer also confirmed the normal visual preview.
+Neither the external module nor Howdy is distributed here.
 
 ## Source-only publication validation
 

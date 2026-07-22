@@ -10,10 +10,16 @@ rear OV13858, and IR VD55G0 sequentially on one OLED/X Elite unit. Concurrent
 camera use, repeated switching, camera suspend/resume, color processing, and
 normal desktop application integration are not qualified.
 
+Rapid camera switching can lock the camera path. Repeated sequential switching
+has remained stable when each transition is separated by at least 10 seconds,
+but that observation is not an endurance guarantee. Keep at least that gap
+until the asynchronous teardown/reinitialization race is characterized.
+
 The PM8550 IR illuminator was tested only in bounded sessions with an
-independent systemd fail-safe. The local Howdy bridge, enrolled model, test
-captures, and separately built v4l2loopback module are not included here. Do
-not leave an IR emitter active without an independent timeout and stop path.
+independent systemd fail-safe. The reviewed bounded bridge and separate
+illuminator-off helper are included, but Howdy itself, an enrolled model, test
+captures, and the separately built v4l2loopback module are not. Do not leave an
+IR emitter active without an independent timeout and stop path.
 
 Results from the withdrawn Practical8 line do not qualify any source or binary
 outside the reviewed `sp11-camera-review` branch.
@@ -69,8 +75,11 @@ boost is included.
 
 ## Flex Keyboard
 
-The attached keyboard works. Detached Flex Keyboard Bluetooth mode has not been
-implemented.
+Attached and detached Flex Keyboard modes work on the tested unit. Detached
+mode currently requires importing a bond created by Windows and using the same
+local controller identity. Native Linux pairing has not been implemented, and
+no machine-specific address or Bluetooth key is distributed here. See
+[docs/BLUETOOTH.md](docs/BLUETOOTH.md).
 
 ## Boot warnings and probe order
 
