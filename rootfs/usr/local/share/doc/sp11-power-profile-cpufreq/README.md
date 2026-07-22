@@ -2,12 +2,21 @@
 
 The SP11's SAM platform-profile interface changes real firmware state, but the
 qualified short-load test did not show a material CPU-frequency difference.
-This companion supplies a deliberately modest userspace limit:
+This companion supplies explicit three-tier userspace limits:
 
-- `low-power`: cap all three SCMI cpufreq policies at the supported
-  2,515,200 kHz level (about 74% of the qualified 3,417,600 kHz maximum);
-- `balanced`, `balanced-performance`, and `performance`: restore each policy's
-  `cpuinfo_max_freq`.
+- `low-power` / Power Profiles Daemon `power-saver`: cap all three SCMI cpufreq
+  policies at or below 1,920,000 kHz;
+- `balanced` and `balanced-performance`: cap them at or below 2,515,200 kHz,
+  preserving the former power-saver behavior as the new balanced tier;
+- `performance`: restore each policy's `cpuinfo_max_freq` of 3,417,600 kHz on
+  the qualified unit.
+
+Repeated battery-only fixed-work tests selected 1,920,000 over 1,670,400 kHz.
+It completed both all-core and single-core jobs about 15.5% faster and reduced
+sampled energy per job by 7.45% and 12.69%, respectively. Bounded idle power
+was effectively tied, thermal increases were small, and the fan returned to
+0 RPM. Service restart, Power Profiles Daemon restart, and review9
+suspend/resume qualification all restored the selected mapping.
 
 The service watches Power Profiles Daemon's standard D-Bus `ActiveProfile`
 notification, independently of the desktop client used to select it. A
@@ -19,9 +28,10 @@ The unit is enabled through `graphical.target`, matching the packaged Power
 Profiles Daemon lifecycle. Enabling it through `multi-user.target` would create
 an ordering cycle because the packaged daemon itself starts after that target.
 
-The target is configurable with the service environment variable
-`SP11_POWER_SAVER_MAX_KHZ`. If the exact value is unavailable, the program uses
-the highest advertised hardware frequency below it. It never changes
+The targets are configurable with `SP11_POWER_SAVER_MAX_KHZ` and
+`SP11_BALANCED_MAX_KHZ`. If an exact value is unavailable, the program uses the
+highest advertised hardware frequency below it. It validates every policy
+before changing any of them and rejects unknown profile names. It never changes
 `scaling_min_freq` or the governor.
 
 Stop and disable the service to restore full frequency range. The unit's stop

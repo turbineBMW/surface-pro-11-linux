@@ -1,11 +1,11 @@
 #!/usr/bin/python3
-"""Apply a conservative SP11 CPU-frequency ceiling for low-power profile.
+"""Apply three-tier SP11 CPU-frequency ceilings for power profiles.
 
 The SP11 Surface platform-profile driver exposes the real SAM/EC profile at
 /sys/class/platform-profile/platform-profile-0/profile.  The firmware profile
 does not currently impose an observable short-load CPU-frequency limit, so this
-small companion applies one to every SCMI cpufreq policy when that profile is
-"low-power".  Other profiles restore each policy's hardware maximum.
+small companion applies explicit power-saver and balanced ceilings to every
+SCMI cpufreq policy.  Performance restores each policy's hardware maximum.
 """
 
 from __future__ import annotations
@@ -28,10 +28,16 @@ CPUFREQ_ROOT = Path(
     os.environ.get("SP11_CPUFREQ_ROOT", "/sys/devices/system/cpu/cpufreq")
 )
 POWER_SAVER_TARGET_KHZ = int(
-    os.environ.get("SP11_POWER_SAVER_MAX_KHZ", "2515200")
+    os.environ.get("SP11_POWER_SAVER_MAX_KHZ", "1920000")
 )
-LOW_POWER_PROFILE = "low-power"
-PPD_LOW_POWER_PROFILE = "power-saver"
+BALANCED_TARGET_KHZ = int(
+    os.environ.get("SP11_BALANCED_MAX_KHZ", "2515200")
+)
+POWER_SAVER_PROFILES = frozenset(("low-power", "power-saver"))
+BALANCED_PROFILES = frozenset(
+    ("balanced", "balanced-performance", "balanced_performance")
+)
+PERFORMANCE_PROFILES = frozenset(("performance",))
 PPD_BUS_NAME = "org.freedesktop.UPower.PowerProfiles"
 PPD_OBJECT_PATH = "/org/freedesktop/UPower/PowerProfiles"
 PPD_INTERFACE = "org.freedesktop.UPower.PowerProfiles"
@@ -70,46 +76,62 @@ def policies() -> list[Path]:
     return result
 
 
-def policy_limit(policy: Path, low_power: bool) -> int:
+def profile_target(profile: str) -> int | None:
+    if profile in POWER_SAVER_PROFILES:
+        return POWER_SAVER_TARGET_KHZ
+    if profile in BALANCED_PROFILES:
+        return BALANCED_TARGET_KHZ
+    if profile in PERFORMANCE_PROFILES:
+        return None
+    raise RuntimeError(f"unsupported power profile: {profile!r}")
+
+
+def policy_limit(policy: Path, target_khz: int | None) -> int:
     hardware_max = int(read_text(policy / "cpuinfo_max_freq"))
-    if not low_power:
+    if target_khz is None:
         return hardware_max
 
     available_path = policy / "scaling_available_frequencies"
     if available_path.exists():
         available = sorted(int(value) for value in read_text(available_path).split())
-        candidates = [value for value in available if value <= POWER_SAVER_TARGET_KHZ]
+        candidates = [
+            value for value in available if value <= target_khz and value <= hardware_max
+        ]
         if not candidates:
             raise RuntimeError(
                 f"{policy.name}: no supported frequency at or below "
-                f"{POWER_SAVER_TARGET_KHZ} kHz"
+                f"{target_khz} kHz"
             )
-        return min(hardware_max, candidates[-1])
+        return candidates[-1]
 
     hardware_min = int(read_text(policy / "cpuinfo_min_freq"))
-    return max(hardware_min, min(hardware_max, POWER_SAVER_TARGET_KHZ))
+    return max(hardware_min, min(hardware_max, target_khz))
 
 
 def apply(profile: str | None = None) -> None:
     if profile is None:
         profile = read_text(PROFILE_PATH)
-    low_power = profile in (LOW_POWER_PROFILE, PPD_LOW_POWER_PROFILE)
+    target_khz = profile_target(profile)
+    planned: list[tuple[Path, int]] = []
     applied: list[str] = []
 
     for policy in policies():
-        limit = policy_limit(policy, low_power)
+        limit = policy_limit(policy, target_khz)
         minimum = int(read_text(policy / "scaling_min_freq"))
         if minimum > limit:
             raise RuntimeError(
                 f"{policy.name}: scaling_min_freq {minimum} exceeds requested "
                 f"maximum {limit} kHz"
             )
+        planned.append((policy, limit))
+
+    for policy, limit in planned:
         maximum_path = policy / "scaling_max_freq"
         write_and_verify(maximum_path, limit)
         actual = int(read_text(maximum_path))
         applied.append(f"{policy.name}={actual}")
 
-    mode = "capped" if low_power else "full-range"
+    mode = "full-range" if target_khz is None else f"capped-at-{target_khz}"
     print(f"profile={profile} mode={mode} " + " ".join(applied), flush=True)
 
 

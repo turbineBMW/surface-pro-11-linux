@@ -54,13 +54,18 @@ has not completed public source review and is not included in this tree.
 
 The SAM/EC platform-profile path is real, but a short CPU workload showed no
 meaningful difference between firmware profiles. The alpha therefore adds a
-reversible userspace companion:
+reversible, hardware-qualified userspace companion:
 
-- power-saver: maximum 2,515,200 kHz on all three SCMI cpufreq domains;
-- balanced/performance: restore 3,417,600 kHz.
+- power-saver: maximum 1,920,000 kHz on all three SCMI cpufreq domains;
+- balanced: maximum 2,515,200 kHz;
+- performance: restore 3,417,600 kHz.
 
-This is a practical field-test cap, not a tuned energy model. Battery drain,
-sustained thermals, and the disabled higher boost point remain future work.
+Repeated battery-only fixed-work tests selected 1,920,000 over 1,670,400 kHz:
+it completed both all-core and single-core work about 15.5% faster and used
+less energy per completed job, while bounded idle draw was effectively tied.
+This remains a practical field-test mapping, not a complete energy model.
+Long-term battery drain, sustained thermals, and the disabled higher boost
+point remain future work.
 
 ## Battery charge limit
 

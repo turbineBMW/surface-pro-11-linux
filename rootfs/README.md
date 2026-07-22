@@ -9,7 +9,7 @@ machine:
 - Surface platform-profile module loading and patched PPD selection
 - Qualcomm SSC startup and the SP11-specific libssc selection for the ambient
   color sensor
-- measurable power-saver cpufreq companion and sleep hook target
+- three-tier power-profile cpufreq companion and sleep hook target
 - verified 75–80% battery charge limit applied at boot and after system sleep
 - short power-button press mapped to suspend through logind
 - CC0 IMX681 simple-pipeline tuning data
