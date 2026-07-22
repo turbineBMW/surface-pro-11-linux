@@ -12,20 +12,23 @@ git fetch /path/to/surface-pro-11-linux/kernel/sp11-camera-review.bundle \
   refs/heads/sp11-camera-review:refs/heads/sp11-camera-review
 git fetch /path/to/surface-pro-11-linux/kernel/sp11-touch-spi-autoload.bundle \
   refs/heads/fix/touch-spi-autoload:refs/heads/fix/touch-spi-autoload
-git switch fix/touch-spi-autoload
+git fetch /path/to/surface-pro-11-linux/kernel/sp11-tablet-mode-resume-resync.bundle \
+  refs/heads/fix/tablet-mode-resume-resync:refs/heads/fix/tablet-mode-resume-resync
+git switch fix/tablet-mode-resume-resync
 git rev-parse HEAD^{commit} HEAD^{tree}
 ```
 
 The final command must print:
 
 ```text
-86fc94c58a89a56c7ceb57b42c6025b2569da56d
-4624d85595964242c26d7042106d068cbbdd9977
+8625b38c7f8efca528ac8ea1df27bc7ee416605a
+54cf9fad522b0600e72a545deb151fc749e201eb
 ```
 
 The bundles are incremental: the sanitized bundle requires Linux `v7.1.3`,
-the camera bundle requires the sanitized tip, and the touch autoload correction
-requires the camera tip. `kernel/README.md` also documents patch reconstruction.
+the camera bundle requires the sanitized tip, the touch autoload correction
+requires the camera tip, and the tablet-mode resume resynchronization requires
+the touch-autoload tip. `kernel/README.md` also documents patch reconstruction.
 
 ## Build
 
@@ -39,7 +42,7 @@ configuration, and builds with Clang/LLVM and `W=1`:
   --jobs "$(nproc)"
 ```
 
-The resulting kernel release is `7.1.3-sp11-camera-review5`. Primary outputs:
+The resulting kernel release is `7.1.3-sp11-camera-review6`. Primary outputs:
 
 ```text
 /path/to/build/arch/arm64/boot/Image
@@ -54,12 +57,13 @@ produce byte-identical Image, DTB, configuration, `Module.symvers`, and module
 content when the declared toolchain and other inputs match. Treat any mismatch
 as a failed reproducibility check; do not publish the artifacts.
 
-Review5 intentionally retains review4's byte-identical merged configuration:
-the touch correction changes source only and requires no configuration change.
-Consequently, `camera-review.config.fragment` still records
+Review6 intentionally retains review4's byte-identical merged configuration:
+the review5 touch correction and review6 resume correction change source only
+and require no configuration change. Consequently,
+`camera-review.config.fragment` still records
 `CONFIG_LOCALVERSION="-sp11-camera-review4"`. The helper's enforced
-`KERNELRELEASE=7.1.3-sp11-camera-review5` is the authoritative release identity
-and must not be omitted when building or installing review5 artifacts.
+`KERNELRELEASE=7.1.3-sp11-camera-review6` is the authoritative release identity
+and must not be omitted when building or installing review6 artifacts.
 
 The helper also requires Python 3.14.6 and invokes it with `-S` so host or user
 site packages cannot change Kconfig feature visibility. In particular, the
@@ -72,7 +76,7 @@ To stage modules without touching the host system:
 
 ```sh
 make -C /path/to/linux O=/path/to/build \
-  KERNELRELEASE=7.1.3-sp11-camera-review5 \
+  KERNELRELEASE=7.1.3-sp11-camera-review6 \
   LOCALVERSION= LLVM=1 PYTHON3="python3 -S" \
   INSTALL_MOD_PATH=/path/to/stage modules_install
 ```

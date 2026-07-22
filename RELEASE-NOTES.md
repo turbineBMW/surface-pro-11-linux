@@ -12,12 +12,15 @@ checks, and installation/rollback validation are complete.
 
 ## Reviewed kernel source
 
-- Kernel release used for hardware validation:
+- Kernel release currently used for hardware validation:
   `7.1.3-sp11-camera-review5`
-- Source commit:
+- Hardware-validated source commit:
   `86fc94c58a89a56c7ceb57b42c6025b2569da56d`
-- Source tree:
+- Hardware-validated source tree:
   `4624d85595964242c26d7042106d068cbbdd9977`
+- Next source candidate: `7.1.3-sp11-camera-review6`
+- Candidate source commit: `8625b38c7f8efca528ac8ea1df27bc7ee416605a`
+- Candidate source tree: `54cf9fad522b0600e72a545deb151fc749e201eb`
 - Base: Linux stable `v7.1.3` plus the attributed SP11/HID-over-SPI branch
 
 The reviewed branch supports sequential capture from the front IMX681, rear
@@ -26,6 +29,11 @@ also enables the independently tested PM8550 IR illuminator and fixes automatic
 loading of the touch/pen SPI transport. The bounded IR bridge source and its
 independent illuminator-off helper are included; Howdy itself, the
 v4l2loopback binary, enrolled face model, and test captures are not.
+
+Review6 adds a focused delayed controller posture re-query to mitigate stale
+tablet-mode state after resume. It has passed strict source checks and two
+byte-identical clean builds. Hardware suspend/resume qualification is pending,
+so review5 remains the persistent fallback.
 
 ## Other validated hardware
 

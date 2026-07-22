@@ -15,6 +15,9 @@ Date opened: 2026-07-19
 - [x] touch autoload bundle adds one commit and restores tip
   `86fc94c58a89a56c7ceb57b42c6025b2569da56d` and tree
   `4624d85595964242c26d7042106d068cbbdd9977`;
+- [x] tablet-mode resume bundle adds one commit and restores tip
+  `8625b38c7f8efca528ac8ea1df27bc7ee416605a` and tree
+  `54cf9fad522b0600e72a545deb151fc749e201eb`;
 - [x] all patches apply cleanly to their declared prerequisites;
 - [x] bundle and patch reconstructions produce identical final trees;
 - [x] changed-path, keyword, SPDX, and whitespace audits pass;
@@ -56,6 +59,16 @@ stylus appeared, both IPTSD virtual devices appeared, and `sp11-iptsd` was
 active. The maintainer physically confirmed touch, multitouch, pen hover,
 strokes, and eraser operation.
 
+Review6 adds a delayed Surface Aggregator tablet-mode controller re-query after
+resume. Two empty-directory builds produced byte-identical Image SHA-256
+`f7ca4995d138d9d03969d5c8cbd65764eb5b5b35c0fa3b201c693a3f62df8dd1`,
+OLED DTB, config, `Module.symvers`, and all 3,758 modules. Their normalized
+module-manifest SHA-256 is
+`a4075bc8d26c2637ad46adb377ee42741eb95f987ad439a1e0a1fbe557534b43`.
+The changed driver passes strict `checkpatch.pl`, and a targeted `W=1` module
+build completes without a warning in the modified module. Target-hardware
+resume and posture testing is not yet checked off.
+
 ## Bounded target-hardware validation
 
 - [x] review4 boots from a one-shot GRUB entry;
@@ -65,6 +78,8 @@ strokes, and eraser operation.
   and iptsd virtual devices;
 - [x] review5 automatically restores the complete physical and IPTSD touch/pen
   path, with touch, multitouch, pen hover, strokes, and eraser confirmed;
+- [ ] review6 preserves correct laptop, detached, and folded-back posture across
+  repeated short and longer lid-triggered suspend/resume cycles;
 - [x] keyboard, touchpad, volume rocker, audio, and microphones work on the
   tested unit;
 - [x] Wi-Fi associates and Bluetooth remains unblocked;

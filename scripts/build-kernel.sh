@@ -2,9 +2,9 @@
 
 set -euo pipefail
 
-release="7.1.3-sp11-camera-review5"
-expected_commit="86fc94c58a89a56c7ceb57b42c6025b2569da56d"
-expected_tree="4624d85595964242c26d7042106d068cbbdd9977"
+release="7.1.3-sp11-camera-review6"
+expected_commit="8625b38c7f8efca528ac8ea1df27bc7ee416605a"
+expected_tree="54cf9fad522b0600e72a545deb151fc749e201eb"
 expected_config="b2497f1a5340c6491dd86014d90a9cdd6dcf0a8b1f45806ceb76be35d972517f"
 expected_python="Python 3.14.6"
 python3_make_command="python3 -S"

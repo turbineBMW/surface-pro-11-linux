@@ -81,6 +81,35 @@ is disabled.
 Keep this workaround opt-in until the lid path receives a narrower fix or more
 platforms reproduce the same failure.
 
+## Review6 tablet-mode resynchronization candidate
+
+A separate lid-resume symptom can leave the Surface Aggregator tablet-mode
+input switch at its early resume value after the embedded controller posture
+has settled. If that stale value is tablet mode, libinput can suppress the
+attached keyboard and touchpad even though their devices are present.
+
+Review6 keeps the driver's immediate resume query and adds one controller
+re-query after two seconds. It uses the existing serialized update path and
+emits an input change only if the controller reports a different posture. This
+is deliberately narrower than synthesizing `SW_TABLET_MODE=0` from userspace.
+The combination “lid open + tablet mode” is legitimate when the Flex Keyboard
+is detached or folded back, so that combination alone is not proof of a fault.
+
+The source and two clean builds are validated, but target-hardware testing is
+pending. Keep review5 as the persistent fallback while testing review6 in
+attached laptop, detached, and folded-back postures.
+
+The read-only diagnostic can record both the controller state and live evdev
+switch state without injecting input, rebinding a driver, or changing policy:
+
+```sh
+sudo ./scripts/diagnose-tablet-mode.py --samples 6 --interval 1
+```
+
+Run it after a suspect resume before detaching or reattaching the keyboard.
+Interpret the result in the context of the physical keyboard posture; the tool
+intentionally does not label any state combination as invalid.
+
 ## Separate attached-touchpad resume fault
 
 One post-reboot lid cycle left the attached touchpad with an apparent stale
