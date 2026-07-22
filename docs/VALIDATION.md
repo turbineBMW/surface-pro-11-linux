@@ -15,9 +15,9 @@ Date opened: 2026-07-19
 - [x] touch autoload bundle adds one commit and restores tip
   `86fc94c58a89a56c7ceb57b42c6025b2569da56d` and tree
   `4624d85595964242c26d7042106d068cbbdd9977`;
-- [x] tablet-mode resume bundle adds one commit and restores tip
-  `8625b38c7f8efca528ac8ea1df27bc7ee416605a` and tree
-  `54cf9fad522b0600e72a545deb151fc749e201eb`;
+- [x] tablet-mode resynchronization bundle adds two commits and restores tip
+  `2651afaca79b7e0e3a31d70eb21a6a000e172cf1` and tree
+  `2b70e7f701f7906db855ad27e527fc8fff891870`;
 - [x] all patches apply cleanly to their declared prerequisites;
 - [x] bundle and patch reconstructions produce identical final trees;
 - [x] changed-path, keyword, SPDX, and whitespace audits pass;
@@ -59,15 +59,27 @@ stylus appeared, both IPTSD virtual devices appeared, and `sp11-iptsd` was
 active. The maintainer physically confirmed touch, multitouch, pen hover,
 strokes, and eraser operation.
 
-Review6 adds a delayed Surface Aggregator tablet-mode controller re-query after
+Review6 added a delayed Surface Aggregator tablet-mode controller re-query after
 resume. Two empty-directory builds produced byte-identical Image SHA-256
 `f7ca4995d138d9d03969d5c8cbd65764eb5b5b35c0fa3b201c693a3f62df8dd1`,
 OLED DTB, config, `Module.symvers`, and all 3,758 modules. Their normalized
 module-manifest SHA-256 is
 `a4075bc8d26c2637ad46adb377ee42741eb95f987ad439a1e0a1fbe557534b43`.
 The changed driver passes strict `checkpatch.pl`, and a targeted `W=1` module
-build completes without a warning in the modified module. Target-hardware
-resume and posture testing is not yet checked off.
+build completes without a warning in the modified module. Attached and detached
+suspend/resume tests passed, but a later physical keyboard reattach exposed a
+missed cover-state notification: attached HID endpoints returned while the
+cached tablet posture suppressed the touchpad. A controller-backed switch
+re-query restored `laptop` state and the touchpad immediately.
+
+Review7 observes the KIP connection event and schedules that same delayed state
+query, retaining the controller as the source of truth. Its target-hardware
+qualification is not yet checked off. Two empty-directory review7 builds are
+byte-identical across Image, OLED DTB, config, `Module.symvers`, `vmlinux`,
+generated build identity, and all 3,758 modules. The Image SHA-256 is
+`caf4fb1db047807a6ff74f5212de51ba96e777a7820e1f7c58ab8d5c210894eb`,
+and the normalized module-manifest SHA-256 is
+`1fdf6690301ab8961d69be2e95d5cef928d30c898551a76f38ca9ec088263d1b`.
 
 ## Bounded target-hardware validation
 
@@ -78,8 +90,8 @@ resume and posture testing is not yet checked off.
   and iptsd virtual devices;
 - [x] review5 automatically restores the complete physical and IPTSD touch/pen
   path, with touch, multitouch, pen hover, strokes, and eraser confirmed;
-- [ ] review6 preserves correct laptop, detached, and folded-back posture across
-  repeated short and longer lid-triggered suspend/resume cycles;
+- [ ] review7 preserves correct laptop, detached, and folded-back posture across
+  repeated suspend/resume and Flex Keyboard detach/reattach cycles;
 - [x] keyboard, touchpad, volume rocker, audio, and microphones work on the
   tested unit;
 - [x] Wi-Fi associates and Bluetooth remains unblocked;

@@ -17,8 +17,8 @@ expected_patch="218ee1ec59a29887aab919fcd37c7d8a21f7ca421ea3757476ddbab76bf07914
 expected_bundle="cd782a17f4c6645d63d51c057bc9115ac0b7167966a6ce8c663c6e351b79d3e7"
 expected_config="8834ac6021bc4d50034b55c0960938070541387c0984aed4cc6797601ecce7f1"
 expected_symvers="b58de2ebd5ca9649b0e7299e4b5b7e3965f70e06506b88c1ec3d5046ce2e9387"
-expected_buildinfo="ba4a04e184e065ad575388325a17c9947f912955d4a526c97c9729d33884a0ec"
-expected_camera_config="585f989a2db132bddbb80f5ef3247a51aaeb4d7e6dfe465fcd0677f6e452cd48"
+expected_buildinfo="896c9abb38862bf25143ab0d1e4cffda36d0274161ee7f11782d3b08d734a2cf"
+expected_camera_config="4b9cd2e6d3e405f9d3c734850747eb85ff93f566e48c30c223e61a08cefde26f"
 expected_tip="2ace98eb6ef18cbd48074eed9f5b585d19ce398b"
 expected_camera_patch="a6d6f31fd9b3eea7e5b4243ec30300e1bc43718253fd2a2b77c2bdf4cebc3b6c"
 expected_camera_bundle="bacf60dc80463c92da9b62f3f0c5da077c27b67ac6685a28c542b890de5b8e64"
@@ -26,9 +26,9 @@ expected_camera_tip="675d89b381d8b730a3f2eff1086875481ee5b515"
 expected_touch_patch="3e698738381fdec196600beb6b7b7e9997dd1cfc53e086eee6e6cb3dfbdc6f0e"
 expected_touch_bundle="02c18a42b44ddefa2c084f5336df68b3ceac2011779aaa299c07cd0e0970add1"
 expected_touch_tip="86fc94c58a89a56c7ceb57b42c6025b2569da56d"
-expected_resume_patch="965b0a6e684af21ccf9df4b7797392d47f142526f524bd9a1c422ac4999d24b2"
-expected_resume_bundle="7803de6e07b04d74bc374d9b4710dce8b3a2d9e5df410047ff9cc4aa31deb289"
-expected_resume_tip="8625b38c7f8efca528ac8ea1df27bc7ee416605a"
+expected_resume_patch="a46e812853adba239010c420cbed2ddd259f3e2ca56588bb3c31417f04f91ad6"
+expected_resume_bundle="6e3a57ed55d45f811823ec6b35ecab75ac641d13014f87fa38dd60aee801feb4"
+expected_resume_tip="2651afaca79b7e0e3a31d70eb21a6a000e172cf1"
 
 for command_name in git reuse rg sha256sum; do
 	command -v "$command_name" >/dev/null || {
@@ -81,7 +81,8 @@ fi
 [[ "$(sha256sum "$resume_patch" | awk '{print $1}')" == "$expected_resume_patch" ]]
 [[ "$(sha256sum "$resume_bundle" | awk '{print $1}')" == "$expected_resume_bundle" ]]
 [[ "$(git bundle list-heads "$resume_bundle" | awk '{print $1}')" == "$expected_resume_tip" ]]
-[[ "$(rg -c '^diff --git ' "$resume_patch")" -eq 1 ]]
+[[ "$(rg -c '^From [0-9a-f]{40} Mon Sep 17 00:00:00 2001$' "$resume_patch")" -eq 2 ]]
+[[ "$(rg -c '^diff --git ' "$resume_patch")" -eq 2 ]]
 
 if rg -n '^diff --git a/(drivers/media|drivers/phy/qualcomm/.*cphy|arch/arm64/boot/dts/qcom/.*camera)' "$patch"; then
 	printf 'Camera-related path found in sanitized kernel patch.\n' >&2

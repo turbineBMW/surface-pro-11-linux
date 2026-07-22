@@ -56,8 +56,8 @@ See [docs/LICENSING.md](docs/LICENSING.md) and the file-level REUSE metadata.
 - Boot environment: UEFI and GRUB on the Arch Linux ARM foundation
 - Reviewed kernel source: `7.1.3-sp11-camera-review5`
 - Exact source commit: `86fc94c58a89a56c7ceb57b42c6025b2569da56d`
-- Build-validated resume candidate: `7.1.3-sp11-camera-review6` at
-  `8625b38c7f8efca528ac8ea1df27bc7ee416605a` (hardware testing pending)
+- Next resume/reattach candidate: `7.1.3-sp11-camera-review7` at
+  `2651afaca79b7e0e3a31d70eb21a6a000e172cf1` (hardware testing pending)
 
 Only one physical OLED/X Elite unit has been qualified. Do not assume that the
 LCD, X Plus, 5G, or other Surface variants use an interchangeable device tree.
@@ -78,8 +78,8 @@ Validated on the tested unit:
 
 Still experimental:
 
-- Review6 delayed tablet-mode resynchronization across attached, detached, and
-  folded-back lid-resume cycles
+- Review7 controller-backed tablet-mode resynchronization across resume and
+  Flex Keyboard reattachment
 - Concurrent cameras, extended camera cycling, and camera suspend/resume
 - Camera color processing, tuning, and normal desktop application integration
 - Power efficiency with the deeper-idle mitigation

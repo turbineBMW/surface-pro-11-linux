@@ -81,23 +81,30 @@ is disabled.
 Keep this workaround opt-in until the lid path receives a narrower fix or more
 platforms reproduce the same failure.
 
-## Review6 tablet-mode resynchronization candidate
+## Review7 tablet-mode resynchronization candidate
 
 A separate lid-resume symptom can leave the Surface Aggregator tablet-mode
 input switch at its early resume value after the embedded controller posture
 has settled. If that stale value is tablet mode, libinput can suppress the
 attached keyboard and touchpad even though their devices are present.
 
-Review6 keeps the driver's immediate resume query and adds one controller
+Review6 kept the driver's immediate resume query and added one controller
 re-query after two seconds. It uses the existing serialized update path and
 emits an input change only if the controller reports a different posture. This
 is deliberately narrower than synthesizing `SW_TABLET_MODE=0` from userspace.
 The combination “lid open + tablet mode” is legitimate when the Flex Keyboard
 is detached or folded back, so that combination alone is not proof of a fault.
 
-The source and two clean builds are validated, but target-hardware testing is
-pending. Keep review5 as the persistent fallback while testing review6 in
-attached laptop, detached, and folded-back postures.
+Attached and detached suspend/resume tests passed on review6. A subsequent Flex
+Keyboard reattach recreated the keyboard and touchpad endpoints while the
+tablet-mode switch remained cached as `disconnected`. Rebinding only the switch
+driver made it query the controller, report `laptop`, and immediately restore
+one-finger touchpad motion. No input state was synthesized.
+
+Review7 therefore also observes the KIP connection event (`0x2c`) and schedules
+the same delayed controller query. This covers attachment or detachment when
+the separate cover-state event (`0x1d`) is missed. Keep review5 as the
+persistent fallback while testing review7.
 
 The read-only diagnostic can record both the controller state and live evdev
 switch state without injecting input, rebinding a driver, or changing policy:

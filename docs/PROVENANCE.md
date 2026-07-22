@@ -24,11 +24,11 @@ firmware file is included here.
 - Camera tree: `03c278405e6d2fd0ffa1fd4cad860ef45c7adbbc`
 - Touch autoload fix tip: `86fc94c58a89a56c7ceb57b42c6025b2569da56d`
 - Touch autoload fix tree: `4624d85595964242c26d7042106d068cbbdd9977`
-- Tablet-mode resume tip: `8625b38c7f8efca528ac8ea1df27bc7ee416605a`
-- Tablet-mode resume tree: `54cf9fad522b0600e72a545deb151fc749e201eb`
-- Candidate release string: `7.1.3-sp11-camera-review6`
+- Tablet-mode resynchronization tip: `2651afaca79b7e0e3a31d70eb21a6a000e172cf1`
+- Tablet-mode resynchronization tree: `2b70e7f701f7906db855ad27e527fc8fff891870`
+- Candidate release string: `7.1.3-sp11-camera-review7`
 - Delta: 12 sanitized commits, 13 reviewed camera commits, one corrective
-  touch-driver commit, and one tablet-mode resume commit
+  touch-driver commit, and two tablet-mode resynchronization commits
 
 `kernel/sp11-sanitized2.bundle` preserves the exact incremental
 history and requires the Linux base commit. The cumulative patch reproduces
@@ -39,8 +39,9 @@ that exact sanitized tip. Its cumulative patch reproduces the camera tree from
 the sanitized prerequisite. `kernel/sp11-touch-spi-autoload.bundle` adds the
 single modalias correction on top of the camera tip. All histories are
 incremental and contain source, not a prebuilt kernel or module payload.
-`kernel/sp11-tablet-mode-resume-resync.bundle` adds the delayed controller
-posture re-query on top of the exact touch-autoload tip.
+`kernel/sp11-tablet-mode-resume-resync.bundle` adds the delayed resume and KIP
+connection controller posture re-queries on top of the exact touch-autoload
+tip.
 
 The history preserves the original authorship of the HID-over-SPI work:
 
@@ -154,8 +155,8 @@ excluded; this selection does not retroactively license or redistribute them.
 | Sanitized Git bundle | `cd782a17f4c6645d63d51c057bc9115ac0b7167966a6ce8c663c6e351b79d3e7` |
 | Touch autoload patch | `3e698738381fdec196600beb6b7b7e9997dd1cfc53e086eee6e6cb3dfbdc6f0e` |
 | Touch autoload Git bundle | `02c18a42b44ddefa2c084f5336df68b3ceac2011779aaa299c07cd0e0970add1` |
-| Tablet-mode resume patch | `965b0a6e684af21ccf9df4b7797392d47f142526f524bd9a1c422ac4999d24b2` |
-| Tablet-mode resume Git bundle | `7803de6e07b04d74bc374d9b4710dce8b3a2d9e5df410047ff9cc4aa31deb289` |
+| Tablet-mode resynchronization patch | `a46e812853adba239010c420cbed2ddd259f3e2ca56588bb3c31417f04f91ad6` |
+| Tablet-mode resynchronization Git bundle | `6e3a57ed55d45f811823ec6b35ecab75ac641d13014f87fa38dd60aee801feb4` |
 | Kernel config | `8834ac6021bc4d50034b55c0960938070541387c0984aed4cc6797601ecce7f1` |
 | Module.symvers | `b58de2ebd5ca9649b0e7299e4b5b7e3965f70e06506b88c1ec3d5046ce2e9387` |
 | Review4 merged config | `b2497f1a5340c6491dd86014d90a9cdd6dcf0a8b1f45806ceb76be35d972517f` |
@@ -169,10 +170,16 @@ excluded; this selection does not retroactively license or redistribute them.
 | Review6 reproducible kernel Image | `f7ca4995d138d9d03969d5c8cbd65764eb5b5b35c0fa3b201c693a3f62df8dd1` |
 | Review6 OLED DTB | `4caa12c8154470ea484890933f7997ec8e9a95b064927e0c2c8b814f9f658b3a` |
 | Review6 module manifest | `a4075bc8d26c2637ad46adb377ee42741eb95f987ad439a1e0a1fbe557534b43` |
+| Review7 merged config | `b2497f1a5340c6491dd86014d90a9cdd6dcf0a8b1f45806ceb76be35d972517f` |
+| Review7 reproducible kernel Image | `caf4fb1db047807a6ff74f5212de51ba96e777a7820e1f7c58ab8d5c210894eb` |
+| Review7 OLED DTB | `4caa12c8154470ea484890933f7997ec8e9a95b064927e0c2c8b814f9f658b3a` |
+| Review7 module manifest | `1fdf6690301ab8961d69be2e95d5cef928d30c898551a76f38ca9ec088263d1b` |
 
 These hashes identify the clean review4 hardware-test artifact and the two
 byte-identical corrected review5 builds completed on 2026-07-19, and two
-byte-identical review6 builds completed on 2026-07-21. Review6 hardware testing
-is pending. These are validation evidence, not distributed binaries or binary
-publication approval. A future payload and its complete corresponding-source
-archive will receive separate identities after testing.
+byte-identical review6 builds completed on 2026-07-21, and two byte-identical
+review7 builds completed from the corrective source tip. Review6 hardware
+testing exposed the reattach gap; review7 hardware testing is pending. These
+are validation evidence, not distributed binaries or binary publication
+approval. A future payload and its complete corresponding-source archive will
+receive separate identities after testing.

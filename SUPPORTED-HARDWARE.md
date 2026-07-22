@@ -13,7 +13,7 @@ The reviewed source was tested on one physical unit:
 | Boot environment | UEFI + GRUB |
 | Distribution | Arch Linux ARM bootstrap from the base project |
 | Hardware-validated kernel | `7.1.3-sp11-camera-review5` |
-| Build-validated resume candidate | `7.1.3-sp11-camera-review6` |
+| Resume/reattach source candidate | `7.1.3-sp11-camera-review7` |
 
 Any future installer must reject a device whose DMI product or live
 device-tree compatible string does not match unless the operator supplies an
