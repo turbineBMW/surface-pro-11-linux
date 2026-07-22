@@ -24,11 +24,11 @@ firmware file is included here.
 - Camera tree: `03c278405e6d2fd0ffa1fd4cad860ef45c7adbbc`
 - Touch autoload fix tip: `86fc94c58a89a56c7ceb57b42c6025b2569da56d`
 - Touch autoload fix tree: `4624d85595964242c26d7042106d068cbbdd9977`
-- Tablet-mode resynchronization tip: `2651afaca79b7e0e3a31d70eb21a6a000e172cf1`
-- Tablet-mode resynchronization tree: `2b70e7f701f7906db855ad27e527fc8fff891870`
-- Candidate release string: `7.1.3-sp11-camera-review7`
+- Tablet-mode resynchronization tip: `940bbc856a120e6f967f9dbaf825d5473bfae664`
+- Tablet-mode resynchronization tree: `62edee5183ed3b42ee3a2f9f0c71066c3ab87742`
+- Candidate release string: `7.1.3-sp11-camera-review8`
 - Delta: 12 sanitized commits, 13 reviewed camera commits, one corrective
-  touch-driver commit, and two tablet-mode resynchronization commits
+  touch-driver commit, and three tablet-mode resynchronization commits
 
 `kernel/sp11-sanitized2.bundle` preserves the exact incremental
 history and requires the Linux base commit. The cumulative patch reproduces
@@ -155,8 +155,8 @@ excluded; this selection does not retroactively license or redistribute them.
 | Sanitized Git bundle | `cd782a17f4c6645d63d51c057bc9115ac0b7167966a6ce8c663c6e351b79d3e7` |
 | Touch autoload patch | `3e698738381fdec196600beb6b7b7e9997dd1cfc53e086eee6e6cb3dfbdc6f0e` |
 | Touch autoload Git bundle | `02c18a42b44ddefa2c084f5336df68b3ceac2011779aaa299c07cd0e0970add1` |
-| Tablet-mode resynchronization patch | `a46e812853adba239010c420cbed2ddd259f3e2ca56588bb3c31417f04f91ad6` |
-| Tablet-mode resynchronization Git bundle | `6e3a57ed55d45f811823ec6b35ecab75ac641d13014f87fa38dd60aee801feb4` |
+| Tablet-mode resynchronization patch | `12f36124f5b7a3d69c22dea082042cbea3cf1c1a784358bad41055a3646db8da` |
+| Tablet-mode resynchronization Git bundle | `5c866e0add29dd2c40fa92df73bcbe2d11754d8fed99ab8986aaf8672612d0ab` |
 | Kernel config | `8834ac6021bc4d50034b55c0960938070541387c0984aed4cc6797601ecce7f1` |
 | Module.symvers | `b58de2ebd5ca9649b0e7299e4b5b7e3965f70e06506b88c1ec3d5046ce2e9387` |
 | Review4 merged config | `b2497f1a5340c6491dd86014d90a9cdd6dcf0a8b1f45806ceb76be35d972517f` |
@@ -174,12 +174,18 @@ excluded; this selection does not retroactively license or redistribute them.
 | Review7 reproducible kernel Image | `caf4fb1db047807a6ff74f5212de51ba96e777a7820e1f7c58ab8d5c210894eb` |
 | Review7 OLED DTB | `4caa12c8154470ea484890933f7997ec8e9a95b064927e0c2c8b814f9f658b3a` |
 | Review7 module manifest | `1fdf6690301ab8961d69be2e95d5cef928d30c898551a76f38ca9ec088263d1b` |
+| Review8 merged config | `b2497f1a5340c6491dd86014d90a9cdd6dcf0a8b1f45806ceb76be35d972517f` |
+| Review8 reproducible kernel Image | `c14a14d353a61693f4306b2cea1704d8af50374d2e8647afd12ac9d1e66fd625` |
+| Review8 OLED DTB | `4caa12c8154470ea484890933f7997ec8e9a95b064927e0c2c8b814f9f658b3a` |
+| Review8 module manifest | `64dd759c407e21a2493e835153b1bc3927a6dea3d51b7d5d2f9d4d16e6ee6084` |
 
 These hashes identify the clean review4 hardware-test artifact and the two
 byte-identical corrected review5 builds completed on 2026-07-19, and two
 byte-identical review6 builds completed on 2026-07-21, and two byte-identical
-review7 builds completed from the corrective source tip. Review6 hardware
-testing exposed the reattach gap; review7 hardware testing is pending. These
-are validation evidence, not distributed binaries or binary publication
-approval. A future payload and its complete corresponding-source archive will
+review7 builds completed from its source tip. Review6 hardware testing exposed
+the reattach gap, and review7 exposed transient raw state zero. Review8 passed
+live-module reattach testing. Its two clean builds are byte-identical, but it
+still needs an exact-artifact boot. These are validation evidence, not
+distributed binaries or binary publication approval. A future payload and its
+complete corresponding-source archive will
 receive separate identities after testing.

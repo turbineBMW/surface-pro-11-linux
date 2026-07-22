@@ -81,7 +81,7 @@ is disabled.
 Keep this workaround opt-in until the lid path receives a narrower fix or more
 platforms reproduce the same failure.
 
-## Review7 tablet-mode resynchronization candidate
+## Review8 tablet-mode resynchronization candidate
 
 A separate lid-resume symptom can leave the Surface Aggregator tablet-mode
 input switch at its early resume value after the embedded controller posture
@@ -101,10 +101,17 @@ tablet-mode switch remained cached as `disconnected`. Rebinding only the switch
 driver made it query the controller, report `laptop`, and immediately restore
 one-finger touchpad motion. No input state was synthesized.
 
-Review7 therefore also observes the KIP connection event (`0x2c`) and schedules
-the same delayed controller query. This covers attachment or detachment when
-the separate cover-state event (`0x1d`) is missed. Keep review5 as the
-persistent fallback while testing review7.
+Review7 therefore also observed the KIP connection event (`0x2c`) and
+scheduled the same delayed controller query. Its first physical qualification
+returned raw KIP state zero, outside the valid 1..6 posture range, and left
+tablet mode asserted.
+
+Review8 rejects out-of-range posture values and retries every two seconds for
+a bounded 30-second settling window after a connection change. It stops the
+sequence when the controller returns a valid posture. The final live module
+passed repeated physical detach/reattach cycles without rebinding or synthetic
+input; exact full-kernel qualification remains pending. Keep review5 as the
+persistent fallback while testing review8.
 
 The read-only diagnostic can record both the controller state and live evdev
 switch state without injecting input, rebinding a driver, or changing policy:

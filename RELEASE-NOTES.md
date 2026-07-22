@@ -18,9 +18,9 @@ checks, and installation/rollback validation are complete.
   `86fc94c58a89a56c7ceb57b42c6025b2569da56d`
 - Hardware-validated source tree:
   `4624d85595964242c26d7042106d068cbbdd9977`
-- Next source candidate: `7.1.3-sp11-camera-review7`
-- Candidate source commit: `2651afaca79b7e0e3a31d70eb21a6a000e172cf1`
-- Candidate source tree: `2b70e7f701f7906db855ad27e527fc8fff891870`
+- Next source candidate: `7.1.3-sp11-camera-review8`
+- Candidate source commit: `940bbc856a120e6f967f9dbaf825d5473bfae664`
+- Candidate source tree: `62edee5183ed3b42ee3a2f9f0c71066c3ab87742`
 - Base: Linux stable `v7.1.3` plus the attributed SP11/HID-over-SPI branch
 
 The reviewed branch supports sequential capture from the front IMX681, rear
@@ -35,9 +35,12 @@ passed attached and detached suspend/resume tests, but a later Flex Keyboard
 reattach recreated its HID devices without delivering the separate cover-state
 notification. The cached detached posture suppressed the attached touchpad.
 
-Review7 also observes the KIP connection event and schedules the same delayed,
-controller-backed posture query. A manual query reproduced this exact recovery
-without synthesizing an input state. Hardware qualification is pending, so
+Review7 also observed the KIP connection event, but its single delayed query
+could receive transient raw state zero and leave tablet mode asserted. Review8
+rejects values outside the valid posture range and retries for a bounded
+30-second settling window, stopping on the first valid controller response.
+The review8 live module passed repeated detach/reattach testing; exact clean
+builds are byte-identical and exact full-kernel qualification is pending, so
 review5 remains the persistent fallback.
 
 ## Other validated hardware
