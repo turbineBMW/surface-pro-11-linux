@@ -9,6 +9,8 @@ machine:
 - Surface platform-profile module loading and patched PPD selection
 - measurable power-saver cpufreq companion and sleep hook target
 - CC0 IMX681 simple-pipeline tuning data
+- source-review-only bounded VD55G0-to-v4l2loopback IR bridge and independent
+  illuminator-off helper (feature branch; bounded on-device validation passed)
 
 The future installer is intended to copy regular files with their repository
 modes, create the power-profile system-sleep symlink, and back up destinations

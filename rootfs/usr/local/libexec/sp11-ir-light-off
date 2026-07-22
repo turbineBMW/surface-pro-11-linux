@@ -1,0 +1,35 @@
+#!/bin/sh
+
+# Independent, idempotent IR-off path for service startup and teardown.
+set -eu
+
+require_led=0
+if [ "${1:-}" = "--require-led" ]; then
+	require_led=1
+	shift
+fi
+[ "$#" -eq 0 ] || {
+	printf 'usage: %s [--require-led]\n' "$0" >&2
+	exit 2
+}
+
+led_root=${SP11_LED_ROOT:-/sys/class/leds}
+found=0
+
+for led in "$led_root"/ir:flash*; do
+	[ -d "$led" ] || continue
+	found=$((found + 1))
+	if [ -w "$led/flash_strobe" ]; then
+		printf '0' >"$led/flash_strobe"
+	fi
+	[ -w "$led/brightness" ] || {
+		printf '%s is missing a writable brightness control\n' "$led" >&2
+		exit 1
+	}
+	printf '0' >"$led/brightness"
+done
+
+if [ "$require_led" -eq 1 ] && [ "$found" -ne 1 ]; then
+	printf 'expected exactly one reviewed IR flash LED, found %s\n' "$found" >&2
+	exit 1
+fi

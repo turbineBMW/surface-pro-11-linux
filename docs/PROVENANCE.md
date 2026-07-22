@@ -120,6 +120,28 @@ class device and accepts the kernel's `balanced-performance` spelling. A
 binary release must include the complete corresponding PPD source and patch,
 or a compliant source offer.
 
+## Bounded IR bridge review branch
+
+The `feature/howdy-ir-review` branch contains an original MIT-licensed bridge
+that configures the already reviewed VD55G0 media graph and converts its
+644x604 Y10P stream to an 8-bit GREY v4l2loopback stream. It was written during
+publication review from the published kernel/media topology, standard
+media-controller and V4L2 interfaces, the documented Y10P layout, and the
+functional lessons of the maintainer's frozen local proof of concept. It does
+not copy the legacy file, preserve its shell-command construction, or include
+its raw/PNG output modes, unbounded illumination modes, PAM edits, machine
+paths, enrolled models, or captures.
+
+The local validation dependency was v4l2loopback 0.15.4, upstream tag commit
+`0f9ee86760b7f2bea174b7e3e7a1d38845da0ab4`, licensed
+GPL-2.0-or-later. The direct recognition proof used the Arch package
+`howdy 2.6.1-3`, corresponding to upstream Howdy tag commit
+`3c9537a35f23773ceca86e79be1ebed3ebe774cc`, licensed MIT. Neither project,
+their binaries, a face model, nor PAM configuration is included. The
+maintainer selected MIT for the public repository's original integration work
+on 2026-07-19. Legacy local bridge files without explicit license headers remain
+excluded; this selection does not retroactively license or redistribute them.
+
 ## Generated artifact hashes
 
 | Artifact | SHA-256 |

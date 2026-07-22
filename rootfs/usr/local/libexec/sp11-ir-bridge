@@ -1,0 +1,419 @@
+#!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 turbinebmw
+# SPDX-License-Identifier: MIT
+"""Bounded Y10P-to-GREY bridge for the reviewed SP11 VD55G0 camera."""
+
+from __future__ import annotations
+
+import argparse
+import glob
+import os
+from pathlib import Path
+import re
+import select
+import signal
+import socket
+import stat
+import subprocess
+import sys
+import time
+from typing import BinaryIO, Sequence
+
+FRAME_WIDTH = 644
+FRAME_HEIGHT = 604
+FRAME_STRIDE = 816
+Y10P_PAYLOAD_PER_LINE = FRAME_WIDTH // 4 * 5
+Y10P_FRAME_BYTES = FRAME_STRIDE * FRAME_HEIGHT
+GREY_FRAME_BYTES = FRAME_WIDTH * FRAME_HEIGHT
+EXPECTED_COMPATIBLE = b"microsoft,denali"
+EXPECTED_LED_MAX_BRIGHTNESS = 255
+SENSOR_PATTERN = re.compile(r"^- entity [0-9]+: (vd55g0 [0-9]+-0060) ", re.MULTILINE)
+MEDIA_NODE_PATTERN = re.compile(r"^/dev/(?:video|v4l-subdev)[0-9]+$")
+VIDEO_DEVICE_PATTERN = re.compile(r"^/dev/video[0-9]+$")
+
+
+class BridgeError(RuntimeError):
+    """A precondition or bounded bridge operation failed."""
+
+
+def run_command(
+    arguments: Sequence[str], *, check: bool = True
+) -> subprocess.CompletedProcess[str]:
+    result = subprocess.run(
+        arguments,
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    if check and result.returncode:
+        detail = (result.stderr or result.stdout).strip() or "no diagnostic output"
+        raise BridgeError(
+            f"{arguments[0]} failed with exit {result.returncode}: {detail}"
+        )
+    return result
+
+
+def natural_device_key(path: str) -> tuple[str, int]:
+    match = re.search(r"([0-9]+)$", path)
+    return (path[: match.start()] if match else path, int(match.group(1)) if match else -1)
+
+
+def require_reviewed_platform(expected_kernel_release: str) -> None:
+    if os.geteuid() != 0:
+        raise BridgeError("run the bridge as root through sp11-ir-bridge.service")
+
+    running_release = os.uname().release
+    if running_release != expected_kernel_release:
+        raise BridgeError(
+            "running kernel release does not match the reviewed bridge identity: "
+            f"{running_release!r} != {expected_kernel_release!r}"
+        )
+
+    try:
+        compatibles = Path("/proc/device-tree/compatible").read_bytes().split(b"\0")
+    except OSError as error:
+        raise BridgeError(f"cannot read the device-tree compatible list: {error}") from error
+    if EXPECTED_COMPATIBLE not in compatibles:
+        raise BridgeError("this system is not device-tree compatible microsoft,denali")
+
+
+def find_camera() -> tuple[str, str]:
+    matches: list[tuple[str, str]] = []
+    for media_device in sorted(glob.glob("/dev/media[0-9]*"), key=natural_device_key):
+        topology = run_command(
+            ["/usr/bin/media-ctl", "-d", media_device, "-p"], check=False
+        )
+        if topology.returncode:
+            continue
+        sensor = SENSOR_PATTERN.search(topology.stdout)
+        if sensor:
+            matches.append((media_device, sensor.group(1)))
+    if len(matches) != 1:
+        raise BridgeError(
+            f"expected one VD55G0 media graph, found {len(matches)}"
+        )
+    return matches[0]
+
+
+def entity_device(media_device: str, entity: str) -> str:
+    device = run_command(
+        ["/usr/bin/media-ctl", "-d", media_device, "-e", entity]
+    ).stdout.strip()
+    if not MEDIA_NODE_PATTERN.fullmatch(device):
+        raise BridgeError(f"entity {entity!r} resolved to unexpected path {device!r}")
+    try:
+        mode = os.stat(device).st_mode
+    except OSError as error:
+        raise BridgeError(f"cannot stat {device}: {error}") from error
+    if not stat.S_ISCHR(mode):
+        raise BridgeError(f"resolved camera node is not a character device: {device}")
+    return device
+
+
+def set_link(media_device: str, link: str, *, enabled: bool) -> None:
+    result = run_command(
+        ["/usr/bin/media-ctl", "-d", media_device, "-l", link],
+        check=enabled,
+    )
+    if enabled and result.returncode:
+        raise BridgeError(f"could not enable media link {link}")
+
+
+def configure_camera(exposure: int) -> str:
+    media_device, sensor = find_camera()
+
+    for phy_id in (0, 1, 2, 4):
+        set_link(
+            media_device,
+            f'"msm_csiphy{phy_id}":1->"msm_csid0":0[0]',
+            enabled=False,
+        )
+    for csid_id in range(5):
+        set_link(
+            media_device,
+            f'"msm_csid{csid_id}":1->"msm_vfe0_rdi0":0[0]',
+            enabled=False,
+        )
+    for link in (
+        '"msm_csid0":2->"msm_vfe0_rdi1":0[0]',
+        '"msm_csid0":3->"msm_vfe0_rdi2":0[0]',
+        '"msm_csid0":4->"msm_vfe0_pix":0[0]',
+    ):
+        set_link(media_device, link, enabled=False)
+
+    set_link(
+        media_device,
+        '"msm_csiphy0":1->"msm_csid0":0[1]',
+        enabled=True,
+    )
+    set_link(
+        media_device,
+        '"msm_csid0":1->"msm_vfe0_rdi0":0[1]',
+        enabled=True,
+    )
+
+    for pad in (
+        f'"{sensor}":0',
+        '"msm_csiphy0":0',
+        '"msm_csiphy0":1',
+        '"msm_csid0":0',
+        '"msm_csid0":1',
+        '"msm_vfe0_rdi0":0',
+        '"msm_vfe0_rdi0":1',
+    ):
+        run_command(
+            [
+                "/usr/bin/media-ctl",
+                "-d",
+                media_device,
+                "-V",
+                f"{pad}[fmt:Y10_1X10/{FRAME_WIDTH}x{FRAME_HEIGHT} field:none]",
+            ]
+        )
+
+    video_device = entity_device(media_device, "msm_vfe0_video0")
+    sensor_device = entity_device(media_device, sensor)
+    if not VIDEO_DEVICE_PATTERN.fullmatch(video_device):
+        raise BridgeError(f"VFE entity did not resolve to a video node: {video_device}")
+    run_command(
+        [
+            "/usr/bin/v4l2-ctl",
+            "-d",
+            video_device,
+            f"--set-fmt-video=width={FRAME_WIDTH},height={FRAME_HEIGHT},pixelformat=Y10P",
+        ]
+    )
+    run_command(
+        [
+            "/usr/bin/v4l2-ctl",
+            "-d",
+            sensor_device,
+            "-c",
+            f"auto_exposure=1,exposure={exposure}",
+        ]
+    )
+    return video_device
+
+
+class Illuminator:
+    """Control exactly the single torch exposed by the reviewed Denali DT."""
+
+    def __init__(self, led_root: Path = Path("/sys/class/leds")) -> None:
+        leds = sorted(led_root.glob("ir:flash*"))
+        if len(leds) != 1:
+            raise BridgeError(f"expected one reviewed IR flash LED, found {len(leds)}")
+        self.led = leds[0]
+        try:
+            maximum = int((self.led / "max_brightness").read_text(encoding="ascii"))
+        except (OSError, ValueError) as error:
+            raise BridgeError(f"cannot read the IR torch ceiling: {error}") from error
+        if maximum != EXPECTED_LED_MAX_BRIGHTNESS:
+            raise BridgeError(
+                f"unexpected IR torch scale {maximum}; expected "
+                f"{EXPECTED_LED_MAX_BRIGHTNESS} from the reviewed DT"
+            )
+        self.maximum = maximum
+
+    def _write(self, attribute: str, value: int) -> None:
+        try:
+            (self.led / attribute).write_text(str(value), encoding="ascii")
+        except OSError as error:
+            raise BridgeError(f"cannot write IR torch {attribute}: {error}") from error
+
+    def on(self) -> None:
+        self._write("brightness", self.maximum)
+
+    def off(self) -> None:
+        self._write("brightness", 0)
+
+
+def y10p_to_grey(frame: bytes) -> bytes:
+    if len(frame) != Y10P_FRAME_BYTES:
+        raise BridgeError(
+            f"Y10P frame has {len(frame)} bytes, expected {Y10P_FRAME_BYTES}"
+        )
+    try:
+        import numpy
+    except ImportError as error:
+        raise BridgeError("python-numpy is required for real-time conversion") from error
+
+    array = numpy.frombuffer(frame, dtype=numpy.uint8).reshape(
+        FRAME_HEIGHT, FRAME_STRIDE
+    )
+    pixels = array[:, :Y10P_PAYLOAD_PER_LINE].reshape(
+        FRAME_HEIGHT, FRAME_WIDTH // 4, 5
+    )[:, :, :4]
+    result = pixels.tobytes()
+    if len(result) != GREY_FRAME_BYTES:
+        raise BridgeError("internal GREY conversion size mismatch")
+    return result
+
+
+def read_frame(
+    stream: BinaryIO, stop_requested: list[bool], deadline: float
+) -> bytes | None:
+    data = bytearray()
+    descriptor = stream.fileno()
+    while len(data) < Y10P_FRAME_BYTES and not stop_requested[0]:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return None
+        readable, _, _ = select.select([descriptor], [], [], min(remaining, 0.2))
+        if not readable:
+            continue
+        chunk = os.read(descriptor, Y10P_FRAME_BYTES - len(data))
+        if not chunk:
+            return None
+        data.extend(chunk)
+    return bytes(data) if len(data) == Y10P_FRAME_BYTES else None
+
+
+def stop_process(process: subprocess.Popen[bytes] | None) -> None:
+    if process is None or process.poll() is not None:
+        return
+    process.terminate()
+    try:
+        process.wait(timeout=2)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait(timeout=1)
+
+
+def notify_ready() -> None:
+    notify_path = os.environ.get("NOTIFY_SOCKET")
+    if not notify_path:
+        return
+    address = "\0" + notify_path[1:] if notify_path.startswith("@") else notify_path
+    with socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM) as notifier:
+        notifier.connect(address)
+        notifier.sendall(b"READY=1")
+
+
+def stream_bridge(
+    video_device: str, sink: str, timeout: float, illuminator: Illuminator | None
+) -> None:
+    stop_requested = [False]
+
+    def request_stop(_signum: int, _frame: object) -> None:
+        stop_requested[0] = True
+
+    signal.signal(signal.SIGINT, request_stop)
+    signal.signal(signal.SIGTERM, request_stop)
+
+    capture: subprocess.Popen[bytes] | None = None
+    encoder: subprocess.Popen[bytes] | None = None
+    deadline = time.monotonic() + timeout
+    ready = False
+    try:
+        capture = subprocess.Popen(
+            [
+                "/usr/bin/v4l2-ctl",
+                "-d",
+                video_device,
+                "--stream-mmap=4",
+                "--stream-poll",
+                "--stream-to=-",
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+        )
+        encoder = subprocess.Popen(
+            [
+                "/usr/bin/ffmpeg",
+                "-hide_banner",
+                "-loglevel",
+                "error",
+                "-f",
+                "rawvideo",
+                "-pixel_format",
+                "gray",
+                "-video_size",
+                f"{FRAME_WIDTH}x{FRAME_HEIGHT}",
+                "-framerate",
+                "30",
+                "-i",
+                "-",
+                "-f",
+                "v4l2",
+                "-pix_fmt",
+                "gray",
+                sink,
+            ],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        if capture.stdout is None or encoder.stdin is None:
+            raise BridgeError("could not open the bounded camera pipeline")
+
+        if illuminator is not None:
+            illuminator.on()
+
+        while not stop_requested[0]:
+            frame = read_frame(capture.stdout, stop_requested, deadline)
+            if frame is None:
+                break
+            if encoder.poll() is not None:
+                raise BridgeError("ffmpeg stopped before the bridge timeout")
+            encoder.stdin.write(y10p_to_grey(frame))
+            encoder.stdin.flush()
+            if not ready:
+                notify_ready()
+                ready = True
+        if not ready and not stop_requested[0]:
+            raise BridgeError("no complete IR frame arrived before the timeout")
+    finally:
+        if illuminator is not None:
+            illuminator.off()
+        if encoder is not None and encoder.stdin is not None:
+            try:
+                encoder.stdin.close()
+            except BrokenPipeError:
+                pass
+        stop_process(capture)
+        stop_process(encoder)
+
+
+def parse_arguments() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run the bounded Surface Pro 11 IR loopback bridge"
+    )
+    parser.add_argument("--sink", required=True)
+    parser.add_argument("--exposure", required=True, type=int)
+    parser.add_argument("--expected-kernel-release", required=True)
+    parser.add_argument("--timeout", required=True, type=float)
+    parser.add_argument("--no-light", action="store_true")
+    arguments = parser.parse_args()
+    if not VIDEO_DEVICE_PATTERN.fullmatch(arguments.sink):
+        parser.error("--sink must be a /dev/videoN path")
+    if not 1 <= arguments.exposure <= 65535:
+        parser.error("--exposure must be in the inclusive range 1..65535")
+    if not 0.5 <= arguments.timeout <= 14:
+        parser.error("--timeout must be between 0.5 and 14 seconds")
+    return arguments
+
+
+def main() -> int:
+    arguments = parse_arguments()
+    try:
+        require_reviewed_platform(arguments.expected_kernel_release)
+        try:
+            mode = os.stat(arguments.sink).st_mode
+        except OSError as error:
+            raise BridgeError(
+                f"loopback sink is unavailable; load pinned v4l2loopback first: {error}"
+            ) from error
+        if not stat.S_ISCHR(mode):
+            raise BridgeError(f"loopback sink is not a character device: {arguments.sink}")
+        video_device = configure_camera(arguments.exposure)
+        illuminator = None if arguments.no_light else Illuminator()
+        stream_bridge(video_device, arguments.sink, arguments.timeout, illuminator)
+    except (BridgeError, BrokenPipeError, OSError) as error:
+        print(f"sp11-ir-bridge: {error}", file=sys.stderr, flush=True)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

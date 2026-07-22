@@ -17,6 +17,11 @@ copyright material tracked in `docs/REDISTRIBUTION-REVIEW.md`.
 - libcamera patches: `LGPL-2.1-or-later`, with the original tuning data also
   available under `CC0-1.0`.
 - Power Profiles Daemon patch: `GPL-3.0-only`.
+- Bounded SP11 IR bridge, service integration, tests, and documentation:
+  original project work under `MIT`.
+- Howdy itself, if obtained separately: upstream `MIT`; it is not included in
+  this repository and its license does not cover v4l2loopback, kernel code, or
+  other dependencies.
 - IMX681 tuning YAML: `CC0-1.0`.
 - Generated build identity and symbol data: `CC0-1.0` where marked.
 
