@@ -62,6 +62,19 @@ SPDX-FileCopyrightText = [
 SPDX-License-Identifier = "GPL-2.0-only AND BSD-2-Clause AND BSD-3-Clause"
 
 [[annotations]]
+path = [
+  "kernel/sp11-touch-spi-autoload.bundle",
+  "kernel/sp11-touch-spi-autoload.patch",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = [
+  "1991-2026 Linux kernel contributors",
+  "2021 Microsoft Corporation",
+  "2026 turbinebmw",
+]
+SPDX-License-Identifier = "GPL-2.0-only"
+
+[[annotations]]
 path = "userspace/iptsd/LICENSE.upstream"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "1989, 1991 Free Software Foundation, Inc."

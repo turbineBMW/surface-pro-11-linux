@@ -6,7 +6,7 @@
 > entry. It is not a distribution, supported product, or finished installer.
 
 This repository publishes the reviewed source used to run Linux on a Microsoft
-Surface Pro 11 OLED with Snapdragon X Elite. The current camera-review source
+Surface Pro 11 OLED with Snapdragon X Elite. The current reviewed source
 has working audio, microphones, front and rear RGB cameras, an IR camera and
 illuminator, touch, pen input through iptsd, volume buttons, conservative power
 profiles, and s2idle with the documented CPU-idle mitigation.
@@ -54,8 +54,8 @@ See [docs/LICENSING.md](docs/LICENSING.md) and the file-level REUSE metadata.
 - Device-tree compatible: `microsoft,denali`
 - SoC/display: Snapdragon X Elite / X1E80100 / OLED
 - Boot environment: UEFI and GRUB on the Arch Linux ARM foundation
-- Reviewed kernel source: `7.1.3-sp11-camera-review4`
-- Exact source commit: `675d89b381d8b730a3f2eff1086875481ee5b515`
+- Reviewed kernel source: `7.1.3-sp11-camera-review5`
+- Exact source commit: `86fc94c58a89a56c7ceb57b42c6025b2569da56d`
 
 Only one physical OLED/X Elite unit has been qualified. Do not assume that the
 LCD, X Plus, 5G, or other Surface variants use an interchangeable device tree.

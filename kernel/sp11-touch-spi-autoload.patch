@@ -1,0 +1,13 @@
+diff --git a/drivers/hid/spi-hid/spi-hid-of.c b/drivers/hid/spi-hid/spi-hid-of.c
+index 804988cab..dae5b2af9 100644
+--- a/drivers/hid/spi-hid/spi-hid-of.c
++++ b/drivers/hid/spi-hid/spi-hid-of.c
+@@ -230,7 +230,7 @@ MODULE_DEVICE_TABLE(of, spi_hid_of_match);
+ static const struct spi_device_id spi_hid_of_id_table[] = {
+ 	{ "hid", 0 },
+ 	{ "hid-over-spi", 0 },
+-	{ "microsoft,g6-touch-digitizer", 0 },
++	{ "g6-touch-digitizer", 0 },
+ 	{ }
+ };
+ MODULE_DEVICE_TABLE(spi, spi_hid_of_id_table);

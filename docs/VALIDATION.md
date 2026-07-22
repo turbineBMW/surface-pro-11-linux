@@ -12,18 +12,61 @@ Date opened: 2026-07-19
 - [x] camera bundle adds 13 commits and restores tip
   `675d89b381d8b730a3f2eff1086875481ee5b515` and tree
   `03c278405e6d2fd0ffa1fd4cad860ef45c7adbbc`;
-- [x] both cumulative patches apply cleanly to their declared prerequisites;
+- [x] touch autoload bundle adds one commit and restores tip
+  `86fc94c58a89a56c7ceb57b42c6025b2569da56d` and tree
+  `4624d85595964242c26d7042106d068cbbdd9977`;
+- [x] all patches apply cleanly to their declared prerequisites;
 - [x] bundle and patch reconstructions produce identical final trees;
 - [x] changed-path, keyword, SPDX, and whitespace audits pass;
 - [x] a clean LLVM/Clang `Image modules dtbs` build completes;
 - [x] generated Image, OLED DTB, config, and module ABI identities are
   recorded.
+- [x] two independent clean builds with the neutral `sp11@reproducible`
+  identity produce byte-identical Image, DTB, config, `Module.symvers`, and
+  module hashes;
+- [x] staged module trees contain no absolute `build`/`source` symlink or other
+  local workspace path.
+
+The initial reproducibility check used two empty output directories with the
+declared Clang/LLD toolchain. Both review4 builds produced Image SHA-256
+`9759248ac951f79a259bbebbfc7910891d940e406e9c8f5aafec17b046fde10e`
+and identical hashes for all 3,758 modules. The staged review4 candidate was
+scanned after removing the generated absolute `build` symlink; it had zero
+remaining symlinks and no local account, hostname, or workspace path marker.
+
+The reproducible review4 candidate booted with the exact expected build identity,
+Image, DTB, config, module count, and module-tree properties. That boot also
+confirmed a pre-existing touch regression in review4: the touchscreen enumerated
+as `spi:g6-touch-digitizer`, while the module advertised only the incompatible
+`spi:microsoft,g6-touch-digitizer` alias. An explicit `modprobe spi_hid_of`
+immediately restored the physical touchscreen/stylus, started `sp11-iptsd`, and
+created both iptsd virtual devices.
+
+After the one-line correction, two new empty-directory review5 builds produced
+byte-identical Image SHA-256
+`39027932868b113b3068713dffd8b97168187a69547065ee4e77e7a136e79b97`,
+DTB, config, `Module.symvers`, `vmlinux`, generated build-identity files, and all
+3,758 modules. Their module-manifest SHA-256 is
+`337ddc859f8b932d78e316f6935b293e97472afb2d6373333f14058894902c2d`.
+The rebuilt module advertises the required `spi:g6-touch-digitizer` alias.
+The corrected module tree and unique boot payload pass their pre-boot staging
+checks. A one-shot review5 boot then passed the strict automatic checker without
+calling `modprobe`: `spi0.0` bound to `spi_hid_of`, the physical touchscreen and
+stylus appeared, both IPTSD virtual devices appeared, and `sp11-iptsd` was
+active. The maintainer physically confirmed touch, multitouch, pen hover,
+strokes, and eraser operation.
 
 ## Bounded target-hardware validation
 
 - [x] review4 boots from a one-shot GRUB entry;
-- [x] touch, multitouch, pen hover/strokes, eraser, keyboard, touchpad, volume
-  rocker, audio, and microphones work on the tested unit;
+- [x] review4's automatic touch and pen initialization failure is traced to the
+  SPI module-alias mismatch, and review5 proves automatic loading after reboot;
+- [x] explicit review4 module loading restores the physical touchscreen/stylus
+  and iptsd virtual devices;
+- [x] review5 automatically restores the complete physical and IPTSD touch/pen
+  path, with touch, multitouch, pen hover, strokes, and eraser confirmed;
+- [x] keyboard, touchpad, volume rocker, audio, and microphones work on the
+  tested unit;
 - [x] Wi-Fi associates and Bluetooth remains unblocked;
 - [x] front IMX681, rear OV13858, and IR VD55G0 produce changing frames
   sequentially;

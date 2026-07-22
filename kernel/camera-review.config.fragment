@@ -1,3 +1,5 @@
+# Review5 deliberately retains the byte-identical review4 merged configuration.
+# scripts/build-kernel.sh supplies the authoritative review5 KERNELRELEASE.
 CONFIG_LOCALVERSION="-sp11-camera-review4"
 CONFIG_I2C_QCOM_CCI=m
 CONFIG_VIDEO_QCOM_CAMSS=m
