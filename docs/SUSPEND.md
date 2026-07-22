@@ -110,8 +110,14 @@ Review8 rejects out-of-range posture values and retries every two seconds for
 a bounded 30-second settling window after a connection change. It stops the
 sequence when the controller returns a valid posture. The final live module
 passed repeated physical detach/reattach cycles without rebinding or synthetic
-input; exact full-kernel qualification remains pending. Keep review5 as the
-persistent fallback while testing review8.
+input. The exact full kernel then passed five consecutive physical reattach
+cycles, attached lid-triggered s2idle, and detached power-button s2idle. The
+attached and Bluetooth touchpads, both keyboard paths, touchscreen, pen, Wi-Fi,
+Bluetooth, audio, microphones, and all three cameras remained healthy after the
+sequence. With the attached keyboard folded completely behind the tablet,
+keyboard and touchpad input were suppressed; returning it to typing position
+restored both. Keep review5 as the installed rollback kernel while review8
+receives daily-use testing as the persistent boot target.
 
 The read-only diagnostic can record both the controller state and live evdev
 switch state without injecting input, rebinding a driver, or changing policy:

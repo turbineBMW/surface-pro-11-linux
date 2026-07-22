@@ -92,7 +92,10 @@ Image SHA-256
 `c14a14d353a61693f4306b2cea1704d8af50374d2e8647afd12ac9d1e66fd625`
 and normalized module-manifest SHA-256
 `64dd759c407e21a2493e835153b1bc3927a6dea3d51b7d5d2f9d4d16e6ee6084`.
-An exact-artifact boot remains pending.
+The exact-artifact boot checker passed. Five consecutive detach/reattach cycles,
+attached lid-triggered s2idle, and detached power-button s2idle restored the
+complete tested hardware set without rebinding, input injection, a logind
+restart, a failed unit, kernel oops, or call trace.
 
 ## Bounded target-hardware validation
 
@@ -103,8 +106,9 @@ An exact-artifact boot remains pending.
   and iptsd virtual devices;
 - [x] review5 automatically restores the complete physical and IPTSD touch/pen
   path, with touch, multitouch, pen hover, strokes, and eraser confirmed;
-- [ ] review8 preserves correct laptop, detached, and folded-back posture across
-  repeated suspend/resume and Flex Keyboard detach/reattach cycles;
+- [x] review8 preserves correct laptop, detached, and folded-back posture across
+  repeated suspend/resume and five consecutive Flex Keyboard detach/reattach
+  cycles; folded-back input is suppressed and returns in typing position;
 - [x] keyboard, touchpad, volume rocker, audio, and microphones work on the
   tested unit;
 - [x] Wi-Fi associates and Bluetooth remains unblocked;
@@ -133,7 +137,8 @@ An exact-artifact boot remains pending.
   BlueZ restores the bond and detached keyboard input after login;
 - [x] a detached Flex Keyboard reconnects and restores keyboard, mouse, and
   HID interfaces immediately after Bluetooth returns from s2idle;
-- [ ] the broader non-camera regression matrix remains incomplete.
+- [x] the bounded attached/detached non-camera regression matrix passes on the
+  tested unit.
 
 Details and exact artifact hashes are in `CAMERA-REVIEW.md`. Howdy itself,
 v4l2loopback binaries, biometric data, and captures are not distributed.

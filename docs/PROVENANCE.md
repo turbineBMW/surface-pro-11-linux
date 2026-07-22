@@ -184,8 +184,8 @@ byte-identical corrected review5 builds completed on 2026-07-19, and two
 byte-identical review6 builds completed on 2026-07-21, and two byte-identical
 review7 builds completed from its source tip. Review6 hardware testing exposed
 the reattach gap, and review7 exposed transient raw state zero. Review8 passed
-live-module reattach testing. Its two clean builds are byte-identical, but it
-still needs an exact-artifact boot. These are validation evidence, not
-distributed binaries or binary publication approval. A future payload and its
-complete corresponding-source archive will
+live-module reattach testing, its two clean builds are byte-identical, and its
+exact-artifact boot and attached/detached hardware matrix passed. These are
+validation evidence, not distributed binaries or binary publication approval.
+A future payload and its complete corresponding-source archive will
 receive separate identities after testing.
