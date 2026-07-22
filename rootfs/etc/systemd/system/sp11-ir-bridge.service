@@ -7,7 +7,7 @@ After=systemd-modules-load.service
 Type=notify
 Environment=SP11_IR_SINK=/dev/video42
 Environment=SP11_IR_EXPOSURE=1200
-Environment=SP11_EXPECTED_KERNEL_RELEASE=7.1.3-sp11-camera-review4
+Environment=SP11_EXPECTED_KERNEL_RELEASE=7.1.3-sp11-camera-review5
 EnvironmentFile=-/etc/sp11-ir-bridge.conf
 ExecStartPre=/usr/local/libexec/sp11-ir-light-off --require-led
 ExecStart=/usr/local/libexec/sp11-ir-bridge --sink ${SP11_IR_SINK} --exposure ${SP11_IR_EXPOSURE} --expected-kernel-release ${SP11_EXPECTED_KERNEL_RELEASE} --timeout 14

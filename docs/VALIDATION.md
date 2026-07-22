@@ -95,13 +95,13 @@ strokes, and eraser operation.
   HID interfaces immediately after Bluetooth returns from s2idle;
 - [ ] the broader non-camera regression matrix remains incomplete.
 
-Details and exact artifact hashes are in `CAMERA-REVIEW.md`. Howdy tools,
+Details and exact artifact hashes are in `CAMERA-REVIEW.md`. Howdy itself,
 v4l2loopback binaries, biometric data, and captures are not distributed.
 
-## Howdy/IR feature-branch source review
+## Howdy/IR source review
 
 - [x] generic camera compliance/regression tooling remains outside the focused
-  `feature/howdy-ir-review` branch;
+  Howdy integration;
 - [x] no machine-specific home path, automatic package/AUR install, PAM edit,
   biometric model, image/raw output mode, or capture is present;
 - [x] the bridge uses argument-vector subprocess calls rather than shell command
@@ -117,9 +117,8 @@ v4l2loopback binaries, biometric data, and captures are not distributed.
 - [x] a focused public-tree target-hardware run confirmed the media graph,
   first-frame readiness, exact loopback format, changing frames, bounded
   timeout, normal stop cleanup, forced-kill cleanup, and post-test kernel log;
-- [ ] Howdy packaging, model inputs, permissions, current security posture, and
-  PAM integration have been reviewed; PAM remains explicitly out of scope for
-  this branch.
+- [ ] Howdy packaging, model inputs, permissions, and current security posture
+  remain unreviewed; PAM integration remains explicitly out of scope.
 
 The 2026-07-19 target run used the exact reviewed kernel and v4l2loopback 0.15.4.
 An eight-second direct run delivered 12 loopback frames with 12 distinct frame
@@ -131,6 +130,13 @@ its main process. A no-light hardened run then reached readiness and exited
 normally; a subsequent SIGKILL run recorded main status 9 while `ExecStopPost`
 exited 0 and returned brightness from 255 to zero. No residual process,
 temporary staging, capture, new camera warning, oops, or call trace remained.
+
+On 2026-07-20, the same bridge with its kernel-release gate retargeted to the
+integrated review5 kernel completed two bounded previews using a separately
+built review5 v4l2loopback 0.15.4 module. Both reached readiness, returned
+brightness to zero, left no bridge/FFmpeg/media-graph process behind, and added
+no kernel warning. The maintainer also confirmed the normal visual preview.
+Neither the external module nor Howdy is distributed here.
 
 ## Source-only publication validation
 

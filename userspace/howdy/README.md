@@ -1,6 +1,6 @@
 # Bounded SP11 IR bridge review preview
 
-> This feature branch is a source-review preview. It does not install Howdy,
+> This source-review integration does not install Howdy,
 > enroll a face, modify PAM, enable biometric login, or authorize a binary
 > payload. The bridge is restricted to the reviewed Surface Pro 11 OLED/X
 > Elite kernel and has passed one bounded target-hardware test on that exact
@@ -37,8 +37,8 @@ sudo /usr/local/libexec/sp11-ir-light-off
 ## Dependencies and source obligations
 
 - reviewed kernel source at
-  `675d89b381d8b730a3f2eff1086875481ee5b515`, built as
-  `7.1.3-sp11-camera-review4`;
+  `86fc94c58a89a56c7ceb57b42c6025b2569da56d`, built as
+  `7.1.3-sp11-camera-review5`;
 - `media-ctl` and `v4l2-ctl` from v4l-utils;
 - Python 3 and NumPy;
 - FFmpeg;
@@ -60,10 +60,18 @@ applicable license material.
 
 ## Bounded validation result
 
-On 2026-07-19 the exact feature-branch bridge was tested on the reviewed
+On 2026-07-19 the exact reviewed bridge was tested on the reviewed
 `7.1.3-sp11-camera-review4` kernel with v4l2loopback 0.15.4. An eight-second run
 produced 12 GREY loopback frames with 12 distinct hashes; no frame was saved.
 Normal timeout and SIGTERM returned the IR LED to zero.
+
+On 2026-07-20 the same bridge was retargeted only to the integrated review5
+kernel identity and exercised in two bounded previews with a separately built
+review5 v4l2loopback 0.15.4 module. Both runs reached readiness, returned IR
+brightness to zero, left no bridge/FFmpeg/media-graph process behind, and added
+no kernel warning. The normal visual preview was also confirmed by the
+maintainer. The external module and Howdy remain local test dependencies and
+are not included here.
 
 The initial hardened `Type=notify` test found that invoking `systemd-notify` as
 a child was incompatible with the empty capability bounding set and default
@@ -85,7 +93,7 @@ sudo modprobe v4l2loopback \
   video_nr=42 card_label='SP11 IR' exclusive_caps=1
 ```
 
-Stage the reviewed files manually from this branch, preserving modes:
+Stage the reviewed files manually from this tree, preserving modes:
 
 ```text
 rootfs/etc/modprobe.d/sp11-ir-loopback.conf
