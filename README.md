@@ -65,7 +65,8 @@ See [SUPPORTED-HARDWARE.md](SUPPORTED-HARDWARE.md).
 
 Validated on the tested unit:
 
-- OLED display, Wi-Fi, Bluetooth, attached keyboard, and haptic touchpad
+- OLED display, Wi-Fi, Bluetooth, attached keyboard, detached Flex Keyboard,
+  and haptic touchpad
 - Touch, multitouch, pen hover/strokes, and eraser through iptsd
 - Speakers, microphones, volume rocker, SAM fan telemetry, and power profiles
 - Front IMX681, rear OV13858, and IR VD55G0 capture tested sequentially
@@ -93,6 +94,8 @@ Read [KNOWN-ISSUES.md](KNOWN-ISSUES.md) before testing.
 - `docs/`: build, provenance, validation, limitations, and recovery records
 
 Start with [docs/BUILD.md](docs/BUILD.md) and [kernel/README.md](kernel/README.md).
+Flex Keyboard Bluetooth identity setup is documented in
+[docs/BLUETOOTH.md](docs/BLUETOOTH.md).
 The source is shared so other developers can reproduce, review, test, and
 improve it; publication does not imply upstream readiness. Before sharing logs
 or patches, read [CONTRIBUTING.md](CONTRIBUTING.md) for the privacy and
