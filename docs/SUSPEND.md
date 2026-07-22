@@ -81,6 +81,55 @@ is disabled.
 Keep this workaround opt-in until the lid path receives a narrower fix or more
 platforms reproduce the same failure.
 
+## Review8 tablet-mode resynchronization candidate
+
+A separate lid-resume symptom can leave the Surface Aggregator tablet-mode
+input switch at its early resume value after the embedded controller posture
+has settled. If that stale value is tablet mode, libinput can suppress the
+attached keyboard and touchpad even though their devices are present.
+
+Review6 kept the driver's immediate resume query and added one controller
+re-query after two seconds. It uses the existing serialized update path and
+emits an input change only if the controller reports a different posture. This
+is deliberately narrower than synthesizing `SW_TABLET_MODE=0` from userspace.
+The combination “lid open + tablet mode” is legitimate when the Flex Keyboard
+is detached or folded back, so that combination alone is not proof of a fault.
+
+Attached and detached suspend/resume tests passed on review6. A subsequent Flex
+Keyboard reattach recreated the keyboard and touchpad endpoints while the
+tablet-mode switch remained cached as `disconnected`. Rebinding only the switch
+driver made it query the controller, report `laptop`, and immediately restore
+one-finger touchpad motion. No input state was synthesized.
+
+Review7 therefore also observed the KIP connection event (`0x2c`) and
+scheduled the same delayed controller query. Its first physical qualification
+returned raw KIP state zero, outside the valid 1..6 posture range, and left
+tablet mode asserted.
+
+Review8 rejects out-of-range posture values and retries every two seconds for
+a bounded 30-second settling window after a connection change. It stops the
+sequence when the controller returns a valid posture. The final live module
+passed repeated physical detach/reattach cycles without rebinding or synthetic
+input. The exact full kernel then passed five consecutive physical reattach
+cycles, attached lid-triggered s2idle, and detached power-button s2idle. The
+attached and Bluetooth touchpads, both keyboard paths, touchscreen, pen, Wi-Fi,
+Bluetooth, audio, microphones, and all three cameras remained healthy after the
+sequence. With the attached keyboard folded completely behind the tablet,
+keyboard and touchpad input were suppressed; returning it to typing position
+restored both. Keep review5 as the installed rollback kernel while review8
+receives daily-use testing as the persistent boot target.
+
+The read-only diagnostic can record both the controller state and live evdev
+switch state without injecting input, rebinding a driver, or changing policy:
+
+```sh
+sudo ./scripts/diagnose-tablet-mode.py --samples 6 --interval 1
+```
+
+Run it after a suspect resume before detaching or reattaching the keyboard.
+Interpret the result in the context of the physical keyboard posture; the tool
+intentionally does not label any state combination as invalid.
+
 ## Separate attached-touchpad resume fault
 
 One post-reboot lid cycle left the attached touchpad with an apparent stale

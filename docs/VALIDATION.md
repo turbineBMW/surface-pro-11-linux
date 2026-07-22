@@ -15,6 +15,9 @@ Date opened: 2026-07-19
 - [x] touch autoload bundle adds one commit and restores tip
   `86fc94c58a89a56c7ceb57b42c6025b2569da56d` and tree
   `4624d85595964242c26d7042106d068cbbdd9977`;
+- [x] tablet-mode resynchronization bundle adds three commits and restores tip
+  `940bbc856a120e6f967f9dbaf825d5473bfae664` and tree
+  `62edee5183ed3b42ee3a2f9f0c71066c3ab87742`;
 - [x] all patches apply cleanly to their declared prerequisites;
 - [x] bundle and patch reconstructions produce identical final trees;
 - [x] changed-path, keyword, SPDX, and whitespace audits pass;
@@ -56,6 +59,44 @@ stylus appeared, both IPTSD virtual devices appeared, and `sp11-iptsd` was
 active. The maintainer physically confirmed touch, multitouch, pen hover,
 strokes, and eraser operation.
 
+Review6 added a delayed Surface Aggregator tablet-mode controller re-query after
+resume. Two empty-directory builds produced byte-identical Image SHA-256
+`f7ca4995d138d9d03969d5c8cbd65764eb5b5b35c0fa3b201c693a3f62df8dd1`,
+OLED DTB, config, `Module.symvers`, and all 3,758 modules. Their normalized
+module-manifest SHA-256 is
+`a4075bc8d26c2637ad46adb377ee42741eb95f987ad439a1e0a1fbe557534b43`.
+The changed driver passes strict `checkpatch.pl`, and a targeted `W=1` module
+build completes without a warning in the modified module. Attached and detached
+suspend/resume tests passed, but a later physical keyboard reattach exposed a
+missed cover-state notification: attached HID endpoints returned while the
+cached tablet posture suppressed the touchpad. A controller-backed switch
+re-query restored `laptop` state and the touchpad immediately.
+
+Review7 observes the KIP connection event and schedules that same delayed state
+query, retaining the controller as the source of truth. Two empty-directory
+review7 builds are byte-identical across Image, OLED DTB, config,
+`Module.symvers`, `vmlinux`,
+generated build identity, and all 3,758 modules. The Image SHA-256 is
+`caf4fb1db047807a6ff74f5212de51ba96e777a7820e1f7c58ab8d5c210894eb`,
+and the normalized module-manifest SHA-256 is
+`1fdf6690301ab8961d69be2e95d5cef928d30c898551a76f38ca9ec088263d1b`.
+Its first physical reattach returned transient raw KIP state zero and retained
+tablet mode, so review7 is not qualified.
+
+Review8 rejects postures outside the valid 1..6 range and performs a bounded
+30-second sequence of two-second queries after a KIP connection change,
+stopping on the first valid posture. The live module passed five consecutive
+traced detach/reattach cycles and one final-candidate cycle with one-finger
+motion restored without rebinding. Two clean full builds are byte-identical:
+Image SHA-256
+`c14a14d353a61693f4306b2cea1704d8af50374d2e8647afd12ac9d1e66fd625`
+and normalized module-manifest SHA-256
+`64dd759c407e21a2493e835153b1bc3927a6dea3d51b7d5d2f9d4d16e6ee6084`.
+The exact-artifact boot checker passed. Five consecutive detach/reattach cycles,
+attached lid-triggered s2idle, and detached power-button s2idle restored the
+complete tested hardware set without rebinding, input injection, a logind
+restart, a failed unit, kernel oops, or call trace.
+
 ## Bounded target-hardware validation
 
 - [x] review4 boots from a one-shot GRUB entry;
@@ -65,6 +106,9 @@ strokes, and eraser operation.
   and iptsd virtual devices;
 - [x] review5 automatically restores the complete physical and IPTSD touch/pen
   path, with touch, multitouch, pen hover, strokes, and eraser confirmed;
+- [x] review8 preserves correct laptop, detached, and folded-back posture across
+  repeated suspend/resume and five consecutive Flex Keyboard detach/reattach
+  cycles; folded-back input is suppressed and returns in typing position;
 - [x] keyboard, touchpad, volume rocker, audio, and microphones work on the
   tested unit;
 - [x] Wi-Fi associates and Bluetooth remains unblocked;
@@ -93,7 +137,8 @@ strokes, and eraser operation.
   BlueZ restores the bond and detached keyboard input after login;
 - [x] a detached Flex Keyboard reconnects and restores keyboard, mouse, and
   HID interfaces immediately after Bluetooth returns from s2idle;
-- [ ] the broader non-camera regression matrix remains incomplete.
+- [x] the bounded attached/detached non-camera regression matrix passes on the
+  tested unit.
 
 Details and exact artifact hashes are in `CAMERA-REVIEW.md`. Howdy itself,
 v4l2loopback binaries, biometric data, and captures are not distributed.
