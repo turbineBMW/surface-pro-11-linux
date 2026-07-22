@@ -80,7 +80,9 @@ Still experimental:
 - Other SP11 variants and distributions
 - Automated installation, binary payloads, and ISO generation
 
-Read [KNOWN-ISSUES.md](KNOWN-ISSUES.md) before testing.
+Read [KNOWN-ISSUES.md](KNOWN-ISSUES.md) before testing. Lid-triggered suspend
+diagnosis and the opt-in logind watchdog workaround are documented in
+[docs/SUSPEND.md](docs/SUSPEND.md).
 
 ## Repository contents
 

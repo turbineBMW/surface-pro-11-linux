@@ -28,6 +28,17 @@ but idle energy use will be higher than the hardware should ultimately achieve.
 Do not remove this mitigation merely to improve a benchmark. The unresolved
 deep-idle path previously caused display/NoC wedges and failed resume.
 
+On the tested systemd 261 host, a lid-triggered suspend longer than three
+minutes can make logind's own service watchdog terminate it during resume. The
+result can look like a hard lock after the compositor loses its session-device
+authorization. An explicitly opt-in, host-tested workaround and its tradeoff
+are documented in [docs/SUSPEND.md](docs/SUSPEND.md); it is not installed by
+the project rootfs.
+
+Separately, the attached Flex Keyboard touchpad has once resumed with contact
+counting offset by one finger. Detaching and reattaching the keyboard restored
+normal operation. An automatic software reset remains unqualified.
+
 ## Power profiles
 
 The SAM/EC platform-profile path is real, but a short CPU workload showed no

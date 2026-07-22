@@ -25,6 +25,21 @@ Disabling `sp11-noidle.service` does not re-enable state1 until its sysfs values
 are changed or the machine reboots; do not do that on the experimental kernel
 unless you are intentionally diagnosing deep idle.
 
+## Restore the logind service watchdog
+
+If the opt-in lid-suspend workaround from `docs/SUSPEND.md` was enabled, remove
+only its drop-in and reboot:
+
+```sh
+sudo rm /etc/systemd/system/systemd-logind.service.d/10-sp11-suspend-watchdog.conf
+sudo systemctl daemon-reload
+sudo reboot
+```
+
+Do not restart logind from inside an active graphical session. A normal reboot
+restores the vendor watchdog without invalidating the compositor's existing
+session-device file descriptors.
+
 ## Full removal
 
 First boot the preserved base kernel. The rollback script refuses to remove the
