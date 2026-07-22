@@ -42,10 +42,14 @@ sustained thermals, and the disabled higher boost point remain future work.
 
 ## Power button
 
-A short press of the tablet power button currently requests immediate orderly
-shutdown. This is desktop policy, not a hardware failure, but it is easy to hit
-accidentally. Change the login/session policy or avoid the button until the
-project provides a qualified default.
+The rootfs maps a short tablet power-button press to suspend instead of the
+systemd default poweroff action. On the tested niri session, a second short
+press woke the system normally after a genuine suspend-to-idle cycle. Desktop
+software can take ownership of power-key handling and override logind policy;
+other sessions remain unqualified.
+
+The project does not change logind's long-press policy or the hardware's forced
+power-off behavior.
 
 ## Audio
 

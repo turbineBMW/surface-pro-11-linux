@@ -8,6 +8,7 @@ machine:
 - dynamic iptsd udev/service/sleep lifecycle
 - Surface platform-profile module loading and patched PPD selection
 - measurable power-saver cpufreq companion and sleep hook target
+- short power-button press mapped to suspend through logind
 - CC0 IMX681 simple-pipeline tuning data
 
 The future installer is intended to copy regular files with their repository
