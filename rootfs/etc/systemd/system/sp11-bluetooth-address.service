@@ -6,6 +6,7 @@ Before=bluetooth.service
 
 [Service]
 Type=oneshot
+EnvironmentFile=-/etc/sp11/bluetooth-address.conf
 ExecStart=/usr/local/libexec/sp11-bluetooth-address hci0
 CapabilityBoundingSet=CAP_NET_ADMIN
 NoNewPrivileges=yes

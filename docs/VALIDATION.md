@@ -68,6 +68,9 @@ strokes, and eraser operation.
 - [x] keyboard, touchpad, volume rocker, audio, and microphones work on the
   tested unit;
 - [x] Wi-Fi associates and Bluetooth remains unblocked;
+- [x] an imported Windows bond connects the Surface Pro Flex Keyboard over
+  Bluetooth while detached when Linux uses the bonded Windows controller
+  identity;
 - [x] front IMX681, rear OV13858, and IR VD55G0 produce changing frames
   sequentially;
 - [x] the IR illuminator produces a measurable scene change and returns to
@@ -81,6 +84,10 @@ strokes, and eraser operation.
   healthy after resume;
 - [ ] concurrent cameras, repeated stream cycling, camera suspend/resume, and
   extended endurance remain unqualified;
+- [x] the Flex Keyboard controller-identity override survives a fresh boot;
+  BlueZ restores the bond and detached keyboard input after login;
+- [x] a detached Flex Keyboard reconnects and restores keyboard, mouse, and
+  HID interfaces immediately after Bluetooth returns from s2idle;
 - [ ] the broader non-camera regression matrix remains incomplete.
 
 Details and exact artifact hashes are in `CAMERA-REVIEW.md`. Howdy tools,

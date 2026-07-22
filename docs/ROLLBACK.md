@@ -20,6 +20,11 @@ sudo systemctl disable --now sp11-noidle.service
 sudo systemctl stop 'sp11-iptsd@*.service'
 ```
 
+If a Windows Bluetooth controller identity override was configured for a Flex
+Keyboard, remove `/etc/sp11/bluetooth-address.conf` and reboot. The address
+helper will return to the firmware EFI address; BlueZ bonds stored below the
+override adapter directory will no longer be active.
+
 Stopping the cpufreq companion restores the hardware maximum on every policy.
 Disabling `sp11-noidle.service` does not re-enable state1 until its sysfs values
 are changed or the machine reboots; do not do that on the experimental kernel
