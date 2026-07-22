@@ -25,6 +25,17 @@ Disabling `sp11-noidle.service` does not re-enable state1 until its sysfs values
 are changed or the machine reboots; do not do that on the experimental kernel
 unless you are intentionally diagnosing deep idle.
 
+To restore systemd's default short power-button action, remove the project
+drop-in and reload logind:
+
+```sh
+sudo rm /etc/systemd/logind.conf.d/10-sp11-power-key.conf
+sudo systemctl reload systemd-logind.service
+```
+
+This logind configuration reload does not require restarting the service or
+the graphical session.
+
 ## Full removal
 
 First boot the preserved base kernel. The rollback script refuses to remove the

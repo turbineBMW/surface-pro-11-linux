@@ -68,6 +68,7 @@ Validated on the tested unit:
 - OLED display, Wi-Fi, Bluetooth, attached keyboard, and haptic touchpad
 - Touch, multitouch, pen hover/strokes, and eraser through iptsd
 - Speakers, microphones, volume rocker, SAM fan telemetry, and power profiles
+- Short power-button press suspends and wakes normally on a second press
 - Front IMX681, rear OV13858, and IR VD55G0 capture tested sequentially
 - PM8550 IR illuminator and a bounded local Howdy proof of concept
 - Usable s2idle while deeper CPU idle remains disabled for stability
