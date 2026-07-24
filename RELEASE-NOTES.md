@@ -13,16 +13,16 @@ checks, and installation/rollback validation are complete.
 ## Reviewed kernel source
 
 - Hardware-validated kernel release:
-  `7.1.3-sp11-camera-review8`
+  `7.1.3-sp11-camera-review9`
 - Hardware-validated source commit:
-  `940bbc856a120e6f967f9dbaf825d5473bfae664`
+  `4d50f4a7a8debb28b5780f80f941f1fcee4036cd`
 - Hardware-validated source tree:
-  `62edee5183ed3b42ee3a2f9f0c71066c3ab87742`
-- Preserved rollback kernel release: `7.1.3-sp11-camera-review5`
+  `9de653f31534b28a525f86d23c441deb831c0e2f`
+- Preserved rollback kernel release: `7.1.3-sp11-camera-review8`
 - Preserved rollback source commit:
-  `86fc94c58a89a56c7ceb57b42c6025b2569da56d`
+  `940bbc856a120e6f967f9dbaf825d5473bfae664`
 - Preserved rollback source tree:
-  `4624d85595964242c26d7042106d068cbbdd9977`
+  `62edee5183ed3b42ee3a2f9f0c71066c3ab87742`
 - Base: Linux stable `v7.1.3` plus the attributed SP11/HID-over-SPI branch
 
 The reviewed branch supports sequential capture from the front IMX681, rear
@@ -45,7 +45,14 @@ The review8 live module passed repeated detach/reattach testing, exact clean
 builds are byte-identical, and the exact full kernel passed the attached,
 detached, folded-back, suspend/resume, and reattach matrix. Subsequent daily-use
 testing repeatedly preserved keyboard and touchpad operation with the Flex
-Keyboard both attached and detached. Review5 remains the preserved rollback.
+Keyboard both attached and detached.
+
+Review9 adds reliable Qualcomm battery-manager charge-threshold writes and
+restores a cached charge window after a remote service reconnect. Two clean
+builds are byte-identical, the exact kernel passed its automatic boot checker
+and complete practical hardware matrix, and the verified 75–80% window was
+reapplied at boot and after resume. Review9 is the persistent target on the
+tested unit; review8 remains installed as its rollback.
 
 ## Other validated hardware
 

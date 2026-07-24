@@ -8,6 +8,7 @@ machine:
 - dynamic iptsd udev/service/sleep lifecycle
 - Surface platform-profile module loading and patched PPD selection
 - measurable power-saver cpufreq companion and sleep hook target
+- verified 75–80% battery charge limit applied at boot and after system sleep
 - short power-button press mapped to suspend through logind
 - CC0 IMX681 simple-pipeline tuning data
 - source-review-only bounded VD55G0-to-v4l2loopback IR bridge and independent

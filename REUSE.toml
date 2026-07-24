@@ -15,6 +15,7 @@ path = [
   "rootfs/usr/lib/**",
   "rootfs/usr/local/**",
   "scripts/**",
+  "userspace/power/**",
   "userspace/**/README.md",
 ]
 precedence = "aggregate"
@@ -83,6 +84,20 @@ precedence = "aggregate"
 SPDX-FileCopyrightText = [
   "1991-2026 Linux kernel contributors",
   "2019-2022 Maximilian Luz",
+  "2026 turbinebmw",
+]
+SPDX-License-Identifier = "GPL-2.0-only"
+
+[[annotations]]
+path = [
+  "kernel/sp11-charge-limit-reliability.bundle",
+  "kernel/sp11-charge-limit-reliability.patch",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = [
+  "1991-2026 Linux kernel contributors",
+  "2019-2026 Qualcomm Technologies, Inc. and/or its subsidiaries",
+  "2022 Linaro Ltd",
   "2026 turbinebmw",
 ]
 SPDX-License-Identifier = "GPL-2.0-only"

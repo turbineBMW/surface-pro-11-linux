@@ -48,6 +48,7 @@ if [[ $apply -ne 1 ]]; then
 fi
 
 systemctl disable --now sp11-power-profile-cpufreq.service 2>/dev/null || true
+systemctl disable --now sp11-charge-limit.service 2>/dev/null || true
 systemctl disable --now sp11-bluetooth-address.service 2>/dev/null || true
 systemctl disable --now sp11-noidle.service 2>/dev/null || true
 systemctl stop 'sp11-iptsd@*.service' 2>/dev/null || true

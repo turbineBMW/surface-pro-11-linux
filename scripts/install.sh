@@ -230,6 +230,7 @@ systemctl enable power-profiles-daemon.service
 systemctl enable sp11-bluetooth-address.service
 systemctl enable sp11-noidle.service
 systemctl enable sp11-power-profile-cpufreq.service
+systemctl enable sp11-charge-limit.service
 
 cat >"$backup_dir/install-info" <<EOF
 release=$release

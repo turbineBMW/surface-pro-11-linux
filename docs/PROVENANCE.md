@@ -26,9 +26,12 @@ firmware file is included here.
 - Touch autoload fix tree: `4624d85595964242c26d7042106d068cbbdd9977`
 - Tablet-mode resynchronization tip: `940bbc856a120e6f967f9dbaf825d5473bfae664`
 - Tablet-mode resynchronization tree: `62edee5183ed3b42ee3a2f9f0c71066c3ab87742`
-- Candidate release string: `7.1.3-sp11-camera-review8`
-- Delta: 12 sanitized commits, 13 reviewed camera commits, one corrective
-  touch-driver commit, and three tablet-mode resynchronization commits
+- Charge-limit reliability tip: `4d50f4a7a8debb28b5780f80f941f1fcee4036cd`
+- Charge-limit reliability tree: `9de653f31534b28a525f86d23c441deb831c0e2f`
+- Candidate release string: `7.1.3-sp11-camera-review9`
+- Delta: 12 sanitized commits, 13 reviewed camera commits, and one corrective
+  touch-driver commit, three tablet-mode resynchronization commits, and one
+  charge-limit reliability commit
 
 `kernel/sp11-sanitized2.bundle` preserves the exact incremental
 history and requires the Linux base commit. The cumulative patch reproduces
@@ -41,6 +44,8 @@ single modalias correction on top of the camera tip. All histories are
 incremental and contain source, not a prebuilt kernel or module payload.
 `kernel/sp11-tablet-mode-resume-resync.bundle` adds the delayed resume and KIP
 connection controller posture re-queries on top of the exact touch-autoload
+tip. `kernel/sp11-charge-limit-reliability.bundle` adds the focused Qualcomm
+battery-manager correction on top of the exact tablet-mode resynchronization
 tip.
 
 The history preserves the original authorship of the HID-over-SPI work:
@@ -125,6 +130,13 @@ class device and accepts the kernel's `balanced-performance` spelling. A
 binary release must include the complete corresponding PPD source and patch,
 or a compliant source offer.
 
+## Battery charge-limit integration
+
+The boot and system-sleep service under `rootfs/` is original MIT-licensed
+integration work based on Linux's documented power-supply sysfs interface and
+live behavior observed on the maintainer's own Surface Pro 11. It contains no
+firmware, firmware-derived tables, proprietary source, or captured data.
+
 ## Bounded IR bridge review branch
 
 The `feature/howdy-ir-review` branch contains an original MIT-licensed bridge
@@ -157,6 +169,8 @@ excluded; this selection does not retroactively license or redistribute them.
 | Touch autoload Git bundle | `02c18a42b44ddefa2c084f5336df68b3ceac2011779aaa299c07cd0e0970add1` |
 | Tablet-mode resynchronization patch | `12f36124f5b7a3d69c22dea082042cbea3cf1c1a784358bad41055a3646db8da` |
 | Tablet-mode resynchronization Git bundle | `5c866e0add29dd2c40fa92df73bcbe2d11754d8fed99ab8986aaf8672612d0ab` |
+| Charge-limit reliability patch | `39295b72da15d0ee562321f2639def026ded06b3b2321bbb91f6e4ee7ff8fdf6` |
+| Charge-limit reliability Git bundle | `89bee6d67608f2d87f3952e1c72be58affcb02eb2ff2f8f8c1ca0ea2aaf06641` |
 | Kernel config | `8834ac6021bc4d50034b55c0960938070541387c0984aed4cc6797601ecce7f1` |
 | Module.symvers | `b58de2ebd5ca9649b0e7299e4b5b7e3965f70e06506b88c1ec3d5046ce2e9387` |
 | Review4 merged config | `b2497f1a5340c6491dd86014d90a9cdd6dcf0a8b1f45806ceb76be35d972517f` |
@@ -178,6 +192,12 @@ excluded; this selection does not retroactively license or redistribute them.
 | Review8 reproducible kernel Image | `c14a14d353a61693f4306b2cea1704d8af50374d2e8647afd12ac9d1e66fd625` |
 | Review8 OLED DTB | `4caa12c8154470ea484890933f7997ec8e9a95b064927e0c2c8b814f9f658b3a` |
 | Review8 module manifest | `64dd759c407e21a2493e835153b1bc3927a6dea3d51b7d5d2f9d4d16e6ee6084` |
+| Review9 merged config | `ce3235cba604521c4b0bc1ce639278e70d612b0e76fa464aee9fd8592f60106c` |
+| Review9 reproducible kernel Image | `2027d41c9d34658d44aba3d6497592f470bb0ffe3abc70712f20fd246afe093d` |
+| Review9 vmlinux | `eff87c55a359dde9abceaf9dcfbad6874db1d54bc19c1ee3d111e4d3e1463302` |
+| Review9 OLED DTB | `4caa12c8154470ea484890933f7997ec8e9a95b064927e0c2c8b814f9f658b3a` |
+| Review9 module manifest | `837037c94f02312080ce9873cb37aef07478b9bd5200d99d5834c9bf06375cbc` |
+| Review9 qcom_battmgr module | `79885843e52a40418bf22b00536e14bb248d2c94f43812a11c70f95d6b131483` |
 
 These hashes identify the clean review4 hardware-test artifact and the two
 byte-identical corrected review5 builds completed on 2026-07-19, and two
@@ -187,5 +207,9 @@ the reattach gap, and review7 exposed transient raw state zero. Review8 passed
 live-module reattach testing, its two clean builds are byte-identical, and its
 exact-artifact boot and attached/detached hardware matrix passed. These are
 validation evidence, not distributed binaries or binary publication approval.
-A future payload and its complete corresponding-source archive will
-receive separate identities after testing.
+Review9 likewise has two byte-identical clean builds; its exact-artifact boot,
+complete practical hardware matrix, charge-window readback, and persistent
+default promotion passed. A controlled charger protection-domain restart was
+unavailable because retail firmware rejected it as disabled before any state
+transition. A future payload and its complete corresponding-source archive
+will receive separate identities after testing.

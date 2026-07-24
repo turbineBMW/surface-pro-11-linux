@@ -62,6 +62,22 @@ reversible userspace companion:
 This is a practical field-test cap, not a tuned energy model. Battery drain,
 sustained thermals, and the disabled higher boost point remain future work.
 
+## Battery charge limit
+
+The Qualcomm battery manager accepts a charge-control window, but the setting
+is not persistent firmware configuration. It must be programmed again after
+boot. The remote battery-manager service can also restart independently and
+forget its active limit while an older kernel continues to show cached
+threshold values.
+
+The rootfs service therefore writes and verifies the configured window at boot
+and after system sleep. The focused kernel correction additionally propagates
+firmware write errors and restores the cached window after a remote service
+reconnect. Review9 passed exact boot, sleep/resume, and 75–80% readback tests.
+The retail firmware rejected a controlled charger protection-domain restart as
+disabled before any state transition, so the kernel reconnect path could not
+be forced without disrupting the shared audio and sensor DSP.
+
 ## Power button
 
 The rootfs maps a short tablet power-button press to suspend instead of the

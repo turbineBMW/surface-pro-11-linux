@@ -1,0 +1,78 @@
+#!/bin/sh
+
+set -eu
+
+SYSFS="${SP11_CHARGE_LIMIT_SYSFS:-/sys/class/power_supply/qcom-battmgr-bat}"
+CONFIG="${SP11_CHARGE_LIMIT_CONFIG:-/etc/sp11-charge-limit.conf}"
+ATTEMPTS="${SP11_CHARGE_LIMIT_ATTEMPTS:-50}"
+DELAY="${SP11_CHARGE_LIMIT_DELAY:-0.2}"
+START_THRESHOLD=75
+END_THRESHOLD=80
+
+log() {
+	echo "sp11-charge-limit: $*"
+}
+
+fail() {
+	log "$*" >&2
+	exit 1
+}
+
+is_uint() {
+	case "$1" in
+		''|*[!0-9]*) return 1 ;;
+		*) return 0 ;;
+	esac
+}
+
+if [ -r "$CONFIG" ]; then
+	# This file is installed root-owned and contains only integer assignments.
+	# shellcheck disable=SC1090
+	. "$CONFIG"
+fi
+
+is_uint "$START_THRESHOLD" || fail "invalid START_THRESHOLD=$START_THRESHOLD"
+is_uint "$END_THRESHOLD" || fail "invalid END_THRESHOLD=$END_THRESHOLD"
+is_uint "$ATTEMPTS" || fail "invalid retry count: $ATTEMPTS"
+[ "$START_THRESHOLD" -ge 50 ] && [ "$START_THRESHOLD" -le 95 ] ||
+	fail "START_THRESHOLD must be between 50 and 95"
+[ "$END_THRESHOLD" -ge 55 ] && [ "$END_THRESHOLD" -le 100 ] ||
+	fail "END_THRESHOLD must be between 55 and 100"
+[ "$START_THRESHOLD" -lt "$END_THRESHOLD" ] ||
+	fail "START_THRESHOLD must be less than END_THRESHOLD"
+[ "$ATTEMPTS" -gt 0 ] || fail "retry count must be positive"
+
+case "${1:-}" in
+	apply) ;;
+	*) fail "usage: $0 apply" ;;
+esac
+
+start_path="$SYSFS/charge_control_start_threshold"
+end_path="$SYSFS/charge_control_end_threshold"
+attempt=1
+
+while [ "$attempt" -le "$ATTEMPTS" ]; do
+	if [ -w "$start_path" ] && [ -w "$end_path" ]; then
+		# Always write both values. After a remote battery-manager restart the
+		# driver's cached readback can be correct even if firmware lost the
+		# active limit.
+		if printf '%s\n' "$END_THRESHOLD" >"$end_path" &&
+		   printf '%s\n' "$START_THRESHOLD" >"$start_path"; then
+			actual_start="$(cat "$start_path")"
+			actual_end="$(cat "$end_path")"
+			if [ "$actual_start" = "$START_THRESHOLD" ] &&
+			   [ "$actual_end" = "$END_THRESHOLD" ]; then
+				log "applied start=$actual_start end=$actual_end attempt=$attempt"
+				exit 0
+			fi
+			log "readback mismatch: start=$actual_start end=$actual_end attempt=$attempt"
+		else
+			log "write failed on attempt=$attempt"
+		fi
+	fi
+
+	attempt=$((attempt + 1))
+	[ "$attempt" -le "$ATTEMPTS" ] && sleep "$DELAY"
+done
+
+fail "could not apply start=$START_THRESHOLD end=$END_THRESHOLD under $SYSFS"

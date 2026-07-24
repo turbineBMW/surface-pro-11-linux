@@ -54,10 +54,10 @@ See [docs/LICENSING.md](docs/LICENSING.md) and the file-level REUSE metadata.
 - Device-tree compatible: `microsoft,denali`
 - SoC/display: Snapdragon X Elite / X1E80100 / OLED
 - Boot environment: UEFI and GRUB on the Arch Linux ARM foundation
-- Reviewed kernel source: `7.1.3-sp11-camera-review8`
-- Exact source commit: `940bbc856a120e6f967f9dbaf825d5473bfae664`
-- Previous rollback source: `7.1.3-sp11-camera-review5` at
-  `86fc94c58a89a56c7ceb57b42c6025b2569da56d`
+- Reviewed kernel source: `7.1.3-sp11-camera-review9`
+- Exact source commit: `4d50f4a7a8debb28b5780f80f941f1fcee4036cd`
+- Previous rollback source: `7.1.3-sp11-camera-review8` at
+  `940bbc856a120e6f967f9dbaf825d5473bfae664`
 
 Only one physical OLED/X Elite unit has been qualified. Do not assume that the
 LCD, X Plus, 5G, or other Surface variants use an interchangeable device tree.
@@ -69,10 +69,11 @@ Validated on the tested unit:
 
 - OLED display, Wi-Fi, Bluetooth, attached keyboard, detached Flex Keyboard,
   and haptic touchpad
-- Review8 laptop, detached, and folded-back posture transitions, including
+- Review9 laptop, detached, and folded-back posture transitions, including
   keyboard and touchpad suppression while folded behind the tablet
 - Touch, multitouch, pen hover/strokes, and eraser through iptsd
 - Speakers, microphones, volume rocker, SAM fan telemetry, and power profiles
+- Verified 75–80% battery charge window, reapplied at boot and after resume
 - Short power-button press suspends and wakes normally on a second press
 - Front IMX681, rear OV13858, and IR VD55G0 capture tested sequentially
 - PM8550 IR illuminator and a bounded local Howdy proof of concept
@@ -94,8 +95,8 @@ diagnosis and the opt-in logind watchdog workaround are documented in
 
 - `kernel/`: incremental Git bundles, cumulative patches, config, build
   identity, and the camera config fragment
-- `userspace/`: pinned iptsd identity and optional libcamera/Power Profiles
-  Daemon source changes
+- `userspace/`: pinned iptsd identity, optional libcamera/Power Profiles
+  Daemon source changes, and battery charge-limit tests
 - `rootfs/`: reviewed services, udev rules, helpers, and tuning data
 - `scripts/`: source build, static audit, and currently held binary tooling
 - `docs/`: build, provenance, validation, limitations, and recovery records

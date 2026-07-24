@@ -14,21 +14,24 @@ git fetch /path/to/surface-pro-11-linux/kernel/sp11-touch-spi-autoload.bundle \
   refs/heads/fix/touch-spi-autoload:refs/heads/fix/touch-spi-autoload
 git fetch /path/to/surface-pro-11-linux/kernel/sp11-tablet-mode-resume-resync.bundle \
   refs/heads/fix/tablet-mode-resume-resync:refs/heads/fix/tablet-mode-resume-resync
-git switch fix/tablet-mode-resume-resync
+git fetch /path/to/surface-pro-11-linux/kernel/sp11-charge-limit-reliability.bundle \
+  refs/heads/integration/review9-charge-limit:refs/heads/integration/review9-charge-limit
+git switch integration/review9-charge-limit
 git rev-parse HEAD^{commit} HEAD^{tree}
 ```
 
 The final command must print:
 
 ```text
-940bbc856a120e6f967f9dbaf825d5473bfae664
-62edee5183ed3b42ee3a2f9f0c71066c3ab87742
+4d50f4a7a8debb28b5780f80f941f1fcee4036cd
+9de653f31534b28a525f86d23c441deb831c0e2f
 ```
 
 The bundles are incremental: the sanitized bundle requires Linux `v7.1.3`,
 the camera bundle requires the sanitized tip, the touch autoload correction
 requires the camera tip, and the tablet-mode resume resynchronization requires
-the touch-autoload tip. `kernel/README.md` also documents patch reconstruction.
+the touch-autoload tip. The charge-limit correction requires the tablet-mode
+tip. `kernel/README.md` also documents patch reconstruction.
 
 ## Build
 
@@ -42,7 +45,7 @@ configuration, and builds with Clang/LLVM and `W=1`:
   --jobs "$(nproc)"
 ```
 
-The resulting kernel release is `7.1.3-sp11-camera-review8`. Primary outputs:
+The resulting kernel release is `7.1.3-sp11-camera-review9`. Primary outputs:
 
 ```text
 /path/to/build/arch/arm64/boot/Image
@@ -57,27 +60,28 @@ produce byte-identical Image, DTB, configuration, `Module.symvers`, and module
 content when the declared toolchain and other inputs match. Treat any mismatch
 as a failed reproducibility check; do not publish the artifacts.
 
-Review8 intentionally retains review4's byte-identical merged configuration:
-the review5 touch correction and review6 through review8 posture corrections
-change source only and require no configuration change. Consequently,
+Review9 retains review4's configuration selections; `olddefconfig` additionally
+normalizes `CONFIG_DRM_MSM_VALIDATE_XML` as explicitly disabled. The review5
+touch correction, review6 through review8 posture corrections, and review9
+charge-limit correction require no enabled configuration change. Consequently,
 `camera-review.config.fragment` still records
 `CONFIG_LOCALVERSION="-sp11-camera-review4"`. The helper's enforced
-`KERNELRELEASE=7.1.3-sp11-camera-review8` is the authoritative release identity
-and must not be omitted when building or installing review8 artifacts.
+`KERNELRELEASE=7.1.3-sp11-camera-review9` is the authoritative release identity
+and must not be omitted when building or installing review9 artifacts.
 
-The helper also requires Python 3.14.6 and invokes it with `-S` so host or user
-site packages cannot change Kconfig feature visibility. In particular, the
-optional `lxml` package otherwise changes whether
-`CONFIG_DRM_MSM_VALIDATE_XML` is emitted in `.config`, even when the option
-remains disabled. Disabling site packages reproduces the reviewed config hash
-and the Kconfig feature visibility present during both clean builds.
+The helper requires Python 3.14.6 and lxml 6.1.1, matching both clean review9
+builds. The optional lxml import controls whether
+`CONFIG_DRM_MSM_VALIDATE_XML` is visible to Kconfig; the reviewed configuration
+keeps that option disabled but records it explicitly. The helper rejects a
+different lxml version before configuration so this build input cannot change
+silently.
 
 To stage modules without touching the host system:
 
 ```sh
 make -C /path/to/linux O=/path/to/build \
-  KERNELRELEASE=7.1.3-sp11-camera-review8 \
-  LOCALVERSION= LLVM=1 PYTHON3="python3 -S" \
+  KERNELRELEASE=7.1.3-sp11-camera-review9 \
+  LOCALVERSION= LLVM=1 PYTHON3=python3 \
   INSTALL_MOD_PATH=/path/to/stage modules_install
 ```
 

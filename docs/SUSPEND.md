@@ -81,7 +81,7 @@ is disabled.
 Keep this workaround opt-in until the lid path receives a narrower fix or more
 platforms reproduce the same failure.
 
-## Review8 tablet-mode resynchronization candidate
+## Review8 tablet-mode resynchronization
 
 A separate lid-resume symptom can leave the Surface Aggregator tablet-mode
 input switch at its early resume value after the embedded controller posture
@@ -116,8 +116,8 @@ attached and Bluetooth touchpads, both keyboard paths, touchscreen, pen, Wi-Fi,
 Bluetooth, audio, microphones, and all three cameras remained healthy after the
 sequence. With the attached keyboard folded completely behind the tablet,
 keyboard and touchpad input were suppressed; returning it to typing position
-restored both. Keep review5 as the installed rollback kernel while review8
-receives daily-use testing as the persistent boot target.
+restored both. Review9 retains this qualified source unchanged, and review8 is
+installed as its rollback kernel.
 
 The read-only diagnostic can record both the controller state and live evdev
 switch state without injecting input, rebinding a driver, or changing policy:

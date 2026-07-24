@@ -18,6 +18,9 @@ Date opened: 2026-07-19
 - [x] tablet-mode resynchronization bundle adds three commits and restores tip
   `940bbc856a120e6f967f9dbaf825d5473bfae664` and tree
   `62edee5183ed3b42ee3a2f9f0c71066c3ab87742`;
+- [x] charge-limit reliability bundle adds one commit to the tablet-mode tip
+  and restores tip `4d50f4a7a8debb28b5780f80f941f1fcee4036cd` and tree
+  `9de653f31534b28a525f86d23c441deb831c0e2f`;
 - [x] all patches apply cleanly to their declared prerequisites;
 - [x] bundle and patch reconstructions produce identical final trees;
 - [x] changed-path, keyword, SPDX, and whitespace audits pass;
@@ -97,6 +100,21 @@ attached lid-triggered s2idle, and detached power-button s2idle restored the
 complete tested hardware set without rebinding, input injection, a logind
 restart, a failed unit, kernel oops, or call trace.
 
+Review9 adds the focused Qualcomm battery-manager correction. Two independent
+builds are byte-identical across Image, `vmlinux`, OLED DTB, config,
+`Module.symvers`, generated identities, and all 3,758 in-tree modules. The
+Image SHA-256 is
+`2027d41c9d34658d44aba3d6497592f470bb0ffe3abc70712f20fd246afe093d`,
+the config SHA-256 is
+`ce3235cba604521c4b0bc1ce639278e70d612b0e76fa464aee9fd8592f60106c`,
+and the normalized module-manifest SHA-256 is
+`837037c94f02312080ce9873cb37aef07478b9bd5200d99d5834c9bf06375cbc`.
+Its exact-artifact boot checker and complete practical hardware matrix passed,
+including attached and detached suspend, lid-triggered suspend, keyboard
+reattach, touch, pen, audio, microphones, ambient light, charge-limit service,
+and exact 75–80% readback. Review9 was then promoted to the persistent boot
+target with review8 preserved as rollback.
+
 Subsequent maintainer daily-use testing repeatedly exercised the Flex Keyboard
 both attached and detached without reproducing keyboard, touchpad, or posture
 failures.
@@ -113,6 +131,8 @@ failures.
 - [x] review8 preserves correct laptop, detached, and folded-back posture across
   repeated suspend/resume and five consecutive Flex Keyboard detach/reattach
   cycles; folded-back input is suppressed and returns in typing position;
+- [x] review9 preserves the complete review8 posture and hardware matrix while
+  adding verified charge-limit reliability;
 - [x] keyboard, touchpad, volume rocker, audio, and microphones work on the
   tested unit;
 - [x] Wi-Fi associates and Bluetooth remains unblocked;
@@ -135,6 +155,17 @@ failures.
   shutdown or reboot, and a second short press wakes the machine; logind, the
   compositor, one-finger touchpad movement, Wi-Fi, Bluetooth, and iptsd remain
   healthy after resume;
+- [x] the Qualcomm charge-control interface stops charging above the requested
+  80% end threshold;
+- [x] the boot/resume helper applies exact 75–80% readback on target hardware,
+  and its fake-sysfs validation covers success and invalid/missing inputs;
+- [x] review9 containing the battery-manager reconnect correction completed an
+  exact-artifact boot and became the persistent target after the complete
+  practical hardware matrix passed;
+- [x] one controlled charger protection-domain restart request was attempted,
+  but retail firmware rejected it as disabled with QMI error `0x45` /
+  `-EOPNOTSUPP` before any state transition; forcing a shared-ADSP failure is
+  excluded because audio and sensors depend on it;
 - [ ] concurrent cameras, repeated stream cycling, camera suspend/resume, and
   extended endurance remain unqualified;
 - [x] the Flex Keyboard controller-identity override survives a fresh boot;

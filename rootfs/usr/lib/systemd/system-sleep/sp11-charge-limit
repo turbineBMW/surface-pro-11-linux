@@ -1,0 +1,7 @@
+#!/bin/sh
+
+set -eu
+
+[ "${1:-}" = "post" ] || exit 0
+
+exec /usr/local/libexec/sp11-charge-limit apply

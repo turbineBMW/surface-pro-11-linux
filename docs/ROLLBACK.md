@@ -15,6 +15,7 @@ From a working boot, the reversible first response is:
 
 ```sh
 sudo systemctl disable --now sp11-power-profile-cpufreq.service
+sudo systemctl disable --now sp11-charge-limit.service
 sudo systemctl disable --now sp11-bluetooth-address.service
 sudo systemctl disable --now sp11-noidle.service
 sudo systemctl stop 'sp11-iptsd@*.service'
@@ -29,6 +30,15 @@ Stopping the cpufreq companion restores the hardware maximum on every policy.
 Disabling `sp11-noidle.service` does not re-enable state1 until its sysfs values
 are changed or the machine reboots; do not do that on the experimental kernel
 unless you are intentionally diagnosing deep idle.
+
+Disabling the charge-limit service prevents future boot applications, but the
+currently programmed window remains active until firmware resets it. To allow
+charging to 100% immediately, write an end threshold of 100:
+
+```sh
+echo 100 | sudo tee \
+  /sys/class/power_supply/qcom-battmgr-bat/charge_control_end_threshold
+```
 
 ## Restore the short power-button action
 
