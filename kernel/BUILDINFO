@@ -23,5 +23,5 @@ module_symvers_sha256=b58de2ebd5ca9649b0e7299e4b5b7e3965f70e06506b88c1ec3d5046ce
 image_sha256=c14a14d353a61693f4306b2cea1704d8af50374d2e8647afd12ac9d1e66fd625
 dtb_sha256=4caa12c8154470ea484890933f7997ec8e9a95b064927e0c2c8b814f9f658b3a
 module_manifest_sha256=64dd759c407e21a2493e835153b1bc3927a6dea3d51b7d5d2f9d4d16e6ee6084
-validation_status=two-clean-builds-byte-identical-live-module-pass-exact-boot-pending
+validation_status=two-clean-builds-byte-identical-exact-boot-attached-detached-folded-back-pass
 build_command=scripts/build-kernel.sh --source <linux> --output <build> --jobs <nproc>

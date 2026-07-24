@@ -39,9 +39,11 @@ Review7 also observed the KIP connection event, but its single delayed query
 could receive transient raw state zero and leave tablet mode asserted. Review8
 rejects values outside the valid posture range and retries for a bounded
 30-second settling window, stopping on the first valid controller response.
-The review8 live module passed repeated detach/reattach testing; exact clean
-builds are byte-identical and exact full-kernel qualification is pending, so
-review5 remains the persistent fallback.
+The review8 live module passed repeated detach/reattach testing, exact clean
+builds are byte-identical, and the exact full kernel passed the attached,
+detached, folded-back, suspend/resume, and reattach matrix. Subsequent daily-use
+testing repeatedly preserved keyboard and touchpad operation with the Flex
+Keyboard both attached and detached. Review5 remains the preserved rollback.
 
 ## Other validated hardware
 

@@ -97,6 +97,10 @@ attached lid-triggered s2idle, and detached power-button s2idle restored the
 complete tested hardware set without rebinding, input injection, a logind
 restart, a failed unit, kernel oops, or call trace.
 
+Subsequent maintainer daily-use testing repeatedly exercised the Flex Keyboard
+both attached and detached without reproducing keyboard, touchpad, or posture
+failures.
+
 ## Bounded target-hardware validation
 
 - [x] review4 boots from a one-shot GRUB entry;
