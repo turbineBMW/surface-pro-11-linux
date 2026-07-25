@@ -14,12 +14,14 @@ resume_patch="$repo_root/kernel/sp11-tablet-mode-resume-resync.patch"
 resume_bundle="$repo_root/kernel/sp11-tablet-mode-resume-resync.bundle"
 charge_patch="$repo_root/kernel/sp11-charge-limit-reliability.patch"
 charge_bundle="$repo_root/kernel/sp11-charge-limit-reliability.bundle"
+switch_patch="$repo_root/kernel/sp11-camera-switch-fix.patch"
+switch_bundle="$repo_root/kernel/sp11-camera-switch-fix.bundle"
 
 expected_patch="218ee1ec59a29887aab919fcd37c7d8a21f7ca421ea3757476ddbab76bf07914"
 expected_bundle="cd782a17f4c6645d63d51c057bc9115ac0b7167966a6ce8c663c6e351b79d3e7"
 expected_config="8834ac6021bc4d50034b55c0960938070541387c0984aed4cc6797601ecce7f1"
 expected_symvers="b58de2ebd5ca9649b0e7299e4b5b7e3965f70e06506b88c1ec3d5046ce2e9387"
-expected_buildinfo="57373a0be6e30f5da7e54b409d43a5c86d6cfae0ec858b729fe26e50d6e9ff88"
+expected_buildinfo="0af317da5653451ef6aca201c25f603aa4d32b0bfb12bdaed6afc9e74cff6563"
 expected_camera_config="4b9cd2e6d3e405f9d3c734850747eb85ff93f566e48c30c223e61a08cefde26f"
 expected_tip="2ace98eb6ef18cbd48074eed9f5b585d19ce398b"
 expected_camera_patch="a6d6f31fd9b3eea7e5b4243ec30300e1bc43718253fd2a2b77c2bdf4cebc3b6c"
@@ -34,6 +36,9 @@ expected_resume_tip="940bbc856a120e6f967f9dbaf825d5473bfae664"
 expected_charge_patch="39295b72da15d0ee562321f2639def026ded06b3b2321bbb91f6e4ee7ff8fdf6"
 expected_charge_bundle="89bee6d67608f2d87f3952e1c72be58affcb02eb2ff2f8f8c1ca0ea2aaf06641"
 expected_charge_tip="4d50f4a7a8debb28b5780f80f941f1fcee4036cd"
+expected_switch_patch="ce3c865b5722b010c2363ad0df60f52e12c237158efc3e6d41e91210d12c5773"
+expected_switch_bundle="65272a9e635aa2856c8b9e5cb01e2b7e155a6762db16ebe3fc044bd102beb8f2"
+expected_switch_tip="fd1932d6e2a45e665c062b1b1c810f09db46ab4e"
 
 for command_name in git reuse rg sha256sum; do
 	command -v "$command_name" >/dev/null || {
@@ -91,6 +96,30 @@ fi
 [[ "$(sha256sum "$charge_patch" | awk '{print $1}')" == "$expected_charge_patch" ]]
 [[ "$(sha256sum "$charge_bundle" | awk '{print $1}')" == "$expected_charge_bundle" ]]
 [[ "$(git bundle list-heads "$charge_bundle" | awk '{print $1}')" == "$expected_charge_tip" ]]
+[[ "$(sha256sum "$switch_patch" | awk '{print $1}')" == "$expected_switch_patch" ]]
+[[ "$(sha256sum "$switch_bundle" | awk '{print $1}')" == "$expected_switch_bundle" ]]
+[[ "$(git bundle list-heads "$switch_bundle" | awk '{print $1}')" == "$expected_switch_tip" ]]
+[[ "$(rg -c '^diff --git ' "$switch_patch")" -eq 1 ]]
+
+# The IR bridge fails closed on a kernel-release mismatch, which is a real
+# guard: the illuminator's sink mapping and 600 mA ceiling were established
+# experimentally, and a device-tree change could alter the current through an
+# emitter nobody can see while every runtime check still passes. That guard is
+# only useful if the shipped pin tracks the shipped kernel. It silently lapsed
+# at review8 and went unnoticed until the bridge refused to start on review10,
+# so tie the two together here rather than relying on anyone remembering.
+bridge_conf="$repo_root/rootfs/etc/sp11-ir-bridge.conf"
+bridge_pin="$(awk -F= '/^SP11_EXPECTED_KERNEL_RELEASE=/{print $2}' "$bridge_conf")"
+build_release="$(awk -F'"' '/^release=/{print $2}' "$repo_root/scripts/build-kernel.sh")"
+[[ -n "$bridge_pin" && -n "$build_release" ]] || {
+	printf 'Could not read the IR bridge pin or the build release.\n' >&2
+	exit 1
+}
+[[ "$bridge_pin" == "$build_release" ]] || {
+	printf 'IR bridge pin %s does not match the build release %s.\n' \
+		"$bridge_pin" "$build_release" >&2
+	exit 1
+}
 
 if rg -n '^diff --git a/(drivers/media|drivers/phy/qualcomm/.*cphy|arch/arm64/boot/dts/qcom/.*camera)' "$patch"; then
 	printf 'Camera-related path found in sanitized kernel patch.\n' >&2
@@ -127,11 +156,17 @@ if rg -n -i 'qccammipicsi|cphy-win-tables|camnoc-win-tables|/home/|WillzDenali' 
 	exit 1
 fi
 
+if rg -n -i 'qccammipicsi|cphy-win-tables|camnoc-win-tables|/home/|WillzDenali' "$switch_patch"; then
+	printf 'Withdrawn, private, or host-specific material found in camera-switch patch.\n' >&2
+	exit 1
+fi
+
 [[ "$(git bundle list-heads "$bundle" | wc -l)" -eq 1 ]]
 [[ "$(git bundle list-heads "$camera_bundle" | wc -l)" -eq 1 ]]
 [[ "$(git bundle list-heads "$touch_bundle" | wc -l)" -eq 1 ]]
 [[ "$(git bundle list-heads "$resume_bundle" | wc -l)" -eq 1 ]]
 [[ "$(git bundle list-heads "$charge_bundle" | wc -l)" -eq 1 ]]
+[[ "$(git bundle list-heads "$switch_bundle" | wc -l)" -eq 1 ]]
 
 (
 	cd -- "$repo_root"

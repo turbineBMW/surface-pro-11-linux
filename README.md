@@ -55,10 +55,10 @@ See [docs/LICENSING.md](docs/LICENSING.md) and the file-level REUSE metadata.
 - Device-tree compatible: `microsoft,denali`
 - SoC/display: Snapdragon X Elite / X1E80100 / OLED
 - Boot environment: UEFI and GRUB on the Arch Linux ARM foundation
-- Reviewed kernel source: `7.1.3-sp11-camera-review9`
-- Exact source commit: `4d50f4a7a8debb28b5780f80f941f1fcee4036cd`
-- Previous rollback source: `7.1.3-sp11-camera-review8` at
-  `940bbc856a120e6f967f9dbaf825d5473bfae664`
+- Reviewed kernel source: `7.1.3-sp11-camera-review10`
+- Exact source commit: `fd1932d6e2a45e665c062b1b1c810f09db46ab4e`
+- Previous rollback source: `7.1.3-sp11-camera-review9` at
+  `4d50f4a7a8debb28b5780f80f941f1fcee4036cd`
 
 Only one physical OLED/X Elite unit has been qualified. Do not assume that the
 LCD, X Plus, 5G, or other Surface variants use an interchangeable device tree.

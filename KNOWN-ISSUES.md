@@ -10,10 +10,22 @@ rear OV13858, and IR VD55G0 sequentially on one OLED/X Elite unit. Concurrent
 camera use, repeated switching, camera suspend/resume, color processing, and
 normal desktop application integration are not qualified.
 
-Rapid camera switching can lock the camera path. Repeated sequential switching
-has remained stable when each transition is separated by at least 10 seconds,
-but that observation is not an endurance guarantee. Keep at least that gap
-until the asynchronous teardown/reinitialization race is characterized.
+Rapid camera switching previously locked the camera path, and review10 corrects
+it. The rear OV13858's first SCCB transaction after power-up intermittently
+returned `-EIO` behind a CCI queue timeout whenever another camera on the same
+SoC had run shortly beforehand; it reproduced on 26% of rear opens across 120
+measured opens on review9, and never when the rear camera was used alone.
+Retrying that single idempotent software-reset write clears it. On review10 a
+60-cycle front/rear soak with no gap between sessions records zero capture
+failures, against 24 of 60 on review9 in a back-to-back control. The 10-second
+gap previously recommended here is no longer required.
+
+The underlying transient is corrected, not explained. The CCI queue timeout
+still occurs and is still logged — on 38 of those 60 opens — but the driver now
+recovers and every session returns its frames, at a cost of roughly 137 ms on an
+affected open. Why the first transaction stalls when another camera in the same
+power domain is powered is not established. Expect the timeout line in the
+kernel log; it is no longer a failure.
 
 The PM8550 IR illuminator was tested only in bounded sessions with an
 independent systemd fail-safe. The reviewed bounded bridge and separate

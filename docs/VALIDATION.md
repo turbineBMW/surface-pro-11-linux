@@ -21,6 +21,9 @@ Date opened: 2026-07-19
 - [x] charge-limit reliability bundle adds one commit to the tablet-mode tip
   and restores tip `4d50f4a7a8debb28b5780f80f941f1fcee4036cd` and tree
   `9de653f31534b28a525f86d23c441deb831c0e2f`;
+- [x] camera-switch fix bundle adds one commit to the charge-limit tip and
+  restores tip `fd1932d6e2a45e665c062b1b1c810f09db46ab4e` and tree
+  `c30f01a3d05a28bf8c4a0e809fc8f81a919927af`;
 - [x] all patches apply cleanly to their declared prerequisites;
 - [x] bundle and patch reconstructions produce identical final trees;
 - [x] changed-path, keyword, SPDX, and whitespace audits pass;
@@ -118,6 +121,30 @@ target with review8 preserved as rollback.
 Subsequent maintainer daily-use testing repeatedly exercised the Flex Keyboard
 both attached and detached without reproducing keyboard, touchpad, or posture
 failures.
+
+Review10 adds a single correction to the rear OV13858 sensor driver. Two
+independent clean builds from empty directories are byte-identical across
+`Image`, `vmlinux`, OLED DTB, config, `Module.symvers`, the generated
+`compile.h` and `utsrelease.h`, and all 3,758 in-tree modules. The Image
+SHA-256 is
+`4020e445a757830c54ea8ad11352e95b88b8eb05f22b5d4cba684277f57f889a`,
+the config SHA-256 is unchanged from review9 at
+`ce3235cba604521c4b0bc1ce639278e70d612b0e76fa464aee9fd8592f60106c`,
+and the normalized module-manifest SHA-256 is
+`443c02ead2526f87fde049d86963ff270204e91db7eb45fc8ea184f87d1f7dc1`.
+Because the change touches one driver and no configuration, `Module.symvers` is
+byte-identical to review9 and the module ABI is unchanged between the releases.
+
+The exact artifact was booted and validated on target hardware. The rear camera
+previously failed to start streaming on roughly a third of opens whenever
+another camera on the same SoC had run shortly beforehand; a 60-cycle
+front/rear soak at zero interval now records **0 capture failures in 60 rear
+opens**, against 24 of 60 measured on review9 in a back-to-back control. The
+underlying CCI queue timeout still occurs and is still logged — 38 of the 60
+opens hit it — but the driver recovers and every session returned its frames.
+Cost is about 137 ms on an affected open. The bounded IR bridge was also
+exercised on the exact artifact: it started, ran its 14 s session, exited
+cleanly, and returned the illuminator to zero.
 
 ## Ambient color sensor validation
 

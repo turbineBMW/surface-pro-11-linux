@@ -28,10 +28,12 @@ firmware file is included here.
 - Tablet-mode resynchronization tree: `62edee5183ed3b42ee3a2f9f0c71066c3ab87742`
 - Charge-limit reliability tip: `4d50f4a7a8debb28b5780f80f941f1fcee4036cd`
 - Charge-limit reliability tree: `9de653f31534b28a525f86d23c441deb831c0e2f`
-- Candidate release string: `7.1.3-sp11-camera-review9`
+- Camera-switch fix tip: `fd1932d6e2a45e665c062b1b1c810f09db46ab4e`
+- Camera-switch fix tree: `c30f01a3d05a28bf8c4a0e809fc8f81a919927af`
+- Candidate release string: `7.1.3-sp11-camera-review10`
 - Delta: 12 sanitized commits, 13 reviewed camera commits, and one corrective
-  touch-driver commit, three tablet-mode resynchronization commits, and one
-  charge-limit reliability commit
+  touch-driver commit, three tablet-mode resynchronization commits, one
+  charge-limit reliability commit, and one camera-switch fix commit
 
 `kernel/sp11-sanitized2.bundle` preserves the exact incremental
 history and requires the Linux base commit. The cumulative patch reproduces

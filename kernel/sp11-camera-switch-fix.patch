@@ -1,0 +1,37 @@
+diff --git a/drivers/media/i2c/ov13858.c b/drivers/media/i2c/ov13858.c
+index 22234954a..8c522b077 100644
+--- a/drivers/media/i2c/ov13858.c
++++ b/drivers/media/i2c/ov13858.c
+@@ -1669,9 +1669,31 @@ static int ov13858_start_streaming(struct ov13858 *ov13858)
+ 	const struct ov13858_reg_list *reg_list;
+ 	int ret, link_freq_index;
+ 
+-	/* Get out of from software reset */
++	/*
++	 * Get out of from software reset.
++	 *
++	 * The first SCCB transaction after the sensor powers up can fail when
++	 * another camera on the same SoC is powered at the same time: the CCI
++	 * master logs a queue timeout and the transfer returns -EIO. The
++	 * condition is transient and clears by the time the failed transfer
++	 * returns, so retry once.
++	 *
++	 * Scoped deliberately to this one register. It is the first
++	 * transaction after power-up and the only one observed to fail, and
++	 * the write is idempotent -- it asserts the sensor's software reset,
++	 * which is already the state it is in. Later writes in this sequence
++	 * are not idempotent and must not be retried blindly.
++	 */
+ 	ret = ov13858_write_reg(ov13858, OV13858_REG_SOFTWARE_RST,
+ 				OV13858_REG_VALUE_08BIT, OV13858_SOFTWARE_RST);
++	if (ret) {
++		dev_dbg(ov13858->dev,
++			"software reset write failed (%d), retrying once\n",
++			ret);
++		ret = ov13858_write_reg(ov13858, OV13858_REG_SOFTWARE_RST,
++					OV13858_REG_VALUE_08BIT,
++					OV13858_SOFTWARE_RST);
++	}
+ 	if (ret) {
+ 		dev_err(ov13858->dev, "%s failed to set powerup registers\n",
+ 			__func__);
