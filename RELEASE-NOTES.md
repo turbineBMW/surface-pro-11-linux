@@ -12,15 +12,17 @@ checks, and installation/rollback validation are complete.
 
 ## Reviewed kernel source
 
-- Kernel release currently used for hardware validation:
-  `7.1.3-sp11-camera-review5`
+- Hardware-validated kernel release:
+  `7.1.3-sp11-camera-review8`
 - Hardware-validated source commit:
-  `86fc94c58a89a56c7ceb57b42c6025b2569da56d`
+  `940bbc856a120e6f967f9dbaf825d5473bfae664`
 - Hardware-validated source tree:
+  `62edee5183ed3b42ee3a2f9f0c71066c3ab87742`
+- Preserved rollback kernel release: `7.1.3-sp11-camera-review5`
+- Preserved rollback source commit:
+  `86fc94c58a89a56c7ceb57b42c6025b2569da56d`
+- Preserved rollback source tree:
   `4624d85595964242c26d7042106d068cbbdd9977`
-- Next source candidate: `7.1.3-sp11-camera-review8`
-- Candidate source commit: `940bbc856a120e6f967f9dbaf825d5473bfae664`
-- Candidate source tree: `62edee5183ed3b42ee3a2f9f0c71066c3ab87742`
 - Base: Linux stable `v7.1.3` plus the attributed SP11/HID-over-SPI branch
 
 The reviewed branch supports sequential capture from the front IMX681, rear
