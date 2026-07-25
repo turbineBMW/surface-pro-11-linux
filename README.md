@@ -73,7 +73,8 @@ Validated on the tested unit:
 - Review9 laptop, detached, and folded-back posture transitions, including
   keyboard and touchpad suppression while folded behind the tablet
 - Touch, multitouch, pen hover/strokes, and eraser through iptsd
-- Speakers, microphones, volume rocker, SAM fan telemetry, and power profiles
+- Speakers, microphones, volume rocker, SAM fan telemetry, and qualified
+  three-tier power profiles
 - Verified 75–80% battery charge window, reapplied at boot and after resume
 - TCS3430 ambient color sensor through Qualcomm SSC and iio-sensor-proxy
 - Short power-button press suspends and wakes normally on a second press

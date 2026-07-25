@@ -61,7 +61,8 @@ tested unit; review8 remains installed as its rollback.
 - Speakers, microphones, and volume rocker
 - Attached keyboard, detached Bluetooth Flex Keyboard, and haptic touchpad
 - Short power-button press suspends and wakes normally on a second press
-- SAM fan telemetry and conservative power profiles
+- SAM fan telemetry and qualified three-tier power profiles: 1,920,000 kHz
+  power-saver, 2,515,200 kHz balanced, and full-range performance
 - Usable s2idle with deeper CPU idle disabled for stability
 
 ## Important limitations

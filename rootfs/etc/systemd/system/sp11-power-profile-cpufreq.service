@@ -6,7 +6,8 @@ Wants=power-profiles-daemon.service
 
 [Service]
 Type=simple
-Environment=SP11_POWER_SAVER_MAX_KHZ=2515200
+Environment=SP11_POWER_SAVER_MAX_KHZ=1920000
+Environment=SP11_BALANCED_MAX_KHZ=2515200
 ExecStart=/usr/local/libexec/sp11-power-profile-cpufreq --watch
 ExecStopPost=-/usr/local/libexec/sp11-power-profile-cpufreq --restore
 Restart=on-failure

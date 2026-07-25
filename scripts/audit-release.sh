@@ -137,6 +137,8 @@ fi
 	cd -- "$repo_root"
 	reuse lint
 	git diff --check
+	PYTHONDONTWRITEBYTECODE=1 \
+		python3 userspace/power-profiles-daemon/test_sp11_power_profile_cpufreq.py
 	bash -n scripts/*.sh rootfs/usr/local/libexec/sp11-bluetooth-address \
 		rootfs/usr/lib/systemd/system-sleep/*.sh \
 		rootfs/usr/lib/systemd/system-sleep/sp11-charge-limit \

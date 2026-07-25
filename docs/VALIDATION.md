@@ -256,6 +256,38 @@ brightness to zero, left no bridge/FFmpeg/media-graph process behind, and added
 no kernel warning. The maintainer also confirmed the normal visual preview.
 Neither the external module nor Howdy is distributed here.
 
+## Three-tier power-profile qualification
+
+The cpufreq companion now maps Power Profiles Daemon `power-saver` and the
+kernel `low-power` profile to a qualified 1,920,000 kHz ceiling, maps balanced
+profiles to the former 2,515,200 kHz ceiling, and restores the
+3,417,600 kHz hardware maximum for performance on the tested unit.
+
+- [x] seven hardware-independent tests cover all profile names, both proposed
+  power-saver candidates, supported-frequency rounding, missing frequency
+  tables, unknown-profile rejection, preflight without partial writes, and
+  restoration;
+- [x] all three live SCMI policies apply 1,920,000 kHz for power-saver,
+  2,515,200 kHz for balanced, and 3,417,600 kHz for performance;
+- [x] stopping the companion restores every policy to hardware maximum and
+  starting it reapplies the active profile;
+- [x] live profile transitions leave `schedutil` and the 710,400 kHz policy
+  minimum unchanged;
+- [x] repeated battery-only ABBAAB comparisons selected 1,920,000 over
+  1,670,400 kHz: all-core and single-core fixed work completed about 15.5%
+  faster while sampled energy per job fell 7.45% and 12.69%, respectively;
+- [x] two 90-second idle windows per ceiling differed by 0.96% in sampled
+  system power, below the useful precision of the bounded platform-level test;
+  mean peak temperature increased only 2.13 C for all-core work and 0.67 C for
+  single-core work, and the fan returned to 0 RPM;
+- [x] restarting the companion applied 1,920,000 kHz to all policies, and
+  restarting Power Profiles Daemon after deliberately applying 1,670,400 kHz
+  caused the owner-change handler to restore the selected mapping;
+- [x] a real review9 s2idle cycle restored 1,920,000 kHz with `schedutil` and
+  the 710,400 kHz minimum unchanged; input, posture, networking, audio, sensor,
+  charge-limit, and power-profile health checks passed with no failed unit,
+  kernel warning, oops, call trace, panic, lockup, or hung-task match.
+
 ## Source-only publication validation
 
 - [x] `reuse lint` passes for the reviewed working tree;
