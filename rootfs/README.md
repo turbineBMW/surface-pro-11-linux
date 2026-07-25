@@ -7,6 +7,8 @@ machine:
 - deep-idle stability mitigation
 - dynamic iptsd udev/service/sleep lifecycle
 - Surface platform-profile module loading and patched PPD selection
+- Qualcomm SSC startup and the SP11-specific libssc selection for the ambient
+  color sensor
 - measurable power-saver cpufreq companion and sleep hook target
 - verified 75–80% battery charge limit applied at boot and after system sleep
 - short power-button press mapped to suspend through logind
@@ -20,3 +22,7 @@ that already exist. Binary installation is currently held, so these files are
 published for source review and manual development use only. No diagnostic
 pstore, network logging, touch probes, or development boot entries are
 included.
+
+The sensor units do not include their external configuration tree or either
+userspace binary. `scripts/install-sensors.sh` accepts those locally built and
+operator-supplied inputs for bounded developer testing.

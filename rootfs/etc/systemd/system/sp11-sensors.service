@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: MIT
+
+[Unit]
+Description=Surface Pro 11 Qualcomm sensor service
+Requires=dev-fastrpc\x2dadsp.device
+ConditionPathExists=/dev/fastrpc-adsp
+ConditionPathExists=/var/lib/sp11-sensors/root/sensors/sns_reg.conf
+ConditionPathExists=/var/lib/sp11-sensors/root/sensors/config/json.lst
+After=systemd-modules-load.service dev-fastrpc\x2dadsp.device
+Before=iio-sensor-proxy.service
+
+[Service]
+Type=simple
+Environment=LD_LIBRARY_PATH=/usr/local/lib/sp11
+ExecStart=/usr/local/libexec/sp11-hexagonrpcd -f /dev/fastrpc-adsp -d adsp -s -R /var/lib/sp11-sensors/root
+Restart=on-failure
+RestartSec=2
+UMask=0077
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=false
+ProtectControlGroups=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectClock=true
+RestrictAddressFamilies=AF_UNIX
+RestrictRealtime=true
+MemoryDenyWriteExecute=true
+ReadOnlyPaths=/var/lib/sp11-sensors/root
+ReadWritePaths=/var/lib/sp11-sensors/root/sensors/persist
+
+[Install]
+WantedBy=multi-user.target

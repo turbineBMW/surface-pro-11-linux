@@ -17,6 +17,7 @@ copyright material tracked in `docs/REDISTRIBUTION-REVIEW.md`.
 - libcamera patches: `LGPL-2.1-or-later`, with the original tuning data also
   available under `CC0-1.0`.
 - Power Profiles Daemon patch: `GPL-3.0-only`.
+- hexagonrpc and libssc patches: `GPL-3.0-or-later`.
 - Bounded SP11 IR bridge, service integration, tests, and documentation:
   original project work under `MIT`.
 - Howdy itself, if obtained separately: upstream `MIT`; it is not included in
@@ -24,6 +25,10 @@ copyright material tracked in `docs/REDISTRIBUTION-REVIEW.md`.
   other dependencies.
 - IMX681 tuning YAML: `CC0-1.0`.
 - Generated build identity and symbol data: `CC0-1.0` where marked.
+
+The original sensor systemd units, developer installer, and documentation are
+MIT-licensed. Microsoft/Qualcomm sensor configuration and generated
+persistence are external prerequisites and are not distributed.
 
 Canonical license texts live in `LICENSES/`. File-level assignments are
 recorded in SPDX headers or `REUSE.toml`; run `reuse lint` before release.

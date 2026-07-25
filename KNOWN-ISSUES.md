@@ -94,6 +94,20 @@ power-off behavior.
 Speakers and microphones work. Speaker volume is conservative; no software
 boost is included.
 
+## Ambient color sensor
+
+The sensor requires an external Microsoft/Qualcomm configuration tree,
+hexagonrpcd registry-write support, and the SP11 libssc color-endpoint mapping.
+None of the proprietary configuration, calibration, or generated registry is
+distributed here.
+
+An empty `color_calibration.bin` crashes the Qualcomm sensor process; leave the
+file absent when no valid record exists. Validate every installation after a
+full host boot. Manually restarting the shared ADSP can incur long
+firmware-client timeouts or trigger automatic ADSP recovery, so it is not a
+substitute for that reboot test. See
+[docs/SENSORS.md](docs/SENSORS.md).
+
 ## Flex Keyboard
 
 Attached and detached Flex Keyboard modes work on the tested unit. Detached
