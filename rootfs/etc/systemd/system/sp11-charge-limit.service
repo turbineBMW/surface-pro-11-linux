@@ -1,0 +1,25 @@
+[Unit]
+Description=Surface Pro 11 battery charge limit
+Documentation=file:///usr/local/share/doc/sp11-charge-limit/README.md
+After=systemd-udev-trigger.service
+Before=upower.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/sp11-charge-limit apply
+RemainAfterExit=yes
+NoNewPrivileges=yes
+PrivateDevices=yes
+PrivateTmp=yes
+ProtectControlGroups=yes
+ProtectHome=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectSystem=strict
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+
+[Install]
+WantedBy=multi-user.target

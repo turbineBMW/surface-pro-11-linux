@@ -2,12 +2,13 @@
 
 set -euo pipefail
 
-release="7.1.3-sp11-camera-review8"
-expected_commit="940bbc856a120e6f967f9dbaf825d5473bfae664"
-expected_tree="62edee5183ed3b42ee3a2f9f0c71066c3ab87742"
-expected_config="b2497f1a5340c6491dd86014d90a9cdd6dcf0a8b1f45806ceb76be35d972517f"
+release="7.1.3-sp11-camera-review9"
+expected_commit="4d50f4a7a8debb28b5780f80f941f1fcee4036cd"
+expected_tree="9de653f31534b28a525f86d23c441deb831c0e2f"
+expected_config="ce3235cba604521c4b0bc1ce639278e70d612b0e76fa464aee9fd8592f60106c"
 expected_python="Python 3.14.6"
-python3_make_command="python3 -S"
+expected_lxml="6.1.1"
+python3_make_command="python3"
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 repo_root="$(cd -- "$script_dir/.." && pwd -P)"
 
@@ -51,6 +52,11 @@ actual_tree="$(git -C "$source_tree" rev-parse 'HEAD^{tree}')"
 actual_python="$(python3 -S --version 2>&1)"
 [[ "$actual_python" == "$expected_python" ]] || {
 	printf 'Unexpected Python version: %s\n' "$actual_python" >&2
+	exit 1
+}
+actual_lxml="$(python3 -c 'import lxml; print(lxml.__version__)')"
+[[ "$actual_lxml" == "$expected_lxml" ]] || {
+	printf 'Unexpected Python lxml version: %s\n' "$actual_lxml" >&2
 	exit 1
 }
 
