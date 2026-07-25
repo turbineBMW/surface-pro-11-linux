@@ -6,9 +6,10 @@ finished.
 ## Cameras are experimental
 
 The reviewed camera branch captured changing frames from the front IMX681,
-rear OV13858, and IR VD55G0 sequentially on one OLED/X Elite unit. Concurrent
-camera use, repeated switching, camera suspend/resume, color processing, and
-normal desktop application integration are not qualified.
+rear OV13858, and IR VD55G0 sequentially on one OLED/X Elite unit. Repeated
+switching and camera suspend/resume are qualified as of review10, on that one
+unit; see below. Concurrent camera use, color processing, and normal desktop
+application integration remain unqualified.
 
 Rapid camera switching previously locked the camera path, and review10 corrects
 it. The rear OV13858's first SCCB transaction after power-up intermittently
@@ -27,10 +28,20 @@ affected open. Why the first transaction stalls when another camera in the same
 power domain is powered is not established. Expect the timeout line in the
 kernel log; it is no longer a failure.
 
+Camera suspend/resume was previously unqualified. On review10 a 27-second
+s2idle cycle followed immediately by rapid front/rear switching preserved all
+three internal cameras and the external USB camera, with every CCI transient
+recovered and no sensor start failure. Concurrent camera use and colour
+processing remain unqualified.
+
 The PM8550 IR illuminator was tested only in bounded sessions with an
 independent systemd fail-safe. The reviewed bounded bridge and separate
 illuminator-off helper are included, but Howdy itself, an enrolled model, test
-captures, and the separately built v4l2loopback module are not. Do not leave an
+captures, and the separately built v4l2loopback module are not. A local Howdy
+preview against a locally built v4l2loopback sink did produce a live IR image
+and match an enrolled face on review10; that exercise is not a shipped
+component. The bridge fails closed when its pinned kernel release does not
+match the running one, so it must be re-pinned for each release. Do not leave an
 IR emitter active without an independent timeout and stop path.
 
 Results from the withdrawn Practical8 line do not qualify any source or binary

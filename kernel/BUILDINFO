@@ -25,5 +25,5 @@ dtb_sha256=4caa12c8154470ea484890933f7997ec8e9a95b064927e0c2c8b814f9f658b3a
 module_manifest_sha256=443c02ead2526f87fde049d86963ff270204e91db7eb45fc8ea184f87d1f7dc1
 ov13858_sha256=133da54f262286cd16548efe3f9389b6728986abab341b4cc8bdf9be512deda2
 vmlinux_sha256=4958a99b556b0cef4026eaec56a17fcacc81f0f04f6ad2940bec42923459f4c1
-validation_status=two-clean-builds-byte-identical-exact-artifact-boot-camera-switch-and-ir-bridge-verified
+validation_status=two-clean-builds-byte-identical-exact-artifact-boot-camera-switch-suspend-resume-and-howdy-ir-verified
 build_command=scripts/build-kernel.sh --source <linux> --output <build> --jobs <nproc>

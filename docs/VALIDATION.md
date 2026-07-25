@@ -143,8 +143,25 @@ opens**, against 24 of 60 measured on review9 in a back-to-back control. The
 underlying CCI queue timeout still occurs and is still logged — 38 of the 60
 opens hit it — but the driver recovers and every session returned its frames.
 Cost is about 137 ms on an affected open. The bounded IR bridge was also
-exercised on the exact artifact: it started, ran its 14 s session, exited
-cleanly, and returned the illuminator to zero.
+exercised on the exact artifact: it started, ran its session, exited cleanly,
+and returned the illuminator to zero.
+
+A 27-second s2idle suspend/resume cycle was then performed on the exact
+artifact, followed immediately by repeated rapid front/rear switching. All
+three internal cameras and the external USB camera still enumerated, 41 CCI
+transients were logged and recovered, and no sensor reported a start failure.
+The Howdy IR preview produced a live image and matched the enrolled face
+through the bounded bridge and the locally built v4l2loopback sink. No kernel
+oops, call trace, or failed systemd unit was present, and the illuminator
+returned to zero.
+
+Review10's practical hardware coverage is deliberately narrower than review9's:
+the camera path, suspend/resume, and the Howdy/IR path were re-verified on the
+exact artifact, while touch, pen, audio, microphones, ambient light, and the
+charge-limit readback were not re-run. Review10 changes one camera driver and
+no configuration, and every module except `ov13858.ko` is byte-identical to
+review9, so review9's matrix is expected to carry over — but it was not
+re-measured and `validation_status` does not claim it.
 
 ## Ambient color sensor validation
 
