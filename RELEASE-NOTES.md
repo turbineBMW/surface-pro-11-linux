@@ -12,11 +12,16 @@ checks, and installation/rollback validation are complete.
 
 ## Reviewed kernel source
 
-- Kernel release used for hardware validation:
-  `7.1.3-sp11-camera-review5`
-- Source commit:
+- Hardware-validated kernel release:
+  `7.1.3-sp11-camera-review8`
+- Hardware-validated source commit:
+  `940bbc856a120e6f967f9dbaf825d5473bfae664`
+- Hardware-validated source tree:
+  `62edee5183ed3b42ee3a2f9f0c71066c3ab87742`
+- Preserved rollback kernel release: `7.1.3-sp11-camera-review5`
+- Preserved rollback source commit:
   `86fc94c58a89a56c7ceb57b42c6025b2569da56d`
-- Source tree:
+- Preserved rollback source tree:
   `4624d85595964242c26d7042106d068cbbdd9977`
 - Base: Linux stable `v7.1.3` plus the attributed SP11/HID-over-SPI branch
 
@@ -26,6 +31,21 @@ also enables the independently tested PM8550 IR illuminator and fixes automatic
 loading of the touch/pen SPI transport. The bounded IR bridge source and its
 independent illuminator-off helper are included; Howdy itself, the
 v4l2loopback binary, enrolled face model, and test captures are not.
+
+Review6 added a focused delayed controller posture re-query after resume. It
+passed attached and detached suspend/resume tests, but a later Flex Keyboard
+reattach recreated its HID devices without delivering the separate cover-state
+notification. The cached detached posture suppressed the attached touchpad.
+
+Review7 also observed the KIP connection event, but its single delayed query
+could receive transient raw state zero and leave tablet mode asserted. Review8
+rejects values outside the valid posture range and retries for a bounded
+30-second settling window, stopping on the first valid controller response.
+The review8 live module passed repeated detach/reattach testing, exact clean
+builds are byte-identical, and the exact full kernel passed the attached,
+detached, folded-back, suspend/resume, and reattach matrix. Subsequent daily-use
+testing repeatedly preserved keyboard and touchpad operation with the Flex
+Keyboard both attached and detached. Review5 remains the preserved rollback.
 
 ## Other validated hardware
 

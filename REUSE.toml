@@ -75,6 +75,19 @@ SPDX-FileCopyrightText = [
 SPDX-License-Identifier = "GPL-2.0-only"
 
 [[annotations]]
+path = [
+  "kernel/sp11-tablet-mode-resume-resync.bundle",
+  "kernel/sp11-tablet-mode-resume-resync.patch",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = [
+  "1991-2026 Linux kernel contributors",
+  "2019-2022 Maximilian Luz",
+  "2026 turbinebmw",
+]
+SPDX-License-Identifier = "GPL-2.0-only"
+
+[[annotations]]
 path = "userspace/iptsd/LICENSE.upstream"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "1989, 1991 Free Software Foundation, Inc."
