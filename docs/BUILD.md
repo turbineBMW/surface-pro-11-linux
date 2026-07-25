@@ -23,8 +23,8 @@ git rev-parse HEAD^{commit} HEAD^{tree}
 The final command must print:
 
 ```text
-4d50f4a7a8debb28b5780f80f941f1fcee4036cd
-9de653f31534b28a525f86d23c441deb831c0e2f
+fd1932d6e2a45e665c062b1b1c810f09db46ab4e
+c30f01a3d05a28bf8c4a0e809fc8f81a919927af
 ```
 
 The bundles are incremental: the sanitized bundle requires Linux `v7.1.3`,
@@ -45,7 +45,7 @@ configuration, and builds with Clang/LLVM and `W=1`:
   --jobs "$(nproc)"
 ```
 
-The resulting kernel release is `7.1.3-sp11-camera-review9`. Primary outputs:
+The resulting kernel release is `7.1.3-sp11-camera-review10`. Primary outputs:
 
 ```text
 /path/to/build/arch/arm64/boot/Image
@@ -66,8 +66,8 @@ touch correction, review6 through review8 posture corrections, and review9
 charge-limit correction require no enabled configuration change. Consequently,
 `camera-review.config.fragment` still records
 `CONFIG_LOCALVERSION="-sp11-camera-review4"`. The helper's enforced
-`KERNELRELEASE=7.1.3-sp11-camera-review9` is the authoritative release identity
-and must not be omitted when building or installing review9 artifacts.
+`KERNELRELEASE=7.1.3-sp11-camera-review10` is the authoritative release identity
+and must not be omitted when building or installing review10 artifacts.
 
 The helper requires Python 3.14.6 and lxml 6.1.1, matching both clean review9
 builds. The optional lxml import controls whether
@@ -80,7 +80,7 @@ To stage modules without touching the host system:
 
 ```sh
 make -C /path/to/linux O=/path/to/build \
-  KERNELRELEASE=7.1.3-sp11-camera-review9 \
+  KERNELRELEASE=7.1.3-sp11-camera-review10 \
   LOCALVERSION= LLVM=1 PYTHON3=python3 \
   INSTALL_MOD_PATH=/path/to/stage modules_install
 ```

@@ -13,12 +13,12 @@ checks, and installation/rollback validation are complete.
 ## Reviewed kernel source
 
 - Hardware-validated kernel release:
-  `7.1.3-sp11-camera-review9`
+  `7.1.3-sp11-camera-review10`
 - Hardware-validated source commit:
-  `4d50f4a7a8debb28b5780f80f941f1fcee4036cd`
+  `fd1932d6e2a45e665c062b1b1c810f09db46ab4e`
 - Hardware-validated source tree:
-  `9de653f31534b28a525f86d23c441deb831c0e2f`
-- Preserved rollback kernel release: `7.1.3-sp11-camera-review8`
+  `c30f01a3d05a28bf8c4a0e809fc8f81a919927af`
+- Preserved rollback kernel release: `7.1.3-sp11-camera-review9`
 - Preserved rollback source commit:
   `940bbc856a120e6f967f9dbaf825d5473bfae664`
 - Preserved rollback source tree:
