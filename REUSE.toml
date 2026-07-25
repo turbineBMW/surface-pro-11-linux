@@ -140,3 +140,21 @@ SPDX-FileCopyrightText = [
   "2026 turbinebmw",
 ]
 SPDX-License-Identifier = "GPL-3.0-only"
+
+[[annotations]]
+path = "userspace/hexagonrpc/0001-apps-std-support-writable-sensor-registry.patch"
+precedence = "aggregate"
+SPDX-FileCopyrightText = [
+  "2023-2026 The HexagonRPC and Sensor Shell contributors",
+  "2026 turbinebmw",
+]
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = "userspace/libssc/0001-light-use-surface-color-sensor.patch"
+precedence = "aggregate"
+SPDX-FileCopyrightText = [
+  "2022-2026 Dylan Van Assche",
+  "2026 turbinebmw",
+]
+SPDX-License-Identifier = "GPL-3.0-or-later"

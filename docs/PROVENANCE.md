@@ -137,6 +137,30 @@ integration work based on Linux's documented power-supply sysfs interface and
 live behavior observed on the maintainer's own Surface Pro 11. It contains no
 firmware, firmware-derived tables, proprietary source, or captured data.
 
+## Qualcomm sensor userspace
+
+- hexagonrpc upstream: `https://github.com/linux-msm/hexagonrpc`
+- Tested version: 0.4.0
+- Exact base commit: `dd9ac70c026e1bad93e8cffa3801255b8ceb551e`
+- License: GPL-3.0-or-later
+- libssc upstream: `https://codeberg.org/DylanVanAssche/libssc`
+- Tested version: 0.4.4
+- Exact base commit: `3befde3ef215bdb78c4a48aa72c99cd458c2aed0`
+- License: GPL-3.0-or-later
+
+The hexagonrpc patch implements reverse-RPC file operations from the public
+FastRPC `apps_std` interface and constrains mutation to the Qualcomm sensor
+registry. The libssc patch maps the existing light abstraction to the
+Microsoft `surface color sensor` endpoint based on target-hardware discovery
+and flashlight testing.
+
+The Microsoft Surface Pro 11 driver pack was used privately to identify the
+active sensor and supply the qualified machine's sensor configuration. No
+driver package, JSON/protobuf configuration, calibration, generated registry,
+Windows binary, or firmware from that package is included. The published
+implementation contains open-source patches, original service integration,
+and factual runtime behavior only. See `docs/SENSORS.md`.
+
 ## Bounded IR bridge review branch
 
 The `feature/howdy-ir-review` branch contains an original MIT-licensed bridge

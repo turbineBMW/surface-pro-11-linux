@@ -14,6 +14,12 @@ relevant to the published implementation were public open-source code, public
 specifications, Linux interfaces, and runtime behavior observed on hardware
 owned by the maintainer.
 
+Codex also assisted the ambient-sensor investigation by comparing public
+hexagonrpc/libssc interfaces with runtime SSC discovery, drafting the
+sandboxed registry-write implementation, and organizing flashlight and
+cold-bootstrap tests. Microsoft driver-package contents remained private
+machine inputs and are not reproduced in the public changes.
+
 AI output was treated as untrusted draft material. The publication candidate
 was rebuilt, schema-checked, statically audited, reconstructed from its public
 patches and bundles, and tested on the target hardware. Those checks reduce

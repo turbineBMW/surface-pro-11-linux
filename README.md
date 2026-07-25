@@ -8,8 +8,9 @@
 This repository publishes the reviewed source used to run Linux on a Microsoft
 Surface Pro 11 OLED with Snapdragon X Elite. The current reviewed source
 has working audio, microphones, front and rear RGB cameras, an IR camera and
-illuminator, touch, pen input through iptsd, volume buttons, conservative power
-profiles, and s2idle with the documented CPU-idle mitigation.
+illuminator, touch, pen input through iptsd, volume buttons, an ambient color
+sensor, conservative power profiles, and s2idle with the documented CPU-idle
+mitigation.
 
 No prebuilt kernel, module archive, firmware, disk image, ISO, biometric model,
 or camera capture is distributed here. See
@@ -74,6 +75,7 @@ Validated on the tested unit:
 - Touch, multitouch, pen hover/strokes, and eraser through iptsd
 - Speakers, microphones, volume rocker, SAM fan telemetry, and power profiles
 - Verified 75–80% battery charge window, reapplied at boot and after resume
+- TCS3430 ambient color sensor through Qualcomm SSC and iio-sensor-proxy
 - Short power-button press suspends and wakes normally on a second press
 - Front IMX681, rear OV13858, and IR VD55G0 capture tested sequentially
 - PM8550 IR illuminator and a bounded local Howdy proof of concept
@@ -104,6 +106,8 @@ diagnosis and the opt-in logind watchdog workaround are documented in
 Start with [docs/BUILD.md](docs/BUILD.md) and [kernel/README.md](kernel/README.md).
 Flex Keyboard Bluetooth identity setup is documented in
 [docs/BLUETOOTH.md](docs/BLUETOOTH.md).
+The ambient color sensor architecture, private configuration prerequisite, and
+developer installation are documented in [docs/SENSORS.md](docs/SENSORS.md).
 The source is shared so other developers can reproduce, review, test, and
 improve it; publication does not imply upstream readiness. Before sharing logs
 or patches, read [CONTRIBUTING.md](CONTRIBUTING.md) for the privacy and

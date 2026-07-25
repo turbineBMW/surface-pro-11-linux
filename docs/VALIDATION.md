@@ -119,6 +119,44 @@ Subsequent maintainer daily-use testing repeatedly exercised the Flex Keyboard
 both attached and detached without reproducing keyboard, touchpad, or posture
 failures.
 
+## Ambient color sensor validation
+
+Validation opened 2026-07-24:
+
+- [x] Qualcomm SSC service discovery works through QRTR/QMI once hexagonrpcd
+  serves the sensor configuration;
+- [x] the firmware exposes a Microsoft `surface color sensor` with data type
+  `color`, continuous stream mode, and 1 Hz sample rate;
+- [x] the standard `ambient_light` endpoint remains static at zero on the
+  qualified OLED unit;
+- [x] color-report element zero responds as illuminance, moving from roughly
+  0.65 lux while covered to 1,438-3,866 lux under a flashlight;
+- [x] accelerometer sampling remains valid through the same SSC transport;
+- [x] a clean DSP registry bootstrap writes 305 persistent files, including
+  the TCS3430 and Surface color records, after adding write, sync, remove,
+  rename, extended-method, and large-message support to hexagonrpcd;
+- [x] hexagonrpc's clean patched build passes both upstream tests, including
+  new write/sync/rename/remove coverage;
+- [x] clean pinned hexagonrpc and libssc source trees accept the published
+  patches and build successfully;
+- [x] installed systemd services run with the private matching
+  `libhexagonrpc.so.0.4` and patched `libssc.so.2`;
+- [x] the first full host reboot exposed and reproduced a systemd ordering
+  race: iio-sensor-proxy exited before `/dev/fastrpc-adsp` appeared, while the
+  sensor daemon recovered on its restart policy;
+- [x] after adding the FastRPC device dependency and proxy retry policy,
+  low-level SSC sampling moved from zero to 1,520 lux under a flashlight;
+- [x] iio-sensor-proxy advertised `HasAmbientLight=true`, and
+  `monitor-sensor --light` reported live changes from 110 to 5,787 lux;
+- [x] a second full host reboot started both services without manual
+  intervention, produced raw readings of 0.16-1.26 lux in the dark, and
+  reported a desktop-facing peak of 80,089 lux under direct flashlight.
+
+Manual ADSP stop/start testing produced long firmware-client acknowledgement
+timeouts and one automatic ADSP recovery. That path is not treated as a valid
+cold-boot test because the ADSP is shared with audio and other firmware clients
+and its power sequence is not equivalent to a host reboot.
+
 ## Bounded target-hardware validation
 
 - [x] review4 boots from a one-shot GRUB entry;
