@@ -36,6 +36,23 @@ IR emitter active without an independent timeout and stop path.
 Results from the withdrawn Practical8 line do not qualify any source or binary
 outside the reviewed `sp11-camera-review` branch.
 
+## External display brightness
+
+DDC/CI over DisplayPort works as of review12. Two upstream `drm/msm` defects
+prevented it: an EDID-read workaround that corrupted every other I2C-over-AUX
+target, and a connector that never advertised its DDC bus. Both are fixed.
+
+`ddcutil` still cannot find the bus. It locates displays by walking up the
+sysfs tree from an i2c adapter looking for a video adapter driver, and on this
+SoC the AUX bus is a sibling of the DRM device rather than a descendant, so the
+walk fails and every bus is rejected before any I/O is attempted. There is no
+option to override this. The kernel publishes the standard
+`/sys/class/drm/<connector>/ddc` link, which is what a fix would use.
+
+Until that is resolved, the desktop brightness sliders in GNOME and KDE will
+not work either, since they use ddcutil's library. Talking to the monitor
+directly does work.
+
 ## Suspend and idle power
 
 Suspend/resume is usable s2idle and has repeatedly preserved touch, pen, and

@@ -16,12 +16,14 @@ charge_patch="$repo_root/kernel/sp11-charge-limit-reliability.patch"
 charge_bundle="$repo_root/kernel/sp11-charge-limit-reliability.bundle"
 switch_patch="$repo_root/kernel/sp11-camera-switch-fix.patch"
 switch_bundle="$repo_root/kernel/sp11-camera-switch-fix.bundle"
+ddc_patch="$repo_root/kernel/sp11-dp-ddc-fix.patch"
+ddc_bundle="$repo_root/kernel/sp11-dp-ddc-fix.bundle"
 
 expected_patch="218ee1ec59a29887aab919fcd37c7d8a21f7ca421ea3757476ddbab76bf07914"
 expected_bundle="cd782a17f4c6645d63d51c057bc9115ac0b7167966a6ce8c663c6e351b79d3e7"
 expected_config="8834ac6021bc4d50034b55c0960938070541387c0984aed4cc6797601ecce7f1"
 expected_symvers="b58de2ebd5ca9649b0e7299e4b5b7e3965f70e06506b88c1ec3d5046ce2e9387"
-expected_buildinfo="0af317da5653451ef6aca201c25f603aa4d32b0bfb12bdaed6afc9e74cff6563"
+expected_buildinfo="6a5b8da3a5649b95b57689cce97792b77f67de0f8704b3b77872df666e2f0ab0"
 expected_camera_config="4b9cd2e6d3e405f9d3c734850747eb85ff93f566e48c30c223e61a08cefde26f"
 expected_tip="2ace98eb6ef18cbd48074eed9f5b585d19ce398b"
 expected_camera_patch="a6d6f31fd9b3eea7e5b4243ec30300e1bc43718253fd2a2b77c2bdf4cebc3b6c"
@@ -39,6 +41,9 @@ expected_charge_tip="4d50f4a7a8debb28b5780f80f941f1fcee4036cd"
 expected_switch_patch="ce3c865b5722b010c2363ad0df60f52e12c237158efc3e6d41e91210d12c5773"
 expected_switch_bundle="65272a9e635aa2856c8b9e5cb01e2b7e155a6762db16ebe3fc044bd102beb8f2"
 expected_switch_tip="fd1932d6e2a45e665c062b1b1c810f09db46ab4e"
+expected_ddc_patch="6e840cd46a1af78734cbc43878bae6553a0591ca489786045b8a72402b6381b6"
+expected_ddc_bundle="0206952408c6c9f55f2804acc8b8153bf6208c9de79cd450973bcdfd601c3073"
+expected_ddc_tip="a3e71f7080ee40dccfdd9500b8957a7c143fb6a2"
 
 for command_name in git reuse rg sha256sum; do
 	command -v "$command_name" >/dev/null || {
@@ -100,6 +105,10 @@ fi
 [[ "$(sha256sum "$switch_bundle" | awk '{print $1}')" == "$expected_switch_bundle" ]]
 [[ "$(git bundle list-heads "$switch_bundle" | awk '{print $1}')" == "$expected_switch_tip" ]]
 [[ "$(rg -c '^diff --git ' "$switch_patch")" -eq 1 ]]
+[[ "$(sha256sum "$ddc_patch" | awk '{print $1}')" == "$expected_ddc_patch" ]]
+[[ "$(sha256sum "$ddc_bundle" | awk '{print $1}')" == "$expected_ddc_bundle" ]]
+[[ "$(git bundle list-heads "$ddc_bundle" | awk '{print $1}')" == "$expected_ddc_tip" ]]
+[[ "$(rg -c '^diff --git ' "$ddc_patch")" -eq 4 ]]
 
 # The IR bridge fails closed on a kernel-release mismatch, which is a real
 # guard: the illuminator's sink mapping and 600 mA ceiling were established
@@ -161,12 +170,18 @@ if rg -n -i 'qccammipicsi|cphy-win-tables|camnoc-win-tables|/home/|WillzDenali' 
 	exit 1
 fi
 
+if rg -n -i 'qccammipicsi|cphy-win-tables|camnoc-win-tables|/home/|WillzDenali' "$ddc_patch"; then
+	printf 'Withdrawn, private, or host-specific material found in DP DDC patch.\n' >&2
+	exit 1
+fi
+
 [[ "$(git bundle list-heads "$bundle" | wc -l)" -eq 1 ]]
 [[ "$(git bundle list-heads "$camera_bundle" | wc -l)" -eq 1 ]]
 [[ "$(git bundle list-heads "$touch_bundle" | wc -l)" -eq 1 ]]
 [[ "$(git bundle list-heads "$resume_bundle" | wc -l)" -eq 1 ]]
 [[ "$(git bundle list-heads "$charge_bundle" | wc -l)" -eq 1 ]]
 [[ "$(git bundle list-heads "$switch_bundle" | wc -l)" -eq 1 ]]
+[[ "$(git bundle list-heads "$ddc_bundle" | wc -l)" -eq 1 ]]
 
 (
 	cd -- "$repo_root"

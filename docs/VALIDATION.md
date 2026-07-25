@@ -24,6 +24,9 @@ Date opened: 2026-07-19
 - [x] camera-switch fix bundle adds one commit to the charge-limit tip and
   restores tip `fd1932d6e2a45e665c062b1b1c810f09db46ab4e` and tree
   `c30f01a3d05a28bf8c4a0e809fc8f81a919927af`;
+- [x] DP DDC fix bundle adds two commits to the camera-switch tip and restores
+  tip `a3e71f7080ee40dccfdd9500b8957a7c143fb6a2` and tree
+  `a1704b98847e95fe6c26c57ce5a588faec011924`;
 - [x] all patches apply cleanly to their declared prerequisites;
 - [x] bundle and patch reconstructions produce identical final trees;
 - [x] changed-path, keyword, SPDX, and whitespace audits pass;
@@ -145,6 +148,35 @@ opens hit it — but the driver recovers and every session returned its frames.
 Cost is about 137 ms on an affected open. The bounded IR bridge was also
 exercised on the exact artifact: it started, ran its 14 s session, exited
 cleanly, and returned the illuminator to zero.
+
+Review12 adds two corrections to the msm DisplayPort AUX path, both fixing
+upstream behaviour rather than local regressions. Two independent clean builds
+are byte-identical across `Image`, `vmlinux`, OLED DTB, config,
+`Module.symvers`, the generated build identity, and all 3,758 modules. The
+Image SHA-256 is
+`5f060d602cfff58f5d97fd9bc933ff4878fe87b3d476e514460ebeaaaeda769f`
+and the normalized module-manifest SHA-256 is
+`bc4d7f20689f7c9c80a24bcbd9e847ff0cb0f18c6ce5fc97d24d4396710bc5d1`.
+Config and `Module.symvers` are unchanged from review10, so the module ABI is
+identical across review10 through review12.
+
+Both were verified on the exact artifact. Before the first fix, six consecutive
+DDC/CI Get-VCP attempts on the external DisplayPort monitor returned six
+different garbage replies while four consecutive EDID reads were byte-identical.
+After it, the monitor returns a valid VCP feature reply
+(`6e 88 02 00 10 00 00 64 00 4c 8c`, checksum verified) and brightness can be
+read and set: 76 to 40 and back to 76, confirmed by read-back each time. After
+the second fix `/sys/class/drm/card0-DP-2/ddc` resolves to the correct AUX i2c
+adapter, which is the association userspace needs to map a display to its bus.
+
+`ddcutil` still cannot drive the monitor, and that limitation is in `ddcutil`
+rather than the kernel. Its `sysfs_find_adapter()` walks up from the i2c bus
+looking for a recognised video adapter driver; on this SoC the AUX bus sits
+under `ae98000.displayport-controller`, a sibling of the DRM device at
+`ae01000.display-controller`, so the walk terminates at `/sys` and every bus is
+discarded before any I/O. The connector `ddc` link the kernel now publishes is
+exactly the information needed to resolve it. Practical coverage for review12
+is the DDC/CI path only; the review10 hardware matrix was not re-run.
 
 ## Ambient color sensor validation
 
