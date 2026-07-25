@@ -104,6 +104,19 @@ SPDX-License-Identifier = "GPL-2.0-only"
 
 [[annotations]]
 path = [
+  "kernel/sp11-dp-ddc-fix.bundle",
+  "kernel/sp11-dp-ddc-fix.patch",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = [
+  "1991-2026 Linux kernel contributors",
+  "2017-2026 The Linux Foundation",
+  "2026 turbinebmw",
+]
+SPDX-License-Identifier = "GPL-2.0-only"
+
+[[annotations]]
+path = [
   "kernel/sp11-camera-switch-fix.bundle",
   "kernel/sp11-camera-switch-fix.patch",
 ]

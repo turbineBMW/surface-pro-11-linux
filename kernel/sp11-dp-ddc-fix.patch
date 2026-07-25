@@ -1,0 +1,97 @@
+diff --git a/drivers/gpu/drm/msm/dp/dp_aux.c b/drivers/gpu/drm/msm/dp/dp_aux.c
+index 3825a2fb4..914c1f159 100644
+--- a/drivers/gpu/drm/msm/dp/dp_aux.c
++++ b/drivers/gpu/drm/msm/dp/dp_aux.c
+@@ -279,6 +279,7 @@ static void msm_dp_aux_transfer_helper(struct msm_dp_aux_private *aux,
+ {
+ 	struct drm_dp_aux_msg helper_msg;
+ 	u32 message_size = 0x10;
++	u32 edid_address = 0x50;
+ 	u32 segment_address = 0x30;
+ 	u32 const edid_block_length = 0x80;
+ 	bool i2c_mot = input_msg->request & DP_AUX_I2C_MOT;
+@@ -288,6 +289,22 @@ static void msm_dp_aux_transfer_helper(struct msm_dp_aux_private *aux,
+ 	if (!i2c_mot || !i2c_read || (input_msg->size == 0))
+ 		return;
+ 
++	/*
++	 * This workaround is specific to EDID reads, and the offset it tracks
++	 * is only meaningful within an EDID block. Applying it to any other
++	 * I2C-over-AUX target corrupts that target's transactions: the offset
++	 * accumulates on unrelated traffic and is then written back to the
++	 * device as if it were an EDID read pointer.
++	 *
++	 * DDC/CI at 0x37 is the common casualty. Its replies come back as
++	 * garbage because a stale offset byte is injected ahead of the read,
++	 * which is why brightness control over DisplayPort does not work while
++	 * EDID reads at 0x50 succeed.
++	 */
++	if (input_msg->address != edid_address &&
++	    input_msg->address != segment_address)
++		return;
++
+ 	/*
+ 	 * Sending the segment value and EDID offset will be performed
+ 	 * from the DRM upstream EDID driver for each block. Avoid
+diff --git a/drivers/gpu/drm/msm/dp/dp_display.c b/drivers/gpu/drm/msm/dp/dp_display.c
+index d2124d625..543acf5c9 100644
+--- a/drivers/gpu/drm/msm/dp/dp_display.c
++++ b/drivers/gpu/drm/msm/dp/dp_display.c
+@@ -1569,7 +1569,8 @@ int msm_dp_modeset_init(struct msm_dp *msm_dp_display, struct drm_device *dev,
+ 
+ 	msm_dp_priv = container_of(msm_dp_display, struct msm_dp_display_private, msm_dp_display);
+ 
+-	ret = msm_dp_bridge_init(msm_dp_display, dev, encoder, yuv_supported);
++	ret = msm_dp_bridge_init(msm_dp_display, dev, encoder, yuv_supported,
++				 msm_dp_priv->aux);
+ 	if (ret) {
+ 		DRM_DEV_ERROR(dev->dev,
+ 			"failed to create dp bridge: %d\n", ret);
+diff --git a/drivers/gpu/drm/msm/dp/dp_drm.c b/drivers/gpu/drm/msm/dp/dp_drm.c
+index fd6443d2b..931380227 100644
+--- a/drivers/gpu/drm/msm/dp/dp_drm.c
++++ b/drivers/gpu/drm/msm/dp/dp_drm.c
+@@ -296,7 +296,8 @@ static const struct drm_bridge_funcs msm_edp_bridge_ops = {
+ };
+ 
+ int msm_dp_bridge_init(struct msm_dp *msm_dp_display, struct drm_device *dev,
+-		   struct drm_encoder *encoder, bool yuv_supported)
++		   struct drm_encoder *encoder, bool yuv_supported,
++		   struct drm_dp_aux *aux)
+ {
+ 	int rc;
+ 	struct msm_dp_bridge *msm_dp_bridge;
+@@ -314,6 +315,19 @@ int msm_dp_bridge_init(struct msm_dp *msm_dp_display, struct drm_device *dev,
+ 	bridge->type = msm_dp_display->connector_type;
+ 	bridge->ycbcr_420_allowed = yuv_supported;
+ 
++	/*
++	 * Publish the AUX I2C adapter so drm_bridge_connector_init() attaches
++	 * it to the connector. Without this the connector has no ddc link in
++	 * sysfs, and userspace cannot tell which /dev/i2c-N belongs to which
++	 * display. Tools that drive DDC/CI, such as ddcutil, then report that
++	 * no display adapter with an i2c bus exists and refuse to run, even
++	 * though the bus is present and works.
++	 *
++	 * The adapter is created by drm_dp_aux_register(), which runs from the
++	 * component bind long before modesetting init reaches this point.
++	 */
++	bridge->ddc = &aux->ddc;
++
+ 	/*
+ 	 * Many ops only make sense for DP. Why?
+ 	 * - Detect/HPD are used by DRM to know if a display is _physically_
+diff --git a/drivers/gpu/drm/msm/dp/dp_drm.h b/drivers/gpu/drm/msm/dp/dp_drm.h
+index 9eb3431dd..dbed33a83 100644
+--- a/drivers/gpu/drm/msm/dp/dp_drm.h
++++ b/drivers/gpu/drm/msm/dp/dp_drm.h
+@@ -23,7 +23,8 @@ struct drm_connector *msm_dp_drm_connector_init(struct msm_dp *msm_dp_display,
+ 					    struct drm_encoder *encoder);
+ int msm_dp_bridge_init(struct msm_dp *msm_dp_display, struct drm_device *dev,
+ 		   struct drm_encoder *encoder,
+-		   bool yuv_supported);
++		   bool yuv_supported,
++		   struct drm_dp_aux *aux);
+ 
+ void msm_dp_bridge_atomic_enable(struct drm_bridge *drm_bridge,
+ 				 struct drm_atomic_state *state);
