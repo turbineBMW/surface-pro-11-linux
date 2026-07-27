@@ -9,8 +9,8 @@ This repository publishes the reviewed source used to run Linux on a Microsoft
 Surface Pro 11 OLED with Snapdragon X Elite. The current reviewed source
 has working audio, microphones, front and rear RGB cameras, an IR camera and
 illuminator, touch, pen input through iptsd, volume buttons, an ambient color
-sensor, conservative power profiles, and s2idle with the documented CPU-idle
-mitigation.
+sensor, conservative power profiles, USB runtime power management, and
+suspend with guarded firmware-managed CPU idle.
 
 No prebuilt kernel, module archive, firmware, disk image, ISO, biometric model,
 or camera capture is distributed here. See
@@ -55,10 +55,11 @@ See [docs/LICENSING.md](docs/LICENSING.md) and the file-level REUSE metadata.
 - Device-tree compatible: `microsoft,denali`
 - SoC/display: Snapdragon X Elite / X1E80100 / OLED
 - Boot environment: UEFI and GRUB on the Arch Linux ARM foundation
-- Reviewed kernel source: `7.1.3-sp11-camera-review10`
-- Exact source commit: `fd1932d6e2a45e665c062b1b1c810f09db46ab4e`
-- Previous rollback source: `7.1.3-sp11-camera-review9` at
-  `4d50f4a7a8debb28b5780f80f941f1fcee4036cd`
+- Reviewed kernel source: `7.1.3-sp11-suspend-review20`
+- Exact source commit: `18d7951a10dc49e383d16c6af82fc2c07784de3d`
+- Exact source tree: `b820f10abba096e23a28506d7ad591dffdedf1a8`
+- Preserved safe source: `7.1.3-sp11-camera-review12` at
+  `a3e71f7080ee40dccfdd9500b8957a7c143fb6a2`
 
 Only one physical OLED/X Elite unit has been qualified. Do not assume that the
 LCD, X Plus, 5G, or other Surface variants use an interchangeable device tree.
@@ -70,25 +71,27 @@ Validated on the tested unit:
 
 - OLED display, Wi-Fi, Bluetooth, attached keyboard, detached Flex Keyboard,
   and haptic touchpad
-- Review9 laptop, detached, and folded-back posture transitions, including
+- Laptop, detached, and folded-back posture transitions, including
   keyboard and touchpad suppression while folded behind the tablet
 - Touch, multitouch, pen hover/strokes, and eraser through iptsd
 - Speakers, microphones, volume rocker, SAM fan telemetry, and qualified
   three-tier power profiles
 - Verified 75–80% battery charge window, reapplied at boot and after resume
 - TCS3430 ambient color sensor through Qualcomm SSC and iio-sensor-proxy
-- Short power-button press suspends and wakes normally on a second press
-- Front IMX681, rear OV13858, and IR VD55G0 capture tested sequentially
+- Short, repeated, ten-minute, and overnight suspend/resume tests
+- Front IMX681, rear OV13858, and IR VD55G0 capture, including repeated
+  front/rear switching
 - PM8550 IR illuminator and a bounded local Howdy proof of concept
-- Usable s2idle while deeper CPU idle remains disabled for stability
+- Guarded firmware-managed CPU idle during runtime, disabled across suspend
+- USB runtime power management with repeated dock/thumb-drive hotplug
 
 Still experimental:
 
-- Concurrent cameras, extended camera cycling, and camera suspend/resume
+- Concurrent camera capture
 - Camera color processing, tuning, and normal desktop application integration
-- Power efficiency with the deeper-idle mitigation
+- Firmware-limited suspend efficiency; the overnight test drew about 1.7–1.8 W
 - Other SP11 variants and distributions
-- Automated installation, binary payloads, and ISO generation
+- The beta installer, binary payload, and ISO are still under release hold
 
 Read [KNOWN-ISSUES.md](KNOWN-ISSUES.md) before testing. Lid-triggered suspend
 diagnosis and the opt-in logind watchdog workaround are documented in

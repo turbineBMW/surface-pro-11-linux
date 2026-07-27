@@ -55,20 +55,35 @@ directly does work.
 
 ## Suspend and idle power
 
-Suspend/resume is usable s2idle and has repeatedly preserved touch, pen, and
-Bluetooth. Stability currently depends on disabling PSCI CPU idle state1 on all
-12 CPUs with `sp11-noidle.service`. The CPUs can still use WFI and scale down,
-but idle energy use will be higher than the hardware should ultimately achieve.
+The review20 release candidate uses PSCI `SYSTEM_SUSPEND` and enables runtime
+PSCI state1 on all 12 CPUs. Runtime state1 reduced a matched detached
+screen-on measurement by 1.47 W. An unguarded configuration later wedged while
+entering suspend, so unguarded runtime state1 is rejected.
 
-Do not remove this mitigation merely to improve a benchmark. The unresolved
-deep-idle path previously caused display/NoC wedges and failed resume.
+The qualified configuration installs a fail-closed suspend guard. It disables
+state1 on all CPUs, forces outstanding residency to exit, and refuses suspend
+unless the aggregate usage count remains flat for two seconds. It restores
+state1 only after resume. This configuration passed repeated short cycles,
+7- and 15-minute endurance cycles, and a 7 h 48 m overnight lid cycle. The
+overnight cycle resumed from the lid with touchscreen, keyboard, touchpad,
+audio, and both cameras working.
+
+Do not enable `sp11_deep_idle=1` without the guard. A boot without that opt-in
+retains the conservative `sp11-noidle.service` state1 block.
+
+Suspend power remains poor. During the overnight cycle APSS was suspended for
+99.986% of the wall interval, but AOSS, CXSD, and DDR-collapse counters stayed
+at zero. Battery capacity fell from 80% to 51%, approximately 3.7 percentage
+points per hour or 1.70--1.81 W. The same hardware-collapse failure is visible
+under Windows. Expect roughly one day of standby, not multi-day standby, until
+platform firmware permits the final collapse state.
 
 On the tested systemd 261 host, a lid-triggered suspend longer than three
-minutes can make logind's own service watchdog terminate it during resume. The
+minutes can make logind's service watchdog terminate it during resume. The
 result can look like a hard lock after the compositor loses its session-device
-authorization. An explicitly opt-in, host-tested workaround and its tradeoff
-are documented in [docs/SUSPEND.md](docs/SUSPEND.md); it is not installed by
-the project rootfs.
+authorization. The reviewed rootfs carries the host-qualified
+`WatchdogSec=0` drop-in used throughout the long review20 qualification. Its
+tradeoff is documented in [docs/SUSPEND.md](docs/SUSPEND.md).
 
 Separately, the attached Flex Keyboard touchpad has once resumed with contact
 counting offset by one finger. Detaching and reattaching the keyboard restored
@@ -156,3 +171,14 @@ The boot log contains known probe/dependency warnings, including a Surface HID
 instance that can fail probe with `-71` while the required input devices still
 bind. Cleanup is deferred until the working hardware paths are preserved in a
 more maintainable patch series.
+
+## Windows boot delay with debugging enabled
+
+The GRUB `Windows Boot Manager` chainloader entry works on the tested
+dual-boot system. That Windows installation has USB/kernel debugging enabled
+and may show an unusually long blank transition before boot continues. The
+delay was initially mistaken for a broken GRUB entry; waiting for Windows
+confirmed that chainloading succeeds.
+
+The installer must preserve the existing Windows firmware entry and EFI
+loader. It must not disable or modify Windows debugging policy.

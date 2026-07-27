@@ -18,13 +18,17 @@ switch_patch="$repo_root/kernel/sp11-camera-switch-fix.patch"
 switch_bundle="$repo_root/kernel/sp11-camera-switch-fix.bundle"
 ddc_patch="$repo_root/kernel/sp11-dp-ddc-fix.patch"
 ddc_bundle="$repo_root/kernel/sp11-dp-ddc-fix.bundle"
+review20_patch="$repo_root/kernel/sp11-suspend-review20.patch"
+review20_bundle="$repo_root/kernel/sp11-suspend-review20.bundle"
+runtime_idle_guard="$repo_root/rootfs/usr/local/libexec/sp11-runtime-idle-suspend-guard"
+runtime_idle_dropin="$repo_root/rootfs/etc/systemd/system/systemd-suspend.service.d/10-sp11-runtime-idle-guard.conf"
 
 expected_patch="218ee1ec59a29887aab919fcd37c7d8a21f7ca421ea3757476ddbab76bf07914"
 expected_bundle="cd782a17f4c6645d63d51c057bc9115ac0b7167966a6ce8c663c6e351b79d3e7"
 expected_config="8834ac6021bc4d50034b55c0960938070541387c0984aed4cc6797601ecce7f1"
 expected_symvers="b58de2ebd5ca9649b0e7299e4b5b7e3965f70e06506b88c1ec3d5046ce2e9387"
-expected_buildinfo="6a5b8da3a5649b95b57689cce97792b77f67de0f8704b3b77872df666e2f0ab0"
-expected_camera_config="4b9cd2e6d3e405f9d3c734850747eb85ff93f566e48c30c223e61a08cefde26f"
+expected_buildinfo="f8154887bf556ce4cb9c2c0c087957a18665758cc3b9834b55b4d39b42898553"
+expected_camera_config="5f0f096db561a65653ed710cd79f8aa8a97d0bad7608fdd06edd51f98212622f"
 expected_tip="2ace98eb6ef18cbd48074eed9f5b585d19ce398b"
 expected_camera_patch="a6d6f31fd9b3eea7e5b4243ec30300e1bc43718253fd2a2b77c2bdf4cebc3b6c"
 expected_camera_bundle="bacf60dc80463c92da9b62f3f0c5da077c27b67ac6685a28c542b890de5b8e64"
@@ -44,6 +48,11 @@ expected_switch_tip="fd1932d6e2a45e665c062b1b1c810f09db46ab4e"
 expected_ddc_patch="6e840cd46a1af78734cbc43878bae6553a0591ca489786045b8a72402b6381b6"
 expected_ddc_bundle="0206952408c6c9f55f2804acc8b8153bf6208c9de79cd450973bcdfd601c3073"
 expected_ddc_tip="a3e71f7080ee40dccfdd9500b8957a7c143fb6a2"
+expected_review20_patch="855eb015df2fa1af281f531e401cb419101ef950738e4d27042f360ebf3d9b04"
+expected_review20_bundle="0c078953e0f827a1b3fd126e818debce17fe851452d61f0e8758dd4e4b521385"
+expected_review20_tip="18d7951a10dc49e383d16c6af82fc2c07784de3d"
+expected_runtime_idle_guard="31af7630b55313ef82cda79c0c1669a3a94cea5ac71e4857cd37fe3b4cb0869a"
+expected_runtime_idle_dropin="a2b708ccb9d61669ddfebb6be8bdcc0e54ec0717e697f8f6894f5a64436ce847"
 
 for command_name in git reuse rg sha256sum; do
 	command -v "$command_name" >/dev/null || {
@@ -109,6 +118,14 @@ fi
 [[ "$(sha256sum "$ddc_bundle" | awk '{print $1}')" == "$expected_ddc_bundle" ]]
 [[ "$(git bundle list-heads "$ddc_bundle" | awk '{print $1}')" == "$expected_ddc_tip" ]]
 [[ "$(rg -c '^diff --git ' "$ddc_patch")" -eq 4 ]]
+[[ "$(sha256sum "$review20_patch" | awk '{print $1}')" == "$expected_review20_patch" ]]
+[[ "$(sha256sum "$review20_bundle" | awk '{print $1}')" == "$expected_review20_bundle" ]]
+[[ "$(git bundle list-heads "$review20_bundle" | awk '{print $1}')" == "$expected_review20_tip" ]]
+[[ "$(rg -c '^From [0-9a-f]{40} Mon Sep 17 00:00:00 2001$' "$review20_patch")" -eq 20 ]]
+[[ "$(rg -c '^diff --git ' "$review20_patch")" -eq 25 ]]
+[[ "$(sha256sum "$runtime_idle_guard" | awk '{print $1}')" == "$expected_runtime_idle_guard" ]]
+[[ "$(sha256sum "$runtime_idle_dropin" | awk '{print $1}')" == "$expected_runtime_idle_dropin" ]]
+[[ -x "$runtime_idle_guard" ]]
 
 # The IR bridge fails closed on a kernel-release mismatch, which is a real
 # guard: the illuminator's sink mapping and 600 mA ceiling were established
@@ -129,6 +146,32 @@ build_release="$(awk -F'"' '/^release=/{print $2}' "$repo_root/scripts/build-ker
 		"$bridge_pin" "$build_release" >&2
 	exit 1
 }
+
+for identity_script in scripts/install.sh scripts/assemble-payload.sh scripts/verify.sh; do
+	script_release="$(awk -F'"' '/^release=/{print $2; exit}' \
+		"$repo_root/$identity_script")"
+	[[ "$script_release" == "$build_release" ]] || {
+		printf '%s release %s does not match build release %s.\n' \
+			"$identity_script" "$script_release" "$build_release" >&2
+		exit 1
+	}
+done
+
+for identity_script in scripts/install.sh scripts/assemble-payload.sh scripts/verify.sh; do
+	rg -qF 'b3ca9ba56570ff1bf8217a866563f1e9788c5dfdc3a153a9b673e3b6e9624ed5' \
+		"$repo_root/$identity_script"
+	rg -qF '5e9009f5bd96a760a33086d1a8842e3228e3d28c413f96d70aca4914f7e397ed' \
+		"$repo_root/$identity_script"
+done
+
+rg -qF 'mem_sleep_default=deep' "$repo_root/scripts/install.sh"
+rg -qF 'qcom_ipcc.mask_summary_on_suspend=1' "$repo_root/scripts/install.sh"
+rg -qF 'sp11_deep_idle=1' "$repo_root/scripts/install.sh"
+if rg -q 'mem_sleep_default=s2idle|clk_ignore_unused|pd_ignore_unused' \
+	"$repo_root/scripts/install.sh"; then
+	printf 'Obsolete or unqualified kernel command-line option remains in installer.\n' >&2
+	exit 1
+fi
 
 if rg -n '^diff --git a/(drivers/media|drivers/phy/qualcomm/.*cphy|arch/arm64/boot/dts/qcom/.*camera)' "$patch"; then
 	printf 'Camera-related path found in sanitized kernel patch.\n' >&2
@@ -175,6 +218,11 @@ if rg -n -i 'qccammipicsi|cphy-win-tables|camnoc-win-tables|/home/|WillzDenali' 
 	exit 1
 fi
 
+if rg -n -i 'qccammipicsi|cphy-win-tables|camnoc-win-tables|vd55g0-win|com\.surface\.sensormodule|/home/|WillzDenali' "$review20_patch"; then
+	printf 'Withdrawn, private, or host-specific material found in review20 patch.\n' >&2
+	exit 1
+fi
+
 [[ "$(git bundle list-heads "$bundle" | wc -l)" -eq 1 ]]
 [[ "$(git bundle list-heads "$camera_bundle" | wc -l)" -eq 1 ]]
 [[ "$(git bundle list-heads "$touch_bundle" | wc -l)" -eq 1 ]]
@@ -182,6 +230,7 @@ fi
 [[ "$(git bundle list-heads "$charge_bundle" | wc -l)" -eq 1 ]]
 [[ "$(git bundle list-heads "$switch_bundle" | wc -l)" -eq 1 ]]
 [[ "$(git bundle list-heads "$ddc_bundle" | wc -l)" -eq 1 ]]
+[[ "$(git bundle list-heads "$review20_bundle" | wc -l)" -eq 1 ]]
 
 (
 	cd -- "$repo_root"
@@ -193,12 +242,14 @@ fi
 		rootfs/usr/lib/systemd/system-sleep/*.sh \
 		rootfs/usr/lib/systemd/system-sleep/sp11-charge-limit \
 		rootfs/usr/local/libexec/sp11-charge-limit \
+		rootfs/usr/local/libexec/sp11-runtime-idle-suspend-guard \
 		userspace/power/test-sp11-charge-limit.sh
 	if command -v shellcheck >/dev/null; then
 		shellcheck scripts/*.sh rootfs/usr/local/libexec/sp11-bluetooth-address \
 			rootfs/usr/lib/systemd/system-sleep/*.sh \
 			rootfs/usr/lib/systemd/system-sleep/sp11-charge-limit \
 			rootfs/usr/local/libexec/sp11-charge-limit \
+			rootfs/usr/local/libexec/sp11-runtime-idle-suspend-guard \
 			userspace/power/test-sp11-charge-limit.sh
 	fi
 	userspace/power/test-sp11-charge-limit.sh

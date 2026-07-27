@@ -5,7 +5,7 @@
 set -euo pipefail
 
 apply=0
-state_path="/var/lib/sp11-alpha/latest"
+state_path="/var/lib/sp11-beta/latest"
 
 usage() {
 	printf 'Usage: sudo %s [--state BACKUP_DIRECTORY] [--apply]\n' "$0"
@@ -22,24 +22,28 @@ done
 
 [[ $EUID -eq 0 ]] || { printf 'Run with sudo/root.\n' >&2; exit 1; }
 case "$(uname -r)" in
-	7.1.3-sp11-touch-practical8|7.1.3-sp11-sanitized1|7.1.3-sp11-sanitized2)
-	printf 'Refusing full removal while the alpha kernel is running.\n' >&2
+	7.1.3-sp11-touch-practical8|7.1.3-sp11-sanitized1|7.1.3-sp11-sanitized2|\
+	7.1.3-sp11-suspend-review20)
+	printf 'Refusing full removal while an SP11 integration kernel is running.\n' >&2
 	printf 'Boot the preserved base kernel, then run rollback again.\n' >&2
 	exit 1
 		;;
 esac
 state_path="$(readlink -f -- "$state_path")"
-[[ "$state_path" == /var/lib/sp11-alpha/backups/* ]] || {
+case "$state_path" in
+	/var/lib/sp11-beta/backups/*|/var/lib/sp11-alpha/backups/*) ;;
+	*)
 	printf 'Unsafe rollback state path: %s\n' "$state_path" >&2
 	exit 1
-}
+		;;
+esac
 [[ -f "$state_path/install-info" && -f "$state_path/created-files.list" ]] || {
 	printf 'Incomplete rollback state: %s\n' "$state_path" >&2
 	exit 1
 }
 
 printf 'Rollback state: %s\n' "$state_path"
-printf 'Will disable SP11 alpha integration services, remove only recorded new\n'
+printf 'Will disable SP11 integration services, remove only recorded new\n'
 printf 'files/trees, restore preserved originals, and regenerate GRUB.\n'
 
 if [[ $apply -ne 1 ]]; then
@@ -64,9 +68,11 @@ done
 if [[ -f "$state_path/created-trees.list" ]]; then
 	tac "$state_path/created-trees.list" | while IFS= read -r created_tree; do
 		case "$created_tree" in
-			/boot/sp11-alpha|/usr/lib/modules/7.1.3-sp11-touch-practical8|\
+			/boot/sp11-alpha|/boot/sp11-beta|\
+			/usr/lib/modules/7.1.3-sp11-touch-practical8|\
 			/usr/lib/modules/7.1.3-sp11-sanitized1|\
-			/usr/lib/modules/7.1.3-sp11-sanitized2)
+			/usr/lib/modules/7.1.3-sp11-sanitized2|\
+			/usr/lib/modules/7.1.3-sp11-suspend-review20)
 				rm -rf -- "$created_tree"
 				;;
 			*)

@@ -2,10 +2,10 @@
 
 set -euo pipefail
 
-release="7.1.3-sp11-sanitized2"
-boot_dir="${SP11_BOOT_DIR:-/boot/sp11-alpha}"
-expected_image="d95b1cbba0e017f2430e65ce6ca5e3e276ef3d0dbcab7f68e999db2dd4143152"
-expected_dtb="3de1d2e6b0d40fef35866ef6e024cb5164f30f1e44f0c0d0051cc7cf9a384ede"
+release="7.1.3-sp11-suspend-review20"
+boot_dir="${SP11_BOOT_DIR:-/boot/sp11-beta}"
+expected_image="b3ca9ba56570ff1bf8217a866563f1e9788c5dfdc3a153a9b673e3b6e9624ed5"
+expected_dtb="5e9009f5bd96a760a33086d1a8842e3228e3d28c413f96d70aca4914f7e397ed"
 failures=0
 
 pass() { printf 'PASS  %s\n' "$*"; }
@@ -50,11 +50,34 @@ done
 if [[ $policy_count -eq 3 ]]; then pass "three SCMI cpufreq policies"; else fail "expected 3 cpufreq policies, found $policy_count"; fi
 
 disabled_idle=0
+enabled_idle=0
 for idle_control in /sys/devices/system/cpu/cpu*/cpuidle/state1/disable; do
 	[[ -e "$idle_control" ]] || continue
 	[[ "$(cat "$idle_control")" == 1 ]] && disabled_idle=$((disabled_idle + 1))
+	[[ "$(cat "$idle_control")" == 0 ]] && enabled_idle=$((enabled_idle + 1))
 done
-if [[ $disabled_idle -eq 12 ]]; then pass "state1 disabled on 12 CPUs"; else fail "state1 disabled on $disabled_idle CPUs"; fi
+if grep -qw sp11_deep_idle=1 /proc/cmdline; then
+	if [[ $enabled_idle -eq 12 ]]; then
+		pass "guarded runtime state1 enabled on 12 CPUs"
+	else
+		fail "guarded runtime state1 enabled on $enabled_idle CPUs"
+	fi
+	if [[ -x /usr/local/libexec/sp11-runtime-idle-suspend-guard ]] &&
+		systemctl cat systemd-suspend.service |
+			grep -Fq 'ExecStartPre=/usr/local/libexec/sp11-runtime-idle-suspend-guard pre' &&
+		systemctl cat systemd-suspend.service |
+			grep -Fq 'ExecStartPost=/usr/local/libexec/sp11-runtime-idle-suspend-guard post'; then
+		pass "runtime-idle suspend guard installed and ordered"
+	else
+		fail "runtime-idle suspend guard missing or ineffective"
+	fi
+else
+	if [[ $disabled_idle -eq 12 ]]; then
+		pass "conservative state1 block active on 12 CPUs"
+	else
+		fail "conservative state1 block active on $disabled_idle CPUs"
+	fi
+fi
 
 iptsd_units="$(systemctl list-units 'sp11-iptsd@*.service' --state=active --no-legend | wc -l)"
 if [[ $iptsd_units -ge 1 ]]; then pass "iptsd active"; else fail "iptsd inactive"; fi

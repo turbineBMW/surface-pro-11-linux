@@ -30,10 +30,20 @@ firmware file is included here.
 - Charge-limit reliability tree: `9de653f31534b28a525f86d23c441deb831c0e2f`
 - Camera-switch fix tip: `fd1932d6e2a45e665c062b1b1c810f09db46ab4e`
 - Camera-switch fix tree: `c30f01a3d05a28bf8c4a0e809fc8f81a919927af`
-- Candidate release string: `7.1.3-sp11-camera-review10`
+- Review12 prerequisite tip: `a3e71f7080ee40dccfdd9500b8957a7c143fb6a2`
+- Review20 qualified tip: `18d7951a10dc49e383d16c6af82fc2c07784de3d`
+- Review20 qualified tree: `b820f10abba096e23a28506d7ad591dffdedf1a8`
+- Candidate release string: `7.1.3-sp11-suspend-review20`
 - Delta: 12 sanitized commits, 13 reviewed camera commits, and one corrective
   touch-driver commit, three tablet-mode resynchronization commits, one
   charge-limit reliability commit, and one camera-switch fix commit
+
+`kernel/sp11-suspend-review20.bundle` adds 20 commits to the exact review12
+prerequisite. It contains the PDC wake/deep-idle series with original
+authorship, subsequent suspend and power corrections, and the locally tested
+review20 integration changes. The accompanying 20-message patch series
+reconstructs the same source delta. Exact hashes and the local-commit
+sign-off boundary are recorded in `docs/REVIEW20-CONSOLIDATION.md`.
 
 `kernel/sp11-sanitized2.bundle` preserves the exact incremental
 history and requires the Linux base commit. The cumulative patch reproduces

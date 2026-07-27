@@ -1,6 +1,5 @@
-# Review6 deliberately retains the byte-identical review4 merged configuration.
-# scripts/build-kernel.sh supplies the authoritative review7 KERNELRELEASE.
-CONFIG_LOCALVERSION="-sp11-camera-review4"
+# The build helper supplies the authoritative review20 KERNELRELEASE.
+CONFIG_LOCALVERSION=""
 CONFIG_I2C_QCOM_CCI=m
 CONFIG_VIDEO_QCOM_CAMSS=m
 CONFIG_VIDEO_IMX681=m

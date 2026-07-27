@@ -21,6 +21,11 @@ sudo systemctl disable --now sp11-noidle.service
 sudo systemctl stop 'sp11-iptsd@*.service'
 ```
 
+The runtime-idle guard is a `systemd-suspend.service` drop-in rather than an
+enabled service. Do not remove only the guard while booted with
+`sp11_deep_idle=1`; select the conservative rollback kernel or remove that
+kernel parameter first.
+
 If a Windows Bluetooth controller identity override was configured for a Flex
 Keyboard, remove `/etc/sp11/bluetooth-address.conf` and reboot. The address
 helper will return to the firmware EFI address; BlueZ bonds stored below the
@@ -55,8 +60,8 @@ the graphical session.
 
 ## Restore the logind service watchdog
 
-If the opt-in lid-suspend workaround from `docs/SUSPEND.md` was enabled, remove
-only its drop-in and reboot:
+To remove the beta baseline's lid-suspend watchdog override, remove only its
+drop-in and reboot:
 
 ```sh
 sudo rm /etc/systemd/system/systemd-logind.service.d/10-sp11-suspend-watchdog.conf

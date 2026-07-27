@@ -129,6 +129,21 @@ SPDX-FileCopyrightText = [
 SPDX-License-Identifier = "GPL-2.0-only"
 
 [[annotations]]
+path = [
+  "kernel/sp11-suspend-review20.bundle",
+  "kernel/sp11-suspend-review20.patch",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = [
+  "1991-2026 Linux kernel contributors",
+  "2017-2026 The Linux Foundation",
+  "2026 Qualcomm Innovation Center, Inc.",
+  "2026 Linaro Ltd",
+  "2026 turbinebmw",
+]
+SPDX-License-Identifier = "GPL-2.0-only"
+
+[[annotations]]
 path = "userspace/iptsd/LICENSE.upstream"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "1989, 1991 Free Software Foundation, Inc."

@@ -4,7 +4,9 @@ This allowlisted tree contains only the integrations required by the qualified
 machine:
 
 - Bluetooth EFI-address setup service/helper
-- deep-idle stability mitigation
+- conservative deep-idle fallback plus the qualified fail-closed runtime-idle
+  suspend guard
+- systemd-logind watchdog override qualified for long lid-triggered suspend
 - dynamic iptsd udev/service/sleep lifecycle
 - Surface platform-profile module loading and patched PPD selection
 - Qualcomm SSC startup and the SP11-specific libssc selection for the ambient

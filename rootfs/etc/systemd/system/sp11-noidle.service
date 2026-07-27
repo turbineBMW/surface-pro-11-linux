@@ -4,11 +4,15 @@ Description=SP11 stability: block deep CPU idle (state1) - RPMh sleep-set fabric
 # votes; racing a display transition starves scan-out and wedges the NoC
 # (suspend hang, blacklist-boot lockups, spontaneous GDM freezes).
 # Cost: higher idle power (WFI only). Remove once a real fix lands.
+#
+# On the reviewed kernel, sp11_deep_idle=1 explicitly opts into runtime state1.
+# In that mode the fail-closed systemd-suspend guard quiesces state1 before
+# suspend and restores it after resume.
 After=multi-user.target
 
 [Service]
 Type=oneshot
-ExecStart=/bin/sh -ec 'if grep -qw cpuidle.off=1 /proc/cmdline; then exit 0; fi; count=0; for f in /sys/devices/system/cpu/cpu*/cpuidle/state1/disable; do [ -e "$f" ] || continue; echo 1 > "$f"; [ "$(cat "$f")" = 1 ]; count=$((count + 1)); done; [ "$count" -eq 12 ] || { echo "expected 12 effective state1 controls, found $count" >&2; exit 1; }'
+ExecStart=/bin/sh -ec 'if grep -qw cpuidle.off=1 /proc/cmdline; then exit 0; fi; if grep -qw sp11_deep_idle=1 /proc/cmdline; then echo "sp11_deep_idle=1 requested: leaving runtime state1 enabled for the suspend guard" >&2; exit 0; fi; count=0; for f in /sys/devices/system/cpu/cpu*/cpuidle/state1/disable; do [ -e "$f" ] || continue; echo 1 > "$f"; [ "$(cat "$f")" = 1 ]; count=$((count + 1)); done; [ "$count" -eq 12 ] || { echo "expected 12 effective state1 controls, found $count" >&2; exit 1; }'
 RemainAfterExit=yes
 
 [Install]

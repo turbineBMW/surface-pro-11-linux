@@ -25,3 +25,14 @@ Local building and hardware testing may continue. Remove this file only as an
 intentional binary-release action after the binary gates in
 `docs/REDISTRIBUTION-REVIEW.md` are complete. This is an engineering
 compliance guard, not legal advice or a guarantee against third-party claims.
+
+## Beta ISO preparation
+
+Work on the beta ISO build system, package manifests, installer, recovery
+environment, and clean-install tests is authorized while this hold remains in
+place. The hold blocks publishing or describing their binary outputs as a
+release; it does not block development of the release machinery.
+
+The active preparation checklist is `docs/BETA-ISO-ROADMAP.md`. Removing this
+file remains the final deliberate publication gate, not the first step of ISO
+development.

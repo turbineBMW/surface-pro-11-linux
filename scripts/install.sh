@@ -2,12 +2,12 @@
 
 set -euo pipefail
 
-release="7.1.3-sp11-sanitized2"
-entry_id="sp11-alpha"
+release="7.1.3-sp11-suspend-review20"
+entry_id="sp11-beta-review20"
 expected_dmi="Microsoft Surface Pro, 11th Edition"
 expected_compatible="microsoft,denali"
-expected_image="d95b1cbba0e017f2430e65ce6ca5e3e276ef3d0dbcab7f68e999db2dd4143152"
-expected_dtb="3de1d2e6b0d40fef35866ef6e024cb5164f30f1e44f0c0d0051cc7cf9a384ede"
+expected_image="b3ca9ba56570ff1bf8217a866563f1e9788c5dfdc3a153a9b673e3b6e9624ed5"
+expected_dtb="5e9009f5bd96a760a33086d1a8842e3228e3d28c413f96d70aca4914f7e397ed"
 expected_iptsd="45ce0fcabdda04a9fcf3ce30f7f0c64ba7098fd2351127ef0e54cf0ac0b3f083"
 expected_checker="54fcdaef90b0bd4239df670865cf8b258c3ae6e3988e42b0b9a3b58aaa4b08f5"
 expected_ppd="9e1d72935f2b916de1c44950e425948e60c7bdf83c69bede2a079e7a79a82252"
@@ -48,7 +48,8 @@ done
 payload="$(cd -- "$payload" && pwd -P)"
 
 required_commands=(awk btmgmt depmod find findmnt fuser grub-mkconfig install \
-	mkinitcpio python3 sha256sum systemctl systemd-escape tar udevadm zstd)
+	mkinitcpio python3 sha256sum systemctl systemd-escape tar taskset udevadm \
+	zstd)
 for command_name in "${required_commands[@]}"; do
 	command -v "$command_name" >/dev/null || {
 		printf 'Missing required command: %s\n' "$command_name" >&2
@@ -115,24 +116,24 @@ boot_mount="$(findmnt -no TARGET -T /boot | head -n1)"
 	exit 1
 }
 if [[ "$boot_mount" == "/" ]]; then
-	grub_boot_dir="/boot/sp11-alpha"
+	grub_boot_dir="/boot/sp11-beta"
 elif [[ "$boot_mount" == "/boot" ]]; then
-	grub_boot_dir="/sp11-alpha"
+	grub_boot_dir="/sp11-beta"
 else
 	printf 'Unsupported /boot mount target: %s\n' "$boot_mount" >&2
 	exit 1
 fi
 
 module_dir="/usr/lib/modules/$release"
-boot_dir="/boot/sp11-alpha"
+boot_dir="/boot/sp11-beta"
 if [[ -e "$module_dir" || -e "$boot_dir" ]]; then
-	printf 'Refusing collision with an existing alpha kernel:\n' >&2
+	printf 'Refusing collision with an existing beta kernel:\n' >&2
 	[[ -e "$module_dir" ]] && printf '  %s\n' "$module_dir" >&2
 	[[ -e "$boot_dir" ]] && printf '  %s\n' "$boot_dir" >&2
 	exit 1
 fi
 
-printf '\nSP11 sanitized candidate preflight passed.\n'
+printf '\nSP11 review20 beta candidate preflight passed.\n'
 printf 'DMI:        %s\n' "$dmi"
 printf 'Kernel:     %s\n' "$release"
 printf 'Root UUID:  %s\n' "$root_uuid"
@@ -147,7 +148,7 @@ if [[ $apply -ne 1 ]]; then
 fi
 
 timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
-state_dir="/var/lib/sp11-alpha"
+state_dir="/var/lib/sp11-beta"
 backup_dir="$state_dir/backups/$timestamp"
 backup_root="$backup_dir/root"
 created_files="$backup_dir/created-files.list"
@@ -200,21 +201,21 @@ ln -s /usr/local/libexec/sp11-power-profile-cpufreq "$sleep_link"
 depmod "$release"
 mkinitcpio -k "$release" -g "$boot_dir/initramfs-$release.img"
 
-grub_fragment="/etc/grub.d/09_sp11_alpha"
+grub_fragment="/etc/grub.d/09_sp11_beta"
 backup_destination "$grub_fragment"
 grub_temporary="$(mktemp)"
 cat >"$grub_temporary" <<EOF
 #!/bin/sh
 exec tail -n +3 \$0
 
-menuentry 'Surface Pro 11 Linux sanitized candidate ($release)' --class arch --class gnu-linux --class gnu --class os --id '$entry_id' {
+menuentry 'Surface Pro 11 Linux beta candidate ($release)' --class arch --class gnu-linux --class gnu --class os --id '$entry_id' {
     load_video
     set gfxpayload=keep
     insmod part_gpt
     insmod ext2
     search --no-floppy --fs-uuid --set=root $boot_uuid
-    echo 'Loading Surface Pro 11 sanitized candidate ...'
-    linux $grub_boot_dir/Image-$release root=UUID=$root_uuid rw clk_ignore_unused pd_ignore_unused loglevel=7 systemd.tpm2_wait=false efi_pstore.pstore_disable=0 mem_sleep_default=s2idle cpufreq.default_governor=schedutil
+    echo 'Loading Surface Pro 11 beta candidate ...'
+    linux $grub_boot_dir/Image-$release root=UUID=$root_uuid rw loglevel=7 systemd.tpm2_wait=false efi_pstore.pstore_disable=0 mem_sleep_default=deep cpufreq.default_governor=schedutil qcom_ipcc.mask_summary_on_suspend=1 sp11_deep_idle=1
     devicetree $grub_boot_dir/x1e80100-microsoft-denali-oled.dtb
     echo 'Loading initial ramdisk ...'
     initrd $grub_boot_dir/initramfs-$release.img

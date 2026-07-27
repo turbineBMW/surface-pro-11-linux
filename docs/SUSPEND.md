@@ -1,10 +1,43 @@
-# Lid suspend and the logind watchdog
+# Guarded runtime idle, lid suspend, and the logind watchdog
+
+## Qualified review20 policy
+
+The beta release candidate opts into runtime PSCI state1 with
+`sp11_deep_idle=1` because it materially reduces screen-on idle power. The
+kernel-side Denali block remains the default when that parameter is absent.
+
+Runtime state1 is not safe across suspend entry by itself. After more than
+3.8 million runtime entries, an unguarded ten-minute test wedged while entering
+suspend and required a forced reboot. The rootfs therefore installs:
+
+```text
+/usr/local/libexec/sp11-runtime-idle-suspend-guard
+/etc/systemd/system/systemd-suspend.service.d/10-sp11-runtime-idle-guard.conf
+```
+
+Before `systemd-sleep` enters the kernel, the guard disables state1 on all
+12 CPUs, schedules work on every CPU to force outstanding residency to exit,
+and requires the aggregate state1 usage count to remain exactly flat for two
+seconds. Any failed write, missing CPU, or continuing entry causes
+`ExecStartPre` to fail and prevents suspend. After a successful resume,
+`ExecStartPost` restores state1 on all 12 CPUs.
+
+The guarded policy passed five short cycles, 7- and 15-minute endurance
+cycles, more runtime-state1 exposure than the rejected configuration, and a
+7 h 48 m overnight lid-triggered suspend. The overnight APSS residency was
+99.986%, the lid woke the system, and all tested hardware worked afterward.
+
+The deeper platform states still do not engage. The overnight cycle consumed
+1.70--1.81 W and lost 29 displayed battery percentage points. Users should
+expect approximately 3.7 percentage points of suspend drain per hour and
+should not treat suspend as multi-day storage.
 
 ## Scope
 
-This is an opt-in workaround for a failure reproduced on the tested Surface
-Pro 11 OLED/X Elite unit with systemd 261 and suspend-to-idle. It is not
-installed by the project rootfs.
+The logind configuration below addresses a separate failure reproduced on the
+tested Surface Pro 11 OLED/X Elite unit with systemd 261. It is included in
+the beta rootfs baseline because all long guarded review20 qualification,
+including the overnight lid cycle, used it.
 
 The failure is specific to the lid-triggered path observed on this machine. A
 direct `systemctl suspend` cycle remained in genuine suspend-to-idle for about
@@ -18,23 +51,17 @@ No kernel panic, oops, or persistent-storage crash record accompanied the
 failure. This workaround does not change the kernel sleep state, deepen
 suspend, or modify lid-switch policy.
 
-## Opt-in workaround
+## Installed workaround
 
-Create the systemd drop-in directory:
-
-```sh
-sudo install -d -m 0755 /etc/systemd/system/systemd-logind.service.d
-sudoedit /etc/systemd/system/systemd-logind.service.d/10-sp11-suspend-watchdog.conf
-```
-
-Place exactly this content in the file:
+The rootfs installs:
 
 ```ini
+# /etc/systemd/system/systemd-logind.service.d/10-sp11-suspend-watchdog.conf
 [Service]
 WatchdogSec=0
 ```
 
-Then reload unit metadata and reboot:
+After installation, reload unit metadata and reboot:
 
 ```sh
 sudo systemctl daemon-reload
@@ -78,8 +105,9 @@ setting remains intact and still restarts logind after an ordinary process
 exit or crash. No kernel, hardware, systemd-manager, or other service watchdog
 is disabled.
 
-Keep this workaround opt-in until the lid path receives a narrower fix or more
-platforms reproduce the same failure.
+Keep this workaround in the narrowly targeted beta baseline until the lid path
+receives a narrower fix or the exact packaged system passes equivalent long
+lid-suspend qualification without it.
 
 ## Review8 tablet-mode resynchronization
 

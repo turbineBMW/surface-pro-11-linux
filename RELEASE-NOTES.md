@@ -1,80 +1,59 @@
-# Experimental source preview
+# Review20 beta consolidation
 
-This repository is a source-only preview for experienced Surface Pro 11 owners
-and Linux hardware-enablement developers. It publishes the reviewed kernel
-history, cumulative patches, configuration, userspace changes, provenance, and
-build instructions behind the current proof of concept.
+This branch prepares the exact, hardware-qualified review20 stack for a beta
+ISO. Binary and ISO publication remains blocked by
+`BINARY-RELEASE-HOLD.md` until clean reconstruction, archive review, and
+install/rollback tests are complete.
 
-There is no downloadable kernel, module payload, installer image, or ISO in
-this preview. Binary and ISO publication remains blocked by
-`BINARY-RELEASE-HOLD.md` until exact corresponding source, licenses, archive
-checks, and installation/rollback validation are complete.
+## Qualified kernel
 
-## Reviewed kernel source
+- Linux release: `7.1.3-sp11-suspend-review20`
+- Source commit: `18d7951a10dc49e383d16c6af82fc2c07784de3d`
+- Source tree: `b820f10abba096e23a28506d7ad591dffdedf1a8`
+- Kernel Image SHA-256:
+  `b3ca9ba56570ff1bf8217a866563f1e9788c5dfdc3a153a9b673e3b6e9624ed5`
+- OLED DTB SHA-256:
+  `5e9009f5bd96a760a33086d1a8842e3228e3d28c413f96d70aca4914f7e397ed`
+- Preserved safe entry: `7.1.3-sp11-camera-review12`
+- Review12 source commit:
+  `a3e71f7080ee40dccfdd9500b8957a7c143fb6a2`
 
-- Hardware-validated kernel release:
-  `7.1.3-sp11-camera-review10`
-- Hardware-validated source commit:
-  `fd1932d6e2a45e665c062b1b1c810f09db46ab4e`
-- Hardware-validated source tree:
-  `c30f01a3d05a28bf8c4a0e809fc8f81a919927af`
-- Preserved rollback kernel release: `7.1.3-sp11-camera-review9`
-- Preserved rollback source commit:
-  `940bbc856a120e6f967f9dbaf825d5473bfae664`
-- Preserved rollback source tree:
-  `62edee5183ed3b42ee3a2f9f0c71066c3ab87742`
-- Base: Linux stable `v7.1.3` plus the attributed SP11/HID-over-SPI branch
+The cumulative review20 patch series and incremental Git bundle are included
+under `kernel/`. See `docs/REVIEW20-CONSOLIDATION.md` for provenance,
+qualification evidence, and remaining release gates.
 
-The reviewed branch supports sequential capture from the front IMX681, rear
-OV13858, and IR VD55G0 cameras on the tested OLED/X Elite Surface Pro 11. It
-also enables the independently tested PM8550 IR illuminator and fixes automatic
-loading of the touch/pen SPI transport. The bounded IR bridge source and its
-independent illuminator-off helper are included; Howdy itself, the
-v4l2loopback binary, enrolled face model, and test captures are not.
+## Validated on the tested OLED/X Elite unit
 
-Review6 added a focused delayed controller posture re-query after resume. It
-passed attached and detached suspend/resume tests, but a later Flex Keyboard
-reattach recreated its HID devices without delivering the separate cover-state
-notification. The cached detached posture suppressed the attached touchpad.
+- OLED display, touchscreen, pen, attached keyboard, detached Flex Keyboard,
+  haptic touchpad, Wi-Fi, and Bluetooth
+- Speakers, microphones, volume controls, and three bounded power profiles
+- Front, rear, and IR cameras, including repeated front/rear switching
+- Battery charge-limit restore, ambient color sensor, fan telemetry, and
+  DisplayPort DDC
+- USB runtime power management with repeated dock/thumb-drive hotplug
+- Guarded firmware-managed CPU idle during normal runtime
+- Short and repeated suspend/resume, a ten-minute suspend, and a 7-hour
+  48-minute overnight suspend with all checked hardware functional afterward
 
-Review7 also observed the KIP connection event, but its single delayed query
-could receive transient raw state zero and leave tablet mode asserted. Review8
-rejects values outside the valid posture range and retries for a bounded
-30-second settling window, stopping on the first valid controller response.
-The review8 live module passed repeated detach/reattach testing, exact clean
-builds are byte-identical, and the exact full kernel passed the attached,
-detached, folded-back, suspend/resume, and reattach matrix. Subsequent daily-use
-testing repeatedly preserved keyboard and touchpad operation with the Flex
-Keyboard both attached and detached.
-
-Review9 adds reliable Qualcomm battery-manager charge-threshold writes and
-restores a cached charge window after a remote service reconnect. Two clean
-builds are byte-identical, the exact kernel passed its automatic boot checker
-and complete practical hardware matrix, and the verified 75–80% window was
-reapplied at boot and after resume. Review9 is the persistent target on the
-tested unit; review8 remains installed as its rollback.
-
-## Other validated hardware
-
-- Touch, multitouch, pen hover/strokes, and eraser through iptsd
-- Wi-Fi and Bluetooth
-- Speakers, microphones, and volume rocker
-- Attached keyboard, detached Bluetooth Flex Keyboard, and haptic touchpad
-- Short power-button press suspends and wakes normally on a second press
-- SAM fan telemetry and qualified three-tier power profiles: 1,920,000 kHz
-  power-saver, 2,515,200 kHz balanced, and full-range performance
-- Usable s2idle with deeper CPU idle disabled for stability
+The runtime-idle suspend guard disables state1 before suspend and restores it
+after resume only when the explicit `sp11_deep_idle=1` opt-in is present.
 
 ## Important limitations
 
-- Tested on one Surface Pro 11 OLED/X Elite unit only
-- Concurrent cameras, repeated switching, and camera suspend/resume remain
-  incomplete
-- Camera color processing and application integration remain experimental
-- The CPU-idle mitigation increases idle power
-- No clean-room installer or binary payload is currently offered
-- The source is not represented as upstream-ready
+- Qualified on one physical Surface Pro 11 OLED/X Elite unit only
+- Suspend draw remains approximately 1.7–1.8 W in the overnight test; this
+  permits more than 24 hours from a full battery but is not an ideal deepest
+  platform sleep
+- Unguarded state1 is not supported, and the firmware boundary remains under
+  investigation
+- Firmware is an external prerequisite and is not redistributed
+- Other Surface Pro 11 variants, distributions, and boot loaders are not yet
+  qualified
+- Camera color tuning and ordinary desktop camera integration remain
+  experimental
 
-The former Practical8 source and binary artifacts are withdrawn and are not
-part of this repository's public object graph. See the provenance and camera
-review documents for the replacement history and source boundaries.
+## Dual boot
+
+The GRUB Windows chainloader entry works. A long blank delay before Windows
+starts is expected when Windows USB/kernel debugging is enabled; that delay was
+previously mistaken for a broken GRUB entry.

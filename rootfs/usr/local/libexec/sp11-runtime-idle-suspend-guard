@@ -1,0 +1,130 @@
+#!/bin/sh
+
+# Fail-closed guard for Surface Pro 11 global runtime PSCI idle.
+#
+# systemd-suspend.service calls "pre" before systemd-sleep can enter the
+# kernel suspend path and calls "post" only after systemd-sleep returns from
+# resume. On an ordinary safe boot without sp11_deep_idle=1, both actions are
+# deliberate no-ops.
+
+set -eu
+
+action=${1:-}
+state_dir=/var/lib/sp11-runtime-idle-guard
+history=$state_dir/history.log
+state=$state_dir/latest-state.txt
+taskset_bin=/usr/bin/taskset
+
+install -d -m0700 "$state_dir"
+
+record() {
+	line="$(date --iso-8601=seconds) | boot=$(cat /proc/sys/kernel/random/boot_id) | $*"
+	printf '%s\n' "$line" >>"$history"
+	printf '%s\n' "$line" >"$state"
+	sync -f "$history" "$state" 2>/dev/null || sync
+	logger -t sp11-runtime-idle-guard -- "$*"
+}
+
+requested() {
+	grep -qw 'sp11_deep_idle=1' /proc/cmdline
+}
+
+usage_total() {
+	total=0
+	for cpu in /sys/devices/system/cpu/cpu[0-9]*; do
+		usage=$cpu/cpuidle/state1/usage
+		[ -r "$usage" ] || continue
+		total=$((total + $(cat "$usage")))
+	done
+	echo "$total"
+}
+
+case "$action" in
+	pre)
+		if ! requested; then
+			record "pre inactive: sp11_deep_idle=1 absent"
+			exit 0
+		fi
+
+		record "pre begin: disabling runtime state1 before suspend"
+
+		disabled=0
+		cpus=""
+		for cpu in /sys/devices/system/cpu/cpu[0-9]*; do
+			disable=$cpu/cpuidle/state1/disable
+			[ -e "$disable" ] || continue
+			printf '1\n' >"$disable"
+			if [ "$(cat "$disable")" = 1 ]; then
+				disabled=$((disabled + 1))
+			fi
+			cpu_id=${cpu##*/cpu}
+			cpus="$cpus $cpu_id"
+		done
+
+		if [ "$disabled" -ne 12 ]; then
+			record "pre FAIL: expected 12 disabled state1 controls, got $disabled"
+			exit 1
+		fi
+
+		# Writing the user-disable bit does not itself invoke the cpuidle
+		# global pause primitive. Force a runnable task onto every CPU so
+		# any state1 residency already in flight must exit.
+		for cpu_id in $cpus; do
+			if ! "$taskset_bin" -c "$cpu_id" /bin/true; then
+				record "pre FAIL: could not execute wake task on CPU$cpu_id"
+				exit 1
+			fi
+		done
+
+		usage_before=$(usage_total)
+		sleep 2
+		usage_after=$(usage_total)
+
+		if [ "$usage_after" -ne "$usage_before" ]; then
+			record "pre FAIL: state1 usage did not quiesce ($usage_before -> $usage_after)"
+			exit 1
+		fi
+
+		disabled_after=0
+		for disable in \
+			/sys/devices/system/cpu/cpu*/cpuidle/state1/disable; do
+			[ -e "$disable" ] || continue
+			[ "$(cat "$disable")" = 1 ] &&
+				disabled_after=$((disabled_after + 1))
+		done
+
+		if [ "$disabled_after" -ne 12 ]; then
+			record "pre FAIL: state1 re-enabled during quiescence check ($disabled_after/12 disabled)"
+			exit 1
+		fi
+
+		record "pre PASS: state1 disabled on 12 CPUs and usage quiesced at $usage_after"
+		;;
+	post)
+		if ! requested; then
+			record "post inactive: sp11_deep_idle=1 absent"
+			exit 0
+		fi
+
+		enabled=0
+		for disable in \
+			/sys/devices/system/cpu/cpu*/cpuidle/state1/disable; do
+			[ -e "$disable" ] || continue
+			printf '0\n' >"$disable"
+			if [ "$(cat "$disable")" = 0 ]; then
+				enabled=$((enabled + 1))
+			fi
+		done
+
+		if [ "$enabled" -ne 12 ]; then
+			record "post FAIL: expected 12 enabled state1 controls, got $enabled"
+			exit 1
+		fi
+
+		record "post PASS: runtime state1 restored on 12 CPUs after resume"
+		;;
+	*)
+		echo "usage: $0 pre|post" >&2
+		exit 2
+		;;
+esac

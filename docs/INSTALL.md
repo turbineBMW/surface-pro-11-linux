@@ -1,9 +1,9 @@
 # Installation status
 
-No prebuilt payload or ISO is published. `BINARY-RELEASE-HOLD.md` deliberately
-blocks the old payload assembly and installer path until a new binary release
-has complete corresponding source, license material, archive review, and clean
-install/rollback validation.
+No prebuilt payload or ISO is published yet. `BINARY-RELEASE-HOLD.md`
+deliberately blocks the review20 beta installer and payload assembler until the
+new release has complete corresponding source, license material, archive
+review, and clean install/rollback validation.
 
 Experienced developers may build the reviewed source by following `BUILD.md`
 and `../kernel/README.md`. Installing a self-built kernel is currently a manual
@@ -22,6 +22,9 @@ Before testing a self-built kernel:
 
 Do not download, mirror, install, or redistribute the former Practical8
 payload. It does not correspond to the reviewed source in this repository.
+The held beta tooling uses a separate review20 kernel, boot directory, GRUB
+entry, and rollback-state identity so it cannot silently replace that payload
+or the preserved safe kernel.
 
 The eventual project goal is a reproducible installer or image with the same
 kind of approachable bootstrap offered by the foundation project. That work is
