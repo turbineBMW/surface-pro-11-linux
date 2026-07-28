@@ -52,7 +52,9 @@ documented redistributable source, removal, or review by qualified counsel.
 - [x] Public repository made private by the owner.
 - [x] Public promotion of downloadable code and binaries paused.
 - [x] Local `provenance-cleanup` branch created.
-- [x] Release-assembly script refuses to run while the hold file exists.
+- [x] Release assembly refuses to run while the hold file exists; only an
+  explicit, repository-local `--local-staging` engineering run is permitted,
+  and its output is marked not for release.
 - [x] GitHub reports the repository `PRIVATE`; the withdrawn prerelease asset
   and tag have been deleted.
 - [x] GitHub reports zero forks. The retained payload asset reported one
@@ -92,9 +94,12 @@ Practical8 commit, tree, Image, DTB, module, archive, or checksum values.
 
 ## Future binary and ISO gates
 
-- [ ] Stage complete corresponding source for every shipped GPL/LGPL binary,
-  including the exact full kernel, iptsd, Power Profiles Daemon, and any
-  modified libcamera sources used by the payload.
+- [x] Stage complete corresponding source for the custom held payload: exact
+  full kernel, iptsd with compiled fallback dependencies, and patched Power
+  Profiles Daemon.
+- [ ] Define the live ISO package manifest and stage or offer exact matching
+  source for its distribution packages, including any shipped libcamera/IPA
+  or optional v4l2loopback build.
 - [ ] Include all applicable license texts, copyright notices, source
   identities, build inputs, and machine-readable build instructions alongside
   the binaries.

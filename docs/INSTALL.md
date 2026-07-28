@@ -1,9 +1,12 @@
 # Installation status
 
 No prebuilt payload or ISO is published yet. `BINARY-RELEASE-HOLD.md`
-deliberately blocks the review20 beta installer and payload assembler until the
+deliberately blocks the review20 beta installer and release assembly until the
 new release has complete corresponding source, license material, archive
-review, and clean install/rollback validation.
+review, and clean install/rollback validation. The assembler permits only an
+explicit `--local-staging` engineering run under the hold, restricts output to
+the repository's ignored `work/` directory, and marks that output not for
+release.
 
 Experienced developers may build the reviewed source by following `BUILD.md`
 and `../kernel/README.md`. Installing a self-built kernel is currently a manual

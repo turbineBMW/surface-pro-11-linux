@@ -6,7 +6,7 @@ release="7.1.3-sp11-suspend-review20"
 entry_id="sp11-beta-review20"
 expected_dmi="Microsoft Surface Pro, 11th Edition"
 expected_compatible="microsoft,denali"
-expected_image="b3ca9ba56570ff1bf8217a866563f1e9788c5dfdc3a153a9b673e3b6e9624ed5"
+expected_image="918ed2560654355555535290fd0d9657e1afc7022b3e46cc8396155d3575f256"
 expected_dtb="5e9009f5bd96a760a33086d1a8842e3228e3d28c413f96d70aca4914f7e397ed"
 expected_iptsd="45ce0fcabdda04a9fcf3ce30f7f0c64ba7098fd2351127ef0e54cf0ac0b3f083"
 expected_checker="54fcdaef90b0bd4239df670865cf8b258c3ae6e3988e42b0b9a3b58aaa4b08f5"
@@ -47,9 +47,9 @@ done
 [[ -n "$payload" ]] || { usage >&2; exit 2; }
 payload="$(cd -- "$payload" && pwd -P)"
 
-required_commands=(awk btmgmt depmod find findmnt fuser grub-mkconfig install \
-	mkinitcpio python3 sha256sum systemctl systemd-escape tar taskset udevadm \
-	zstd)
+required_commands=(awk btmgmt depmod find findmnt fuser grep grub-mkconfig \
+	install lsinitcpio mkinitcpio python3 sha256sum systemctl systemd-escape \
+	tar taskset udevadm zstd)
 for command_name in "${required_commands[@]}"; do
 	command -v "$command_name" >/dev/null || {
 		printf 'Missing required command: %s\n' "$command_name" >&2
@@ -200,6 +200,11 @@ ln -s /usr/local/libexec/sp11-power-profile-cpufreq "$sleep_link"
 
 depmod "$release"
 mkinitcpio -k "$release" -g "$boot_dir/initramfs-$release.img"
+if ! lsinitcpio "$boot_dir/initramfs-$release.img" |
+	grep -Eq '(^|/)videocc-sm8550\.ko(\.(gz|xz|zst))?$'; then
+	printf 'Generated initramfs is missing the required X1E VideoCC module.\n' >&2
+	exit 1
+fi
 
 grub_fragment="/etc/grub.d/09_sp11_beta"
 backup_destination "$grub_fragment"

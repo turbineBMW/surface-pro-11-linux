@@ -5,7 +5,7 @@ set -euo pipefail
 release="7.1.3-sp11-suspend-review20"
 expected_commit="18d7951a10dc49e383d16c6af82fc2c07784de3d"
 expected_tree="b820f10abba096e23a28506d7ad591dffdedf1a8"
-expected_config="f47a2576b530a981531d3e176e44fbe6604f98200455bbfe5e47f80ff33b9060"
+expected_config="c68c4b072713503c8282cb09ff8f05aa4876966503c65331732bfe0775196c52"
 expected_python="Python 3.14.6"
 expected_lxml="6.1.1"
 python3_make_command="python3"

@@ -4,7 +4,7 @@ set -euo pipefail
 
 release="7.1.3-sp11-suspend-review20"
 boot_dir="${SP11_BOOT_DIR:-/boot/sp11-beta}"
-expected_image="b3ca9ba56570ff1bf8217a866563f1e9788c5dfdc3a153a9b673e3b6e9624ed5"
+expected_image="918ed2560654355555535290fd0d9657e1afc7022b3e46cc8396155d3575f256"
 expected_dtb="5e9009f5bd96a760a33086d1a8842e3228e3d28c413f96d70aca4914f7e397ed"
 failures=0
 

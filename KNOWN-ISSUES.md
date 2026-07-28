@@ -53,6 +53,34 @@ Until that is resolved, the desktop brightness sliders in GNOME and KDE will
 not work either, since they use ddcutil's library. Talking to the monitor
 directly does work.
 
+## GPU hang investigation
+
+After approximately 16 hours and 49 minutes of extended use, the qualified
+review20 host froze and then rebooted without an orderly shutdown. The
+surviving journal contains no suspend attempt near the failure and no OOM,
+thermal trip, active watchdog reset, kernel Oops, or remote-processor crash.
+The host's development-only sysctl configuration intentionally panics after a
+task remains blocked for 30 seconds and reboots 15 seconds later, which
+explains the automatic reboot but not the original stall.
+
+The exact review20 panic trace was not preserved because old EFI pstore
+fragments had exhausted the firmware variable store. Those records have been
+archived locally, pstore has been cleared, and approximately 94 KiB is
+available for a future capture.
+
+Historical pstore data from an older review9 boot contains repeated MSM/DPU
+GPU hangchecks, Adreno GMU and HFI timeouts, and a blocked display commit that
+ended in a hung-task panic. The recovery worker identified GPU work submitted
+by Quickshell as the offending ring-buffer task. That does not prove Quickshell
+caused the driver or firmware failure. The review20 journal also contains one
+GMU fenced-register-write delay more than three hours before the later reset.
+The MSM/Adreno GMU recovery path is therefore the leading hypothesis, not a
+confirmed review20 root cause.
+
+The panic-on-hung-task policy is host diagnostic instrumentation and is not
+part of the public beta rootfs. The clean reproducible candidate needs extended
+GPU observation during its one-shot hardware qualification.
+
 ## Suspend and idle power
 
 The review20 release candidate uses PSCI `SYSTEM_SUSPEND` and enables runtime

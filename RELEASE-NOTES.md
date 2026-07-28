@@ -10,7 +10,9 @@ install/rollback tests are complete.
 - Linux release: `7.1.3-sp11-suspend-review20`
 - Source commit: `18d7951a10dc49e383d16c6af82fc2c07784de3d`
 - Source tree: `b820f10abba096e23a28506d7ad591dffdedf1a8`
-- Kernel Image SHA-256:
+- Promoted reproducible Kernel Image SHA-256:
+  `918ed2560654355555535290fd0d9657e1afc7022b3e46cc8396155d3575f256`
+- Historical locally qualified Image SHA-256:
   `b3ca9ba56570ff1bf8217a866563f1e9788c5dfdc3a153a9b673e3b6e9624ed5`
 - OLED DTB SHA-256:
   `5e9009f5bd96a760a33086d1a8842e3228e3d28c413f96d70aca4914f7e397ed`
@@ -21,6 +23,21 @@ install/rollback tests are complete.
 The cumulative review20 patch series and incremental Git bundle are included
 under `kernel/`. See `docs/REVIEW20-CONSOLIDATION.md` for provenance,
 qualification evidence, and remaining release gates.
+
+## Reproducible beta candidate
+
+Two clean builds from empty output directories are byte-identical across the
+kernel Image, `vmlinux`, OLED DTB, configuration, module ABI, generated build
+identity, and all 3,759 in-tree modules. The clean candidate Image SHA-256 is
+`918ed2560654355555535290fd0d9657e1afc7022b3e46cc8396155d3575f256`.
+The X1E VideoCC provider is now part of that reproducible module set and is
+forced into the initramfs; its binary exactly matches the provider used during
+earlier hardware qualification. On 2026-07-28, the corrected Image passed its
+one-shot target boot, active state1 checks on all 12 CPUs, VideoCC binding,
+deep suspend/resume, and the complete post-resume hardware matrix. It is now
+the Image accepted by the payload assembler, installer, and verifier and was
+promoted as the tested host's persistent default while preserving the prior
+review20, review12, and Windows boot entries.
 
 ## Validated on the tested OLED/X Elite unit
 
@@ -51,6 +68,9 @@ after resume only when the explicit `sp11_deep_idle=1` opt-in is present.
   qualified
 - Camera color tuning and ordinary desktop camera integration remain
   experimental
+- One extended-use graphical freeze followed by an automatic debug panic and
+  reboot remains under investigation; historical crash data points toward the
+  MSM/Adreno GMU recovery path, but the exact review20 failure was not captured
 
 ## Dual boot
 

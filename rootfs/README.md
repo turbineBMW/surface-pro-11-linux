@@ -9,6 +9,8 @@ machine:
 - systemd-logind watchdog override qualified for long lid-triggered suspend
 - dynamic iptsd udev/service/sleep lifecycle
 - Surface platform-profile module loading and patched PPD selection
+- early X1E VideoCC provider loading through an mkinitcpio configuration
+  drop-in
 - Qualcomm SSC startup and the SP11-specific libssc selection for the ambient
   color sensor
 - three-tier power-profile cpufreq companion and sleep hook target

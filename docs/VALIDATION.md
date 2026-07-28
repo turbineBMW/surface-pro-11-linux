@@ -178,6 +178,72 @@ discarded before any I/O. The connector `ddc` link the kernel now publishes is
 exactly the information needed to resolve it. Practical coverage for review12
 is the DDC/CI path only; the review10 hardware matrix was not re-run.
 
+Review20 adds the reviewed PDC/deep-idle stack, the Denali runtime-state1
+opt-in, and the suspend-path corrections documented in
+`REVIEW20-CONSOLIDATION.md`. Two independent clean builds from empty output
+directories are byte-identical across `Image`, `vmlinux`, OLED DTB, config,
+`Module.symvers`, `System.map`, module indexes, generated build identity, and
+all 3,759 in-tree modules. The clean candidate Image SHA-256 is
+`918ed2560654355555535290fd0d9657e1afc7022b3e46cc8396155d3575f256`,
+the config SHA-256 is
+`c68c4b072713503c8282cb09ff8f05aa4876966503c65331732bfe0775196c52`,
+and the normalized module-manifest SHA-256 is
+`82a376eecf320b7182ae94ff1b1acc0bf854b203727b903a1f97cab26d5ed637`.
+Both builds used Clang/LLD 22.1.8, Python 3.14.6, lxml 6.1.1, and the pinned
+`sp11@reproducible #1` identity.
+
+The corrected configuration promotes the qualified X1E VideoCC provider from
+an external exact-ABI diagnostic module into the 3,759-module in-tree payload
+and forces it into the initramfs. The resulting `videocc-sm8550.ko` is
+byte-identical to the module used during qualification, SHA-256
+`ca449eebd9520ff44473302755fe8760cc11341928db8be6dbf8b2cc5f5957e8`.
+The corrected Image differs from the historical locally qualified Image in
+both reproducible UTS metadata and configuration metadata, while the source
+tree, module ABI, and OLED DTB remain unchanged. Its one-shot target-hardware
+qualification completed successfully on 2026-07-28.
+
+The corrected candidate stage at
+`out/stage/beta-review20-videocc-clean-20260727` passed structural validation:
+all 3,759 installed modules match build A byte-for-byte; one exact release
+vermagic is present; depmod indexes are complete; no symlink, special file,
+unsafe path, or host path remains; and `modprobe --show-depends` resolves
+`videocc_sm8550` to the expected in-tree module.
+
+A separate minimal base-hook mkinitcpio probe against the stage embedded
+`videocc-sm8550.ko` at the exact path checked by the installer. The probe image
+is `out/probes/review20-videocc-initramfs-20260727.img`, SHA-256
+`467c699c576f846f199eb327659540b5211b3953d901b4ff3229d5abd6329621`.
+It validates module inclusion only; it is not a production or bootable
+candidate initramfs.
+
+A full one-shot initramfs was also generated with the qualified host's complete
+hook and early-module set plus `videocc_sm8550`. Compared with the qualified
+review20 initramfs, its complete path set differs only by relocating that exact
+provider from `updates/diagnostic/` to
+`kernel/drivers/clk/qcom/videocc-sm8550.ko`. The full image is
+`out/probes/review20-videocc-full-initramfs-20260727.img`, SHA-256
+`e28cf33f869c8ae6106619c8ebb2eaa88b89f2e23b231817687e2ce14f855636`,
+and its config SHA-256 is
+`c59fe09beef09a439e3cd750b701d072e3c39eb5a5966e0ebc5e52e16ff5db9c`.
+It was installed under a unique boot path and used for the successful
+2026-07-28 one-shot qualification.
+
+The boot reported the exact pinned identity
+`sp11@reproducible #1 SMP PREEMPT_DYNAMIC 2026-07-26T14:35:25Z`; GRUB consumed
+the one-shot; pstore remained empty; and the VideoCC provider loaded from the
+standard in-tree initramfs path and bound to `aaf0000.clock-controller`.
+Runtime PSCI state1 accumulated residency on all 12 CPUs. A deep suspend
+powered down CPUs 1--11, ran the PSCI syscore suspend/resume path, suspended
+and resumed both VideoCC power domains, and woke from the power button on IRQ
+216. Touchscreen, keyboard, touchpad, audio, front camera, and rear camera all
+passed before and after resume. The local pre/post evidence SHA-256 values are
+`cfa97764b1a2cf1c2f85e0fdf6749d7b146869c014cc1c327056b7c9faa40fb6`
+and
+`bb8b9a7e9d9fbad4d794622669b069ecc93cd86ae199748675e0c80ce91db1be`.
+The qualified reproducible entry was then made the host's persistent default;
+the guarded review20 fallback, review12 entries, and explicit Windows
+chainloader remained present, and GRUB had no pending one-shot selection.
+
 ## Ambient color sensor validation
 
 Validation opened 2026-07-24:
@@ -362,7 +428,10 @@ profiles to the former 2,515,200 kHz ceiling, and restores the
 
 ## Future binary/ISO validation
 
-- [ ] exact complete corresponding source is staged for every GPL/LGPL binary;
+- [x] exact complete corresponding source is staged for every custom binary in
+  the held payload;
+- [ ] exact matching source is staged or offered for every distribution
+  package selected for the eventual live ISO;
 - [ ] all binary/source archives pass absolute-path, traversal, firmware,
   privacy, credential, and diagnostic-log checks;
 - [ ] installer syntax, ShellCheck, hash verification, and collision refusal
@@ -373,3 +442,37 @@ profiles to the former 2,515,200 kHz ceiling, and restores the
 
 Open engineering checks do not invalidate publication of clearly labelled
 experimental source. They continue to block a prebuilt payload or ISO.
+
+### Held payload assembly probe
+
+On 2026-07-28, the promoted payload assembler was changed to require the
+audited kernel stage rather than the host boot and module trees. Its
+release-mode refusal passed while `BINARY-RELEASE-HOLD.md` was present. Two
+explicit `--local-staging` runs then produced byte-identical held archives,
+SHA-256
+`d6192f47672772adf781170743427141f65beb88d6c2abb47703118108f59679`.
+
+The outer payload and nested module archive passed checksum, relative-path,
+symlink, and special-file checks. The nested archive contains exactly 3,759
+modules and the qualified VideoCC hash at its standard in-tree path. It
+contains no external diagnostic VideoCC path, `v4l2loopback`, or
+`sp11_genpd_sync_release`. This bounded probe does not satisfy the unchecked
+corresponding-source, final archive, install, rollback, or publication gates.
+
+### Custom-payload source reconstruction
+
+On 2026-07-28, exact iptsd v3.1.0 source plus its pinned fallback dependencies
+reproduced both qualified iptsd binaries byte-for-byte. Exact PPD 0.30 source
+plus the published SP11 patch also reproduced the qualified daemon
+byte-for-byte. The recovered commands, build directories, compilers,
+dependencies, Meson options, and target names are recorded in their userspace
+READMEs.
+
+Two deterministic complete-source assemblies then produced identical archive
+SHA-256
+`521e99ff30d32c4be2d14aa99de05d4839e3dae8f570d87a5bfc8e7e5ac534ee`.
+The source set contains the complete exact kernel tree and build inputs,
+complete iptsd and compiled fallback sources/licenses, and complete patched
+PPD source/license. Outer and nested checksum, path, privacy-marker, required
+license, and resolved-symlink checks pass. Live ISO distribution-package
+source correspondence remains unchecked.

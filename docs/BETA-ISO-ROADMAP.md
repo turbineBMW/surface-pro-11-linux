@@ -25,8 +25,8 @@ local review20 configuration:
 - Linux release `7.1.3-sp11-suspend-review20`;
 - source commit `18d7951a10dc49e383d16c6af82fc2c07784de3d`;
 - source tree `b820f10abba096e23a28506d7ad591dffdedf1a8`;
-- Image SHA-256
-  `b3ca9ba56570ff1bf8217a866563f1e9788c5dfdc3a153a9b673e3b6e9624ed5`;
+- promoted reproducible Image SHA-256
+  `918ed2560654355555535290fd0d9657e1afc7022b3e46cc8396155d3575f256`;
 - OLED DTB SHA-256
   `5e9009f5bd96a760a33086d1a8842e3228e3d28c413f96d70aca4914f7e397ed`;
 - runtime PSCI state1 enabled by `sp11_deep_idle=1`;
@@ -85,15 +85,24 @@ disable it must be stated before installation.
 
 - [x] Publish reviewed source for the complete review20-derived kernel stack,
   including attribution and provenance for the PDC series and local changes.
-- [ ] Produce two clean, byte-identical kernel builds and record the complete
+- [x] Produce two clean, byte-identical kernel builds and record the complete
   build identity.
+- [x] Qualify the corrected reproducible Image on target hardware through an
+  exact-identity one-shot boot, active runtime state1, VideoCC binding, deep
+  suspend/resume, and the complete post-resume hardware matrix.
 - [x] Package and test the runtime-idle suspend guard and its conservative
   no-opt-in fallback.
 - [x] Replace the obsolete `sp11-sanitized2` identities in the payload,
   installer, verifier, rollback tool, build helper, and documentation.
-- [ ] Stage exact corresponding source for every shipped GPL/LGPL binary,
-  including kernel modules, iptsd, Power Profiles Daemon, libcamera/IPA
-  components, and any optional v4l2loopback module.
+- [x] Assemble the promoted kernel payload twice from the audited module stage
+  under the release hold; confirm byte-identical archives, safe paths, exact
+  module count, and exclusion of host-only modules.
+- [x] Stage deterministic complete corresponding source for every custom
+  binary in the held payload: kernel/modules, iptsd/checker, and patched Power
+  Profiles Daemon; reproduce all three userspace binary identities.
+- [ ] Define the eventual live ISO package manifest and stage or offer the
+  matching distribution-package source, including libcamera/IPA components
+  and v4l2loopback only if the ISO actually includes it.
 - [ ] Include every applicable license, notice, source identity, patch, and
   machine-readable build recipe.
 - [ ] Define a firmware manifest containing only redistributable firmware.

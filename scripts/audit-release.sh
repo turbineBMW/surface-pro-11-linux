@@ -22,12 +22,13 @@ review20_patch="$repo_root/kernel/sp11-suspend-review20.patch"
 review20_bundle="$repo_root/kernel/sp11-suspend-review20.bundle"
 runtime_idle_guard="$repo_root/rootfs/usr/local/libexec/sp11-runtime-idle-suspend-guard"
 runtime_idle_dropin="$repo_root/rootfs/etc/systemd/system/systemd-suspend.service.d/10-sp11-runtime-idle-guard.conf"
+videocc_initramfs_dropin="$repo_root/rootfs/etc/mkinitcpio.conf.d/90-sp11-videocc.conf"
 
 expected_patch="218ee1ec59a29887aab919fcd37c7d8a21f7ca421ea3757476ddbab76bf07914"
 expected_bundle="cd782a17f4c6645d63d51c057bc9115ac0b7167966a6ce8c663c6e351b79d3e7"
-expected_config="8834ac6021bc4d50034b55c0960938070541387c0984aed4cc6797601ecce7f1"
+expected_config="a4ed1fbc62e2d3251394c09410778173766cae309b7e3434388239644bb51788"
 expected_symvers="b58de2ebd5ca9649b0e7299e4b5b7e3965f70e06506b88c1ec3d5046ce2e9387"
-expected_buildinfo="f8154887bf556ce4cb9c2c0c087957a18665758cc3b9834b55b4d39b42898553"
+expected_buildinfo="eb14f58615a7dbd6abf0ac825abf64f45f4435092dc6e5dadf9b1d44b112583b"
 expected_camera_config="5f0f096db561a65653ed710cd79f8aa8a97d0bad7608fdd06edd51f98212622f"
 expected_tip="2ace98eb6ef18cbd48074eed9f5b585d19ce398b"
 expected_camera_patch="a6d6f31fd9b3eea7e5b4243ec30300e1bc43718253fd2a2b77c2bdf4cebc3b6c"
@@ -53,6 +54,7 @@ expected_review20_bundle="0c078953e0f827a1b3fd126e818debce17fe851452d61f0e8758dd
 expected_review20_tip="18d7951a10dc49e383d16c6af82fc2c07784de3d"
 expected_runtime_idle_guard="31af7630b55313ef82cda79c0c1669a3a94cea5ac71e4857cd37fe3b4cb0869a"
 expected_runtime_idle_dropin="a2b708ccb9d61669ddfebb6be8bdcc0e54ec0717e697f8f6894f5a64436ce847"
+expected_videocc_initramfs_dropin="274f034664f810d666194af6682f652537323444ca61b70d0f70768c34bb27cb"
 
 for command_name in git reuse rg sha256sum; do
 	command -v "$command_name" >/dev/null || {
@@ -125,6 +127,7 @@ fi
 [[ "$(rg -c '^diff --git ' "$review20_patch")" -eq 25 ]]
 [[ "$(sha256sum "$runtime_idle_guard" | awk '{print $1}')" == "$expected_runtime_idle_guard" ]]
 [[ "$(sha256sum "$runtime_idle_dropin" | awk '{print $1}')" == "$expected_runtime_idle_dropin" ]]
+[[ "$(sha256sum "$videocc_initramfs_dropin" | awk '{print $1}')" == "$expected_videocc_initramfs_dropin" ]]
 [[ -x "$runtime_idle_guard" ]]
 
 # The IR bridge fails closed on a kernel-release mismatch, which is a real
@@ -158,11 +161,36 @@ for identity_script in scripts/install.sh scripts/assemble-payload.sh scripts/ve
 done
 
 for identity_script in scripts/install.sh scripts/assemble-payload.sh scripts/verify.sh; do
-	rg -qF 'b3ca9ba56570ff1bf8217a866563f1e9788c5dfdc3a153a9b673e3b6e9624ed5' \
+	rg -qF '918ed2560654355555535290fd0d9657e1afc7022b3e46cc8396155d3575f256' \
 		"$repo_root/$identity_script"
 	rg -qF '5e9009f5bd96a760a33086d1a8842e3228e3d28c413f96d70aca4914f7e397ed' \
 		"$repo_root/$identity_script"
 done
+
+rg -qF 'SP11_KERNEL_STAGE' "$repo_root/scripts/assemble-payload.sh"
+rg -qF 'LOCAL-STAGING-NOT-FOR-RELEASE' \
+	"$repo_root/scripts/assemble-payload.sh"
+rg -qF 'expected_module_count=3759' \
+	"$repo_root/scripts/assemble-payload.sh"
+if rg -q 'SP11_QUALIFIED_BOOT_DIR|-C /usr/lib/modules' \
+	"$repo_root/scripts/assemble-payload.sh"; then
+	printf 'Payload assembler still depends on live host kernel artifacts.\n' >&2
+	exit 1
+fi
+
+for source_identity in \
+	18d7951a10dc49e383d16c6af82fc2c07784de3d \
+	a83bc1232f7096f8b33b50fdbda249cd640de670 \
+	5b4994c8a91290481bef87a5bae95391d0ec677f; do
+	rg -qF "$source_identity" "$repo_root/scripts/assemble-source.sh"
+done
+rg -qF 'subprojects/fmt-12.0.0/LICENSE' \
+	"$repo_root/scripts/assemble-source.sh"
+if rg -q '/home/|turbinebmw|archive-private|lab-private' \
+	"$repo_root/scripts/assemble-source.sh"; then
+	printf 'Source assembler contains a private host path.\n' >&2
+	exit 1
+fi
 
 rg -qF 'mem_sleep_default=deep' "$repo_root/scripts/install.sh"
 rg -qF 'qcom_ipcc.mask_summary_on_suspend=1' "$repo_root/scripts/install.sh"
