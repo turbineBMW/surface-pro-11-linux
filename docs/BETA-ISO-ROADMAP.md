@@ -103,6 +103,11 @@ disable it must be stated before installation.
 - [ ] Define the eventual live ISO package manifest and stage or offer the
   matching distribution-package source, including libcamera/IPA components
   and v4l2loopback only if the ISO actually includes it.
+  - [x] Freeze the recommended GNOME AArch64 direct profiles, complete
+    transitive dependency lock, repository database identities, package
+    hashes, source-retrieval contract, and hard exclusion audit.
+  - [ ] Cache every exact signed binary package and stage its matching
+    package recipe, upstream source inputs, build metadata, and licenses.
 - [ ] Include every applicable license, notice, source identity, patch, and
   machine-readable build recipe.
 - [ ] Define a firmware manifest containing only redistributable firmware.
@@ -123,6 +128,33 @@ disable it must be stated before installation.
   data, credentials, diagnostic captures, and withdrawn artifacts.
 - [ ] Run a final clean-clone source/binary correspondence and REUSE audit.
 - [ ] Remove `BINARY-RELEASE-HOLD.md` only after every required gate passes.
+
+## GNOME package snapshot
+
+The first live profile is defined by `iso/packages-live.aarch64.tsv`; the
+native image-builder profile is separate in `iso/packages-build.aarch64.tsv`.
+The 2026-07-28 resolution contains 672 unique distribution packages: 662 in
+the live closure and 129 in the build closure, with overlap. The live package
+payload is 678,711,028 compressed bytes and 3,511,202,214 installed bytes
+before the custom SP11 payload, firmware allowlist, live-image compression,
+and project documentation.
+
+Snapshot identities:
+
+- live direct profile:
+  `002d3e19caf039fe22f48bb72598230b093f5a2fccfc34ada48ebc97a427c580`;
+- build direct profile:
+  `972c0113ddef15714149623c947af54e67196cb091ce57f5c039550451b1c245`;
+- complete package lock:
+  `469dfdf921d1376757d02c0a9492dec58f560c3e359d85c0ddf9e0f68785257e`;
+- repository database lock:
+  `9dee549f5f9a867115e318448513cc9355b0bca5ab9a060462ff8792d770fd9a`.
+
+The live closure uses only `core`, `extra`, and the single ARM-specific
+`alarm/libpisp` dependency required by distribution libcamera. It contains no
+firmware, alternate distribution kernel, AUR/foreign package, Howdy,
+v4l2loopback, Quickshell, Niri, container stack, or compiler. The exact lock
+and source-retention rules are documented in `iso/README.md`.
 
 ## Accepted beta limitations
 

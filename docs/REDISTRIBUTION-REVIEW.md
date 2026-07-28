@@ -100,6 +100,11 @@ Practical8 commit, tree, Image, DTB, module, archive, or checksum values.
 - [ ] Define the live ISO package manifest and stage or offer exact matching
   source for its distribution packages, including any shipped libcamera/IPA
   or optional v4l2loopback build.
+  - [x] Freeze and audit the GNOME AArch64 direct profiles, full dependency
+    closure, exact binary hashes, repository database hashes, package source
+    endpoints, and explicit exclusions.
+  - [ ] Cache the locked signed packages and retain their complete matching
+    package recipes, upstream source inputs, build metadata, and licenses.
 - [ ] Include all applicable license texts, copyright notices, source
   identities, build inputs, and machine-readable build instructions alongside
   the binaries.

@@ -9,6 +9,7 @@ path = [
   ".gitignore",
   "*.md",
   "docs/**",
+  "iso/**",
   "kernel/README.md",
   "rootfs/README.md",
   "rootfs/etc/**",

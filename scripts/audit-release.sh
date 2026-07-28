@@ -280,6 +280,7 @@ fi
 			rootfs/usr/local/libexec/sp11-runtime-idle-suspend-guard \
 			userspace/power/test-sp11-charge-limit.sh
 	fi
+	scripts/audit-package-lock.sh
 	userspace/power/test-sp11-charge-limit.sh
 )
 

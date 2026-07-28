@@ -1,0 +1,87 @@
+package	role	rationale
+base	base	Minimal Arch userspace and package manager
+archlinuxarm-keyring	base	Verify Arch Linux ARM repository signatures
+mkinitcpio	boot	Generate the qualified custom-kernel initramfs
+grub	boot	ARM64 UEFI boot and collision-safe installed entries
+efibootmgr	boot	Inspect and add UEFI entries without deleting existing entries
+dosfstools	boot	Create and repair FAT EFI system partitions
+e2fsprogs	storage	Install and recover ext4 filesystems
+btrfs-progs	storage	Install and recover btrfs filesystems
+cryptsetup	storage	Support encrypted Linux installations
+lvm2	storage	Inspect and recover LVM installations
+mdadm	storage	Inspect and recover Linux software RAID
+ntfs-3g	storage	Read and repair common Windows NTFS volumes
+exfatprogs	storage	Read and repair removable exFAT media
+parted	recovery	Scriptable GPT partition inspection and editing
+gptfdisk	recovery	GPT recovery and validation
+gparted	recovery	Touch-usable graphical partition editor
+testdisk	recovery	Partition and file recovery
+smartmontools	recovery	Storage health diagnostics
+nvme-cli	recovery	NVMe diagnostics
+rsync	recovery	Recover files while preserving metadata
+tar	recovery	Archive and restore files
+zstd	recovery	Read project and package archives
+unzip	recovery	Read common support archives
+zip	recovery	Create portable support archives
+sudo	base	Bounded administrative access for the live user
+networkmanager	network	GNOME-compatible Wi-Fi and wired network management
+wpa_supplicant	network	NetworkManager Wi-Fi backend required by the package
+wireless-regdb	network	Regulatory data for Wi-Fi
+iw	network	Wi-Fi diagnostics
+bluez	bluetooth	Bluetooth daemon and protocol stack
+bluez-utils	bluetooth	Bluetooth pairing and diagnostics
+openssh	network	Optional remote recovery; service disabled by default
+curl	network	Retrieve documentation and recovery inputs
+wget	network	Alternate resumable retrieval tool
+gdm	desktop	GNOME Wayland display manager
+gnome-shell	desktop	Touch-oriented GNOME Wayland shell and on-screen keyboard
+gnome-session	desktop	GNOME session definition
+gnome-settings-daemon	desktop	GNOME device and session settings
+gnome-control-center	desktop	Touch-usable system settings
+nautilus	desktop	File manager
+gnome-console	desktop	Terminal for recovery
+gnome-text-editor	desktop	Simple configuration editor
+gnome-disk-utility	recovery	Touch-usable disk inspection and imaging
+gnome-system-monitor	diagnostics	Process and resource inspection
+gnome-logs	diagnostics	Journal inspection
+baobab	diagnostics	Disk-usage inspection
+gnome-keyring	desktop	Session secret storage
+seahorse	desktop	Keyring inspection
+xdg-desktop-portal-gnome	desktop	GNOME desktop portal backend
+xdg-user-dirs-gtk	desktop	User-directory integration
+orca	accessibility	Screen reader and accessibility support
+noto-fonts	desktop	Primary Unicode font coverage
+noto-fonts-emoji	desktop	Emoji font coverage
+ttf-dejavu	desktop	Fallback font coverage
+gvfs	desktop	GNOME virtual filesystem integration
+gvfs-mtp	desktop	Android and MTP removable-device access
+gvfs-gphoto2	desktop	Camera storage access
+gvfs-smb	desktop	Windows network share recovery
+pipewire	audio	Audio and video graph
+pipewire-audio	audio	PipeWire audio configuration
+pipewire-pulse	audio	PulseAudio compatibility
+pipewire-alsa	audio	ALSA client routing through PipeWire
+wireplumber	audio	PipeWire policy manager
+alsa-utils	audio	Audio diagnostics and mixer recovery
+libcamera	camera	Camera support library used by the qualified host
+libcamera-ipa	camera	Matching signed IPA modules
+libcamera-tools	camera	Camera diagnostics
+pipewire-libcamera	camera	Expose libcamera cameras through PipeWire
+gst-plugin-libcamera	camera	Expose libcamera cameras to GStreamer
+snapshot	camera	GNOME camera validation application
+gnome-sound-recorder	audio	GNOME microphone validation application
+polkit	desktop	Desktop authorization broker
+upower	power	Desktop battery integration
+power-profiles-daemon	power	Distribution package replaced at runtime by audited SP11 daemon
+iio-sensor-proxy	sensors	Open sensor proxy; SP11 service remains gated on external config
+brightnessctl	power	Backlight diagnostics and recovery
+firefox	desktop	Documentation and network validation browser
+loupe	desktop	Image viewer for camera validation
+papers	desktop	Document viewer for offline release documentation
+nano	recovery	Terminal text editor
+less	recovery	Pager for logs and documentation
+man-db	recovery	Local manual page reader
+man-pages	recovery	Base Linux manual pages
+bash-completion	recovery	Discoverable shell commands
+usbutils	diagnostics	USB topology diagnostics
+pciutils	diagnostics	PCI topology diagnostics

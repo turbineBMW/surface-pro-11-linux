@@ -1,0 +1,17 @@
+package	role	rationale
+archlinuxarm-keyring	trust	Verify repository package signatures
+arch-install-scripts	rootfs	Create a clean Arch Linux ARM root filesystem
+pacman-contrib	trust	Package cache and database audit helpers
+grub	boot	Create the standalone ARM64 UEFI loader
+dosfstools	boot	Create the EFI system partition image
+e2fsprogs	image	Create and check ext4 image filesystems
+squashfs-tools	image	Create the compressed live root filesystem
+libisoburn	image	Provide xorriso when an optical-style ISO wrapper is tested
+mtools	boot	Populate FAT images without mounting
+cpio	initramfs	Inspect and assemble initramfs archives
+mkinitcpio	initramfs	Assemble the qualified custom-kernel initramfs
+dtc	boot	Validate and inspect the Denali device tree
+fakeroot	build	Create package metadata without host ownership leakage
+rsync	build	Stage deterministic filesystem trees
+tar	build	Assemble deterministic source and payload archives
+zstd	build	Compress packages, rootfs, and release archives
