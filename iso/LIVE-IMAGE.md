@@ -7,7 +7,7 @@ release:
 - filename: `sp11-beta-review20-aarch64-HELD-local.iso`;
 - size: 1,284,163,584 bytes;
 - SHA-256:
-  `f6cae0d7a4fdd8691122288ff4d909607e84e5072c5442b89e6138df8d1a6cbf`;
+  `4aae21a7183e0a7eb0a5ce2cbfbae798fd481f0d9b3f5e67380e5b82b5ef19ba`;
 - package root: 662 exact signed Arch Linux ARM packages;
 - custom kernel: `7.1.3-sp11-suspend-review20`, 3,759 modules;
 - firmware: exactly the 11 files in `firmware/allowlist.tsv`;
@@ -42,6 +42,25 @@ The corrected image:
   keyboard/aggregator modules; and
 - audits the SquashFS codec against the exact kernel configuration and checks
   the early module and root-device contract.
+
+## First desktop boot and rejected ownership build
+
+The codec-corrected image, SHA-256
+`f6cae0d7a4fdd8691122288ff4d909607e84e5072c5442b89e6138df8d1a6cbf`,
+successfully completed the ARM64 UEFI, GRUB, kernel, live-root, systemd, and
+GNOME automatic-login path. The OLED and touchscreen worked.
+
+That image is nevertheless rejected. GNOME Console could not start because
+it could not enter `/home/live`. The rootfs staging tree correctly created
+that directory as `1000:1000` with mode `0700`, but the SquashFS builder's
+`-all-root` option rewrote all filesystem owners to `0:0`. This also risked
+breaking other service-owned state.
+
+The current image removes `-all-root`, preserves the staged numeric owners,
+and audits `/home/live` both before compression and after extraction from the
+finished SquashFS. The live user must be `1000:1000` with mode `0700` at both
+gates. Wi-Fi was unavailable during the rejected desktop boot; its exact
+live-side driver/firmware state still needs capture after Console works.
 
 ## Build and audit
 
@@ -81,6 +100,8 @@ The final audit verifies:
 - gzip SquashFS compatibility with the exact kernel configuration and the
   live-medium root-device contract;
 - preservation of required file capabilities through SquashFS;
+- preservation of the live user's private home ownership and mode through
+  SquashFS;
 - ARM64 PE/COFF fallback loader, EFI FAT contents, El Torito UEFI boot entry,
   GPT, and EFI System Partition; and
 - every SHA-256 and byte count in `ARTIFACTS.tsv`.

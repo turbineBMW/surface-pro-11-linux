@@ -69,6 +69,10 @@ done
 	awk '{print $1}')" == "$expected_dtb" ]]
 [[ "$(stat -c '%a' "$initramfs")" == "644" ]]
 [[ "$(stat -c '%s' "$rootfs/etc/machine-id")" == "0" ]]
+[[ "$(stat -c '%u:%g:%a' "$rootfs/home/live")" == "1000:1000:700" ]] || {
+	printf 'Live root has an unusable home ownership or mode.\n' >&2
+	exit 1
+}
 [[ ! -e "$rootfs/etc/brlapi.key" ]]
 [[ ! -e "$rootfs/usr/bin/archinstall" ]]
 [[ ! -e "$rootfs/var/lib/bluetooth" ]]
@@ -262,10 +266,16 @@ fi
 	-quiet \
 	-dest "$capability_extract" \
 	"$squashfs" \
-	usr/lib/gstreamer-1.0/gst-ptp-helper
+	usr/lib/gstreamer-1.0/gst-ptp-helper \
+	home/live
 getcap "$capability_extract/usr/lib/gstreamer-1.0/gst-ptp-helper" |
 	grep -Fq 'cap_net_bind_service,cap_net_admin=ep' || {
 	printf 'SquashFS did not preserve the required file capability.\n' >&2
+	exit 1
+}
+[[ "$(stat -c '%u:%g:%a' "$capability_extract/home/live")" == \
+	"1000:1000:700" ]] || {
+	printf 'SquashFS did not preserve the live home ownership or mode.\n' >&2
 	exit 1
 }
 

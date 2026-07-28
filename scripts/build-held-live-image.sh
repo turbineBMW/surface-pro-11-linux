@@ -429,7 +429,6 @@ done
 printf 'Compressing the live root filesystem ...\n'
 "$mksquashfs" "$rootfs" "$iso_tree/sp11/rootfs.sfs" \
 	-noappend \
-	-all-root \
 	-comp gzip \
 	-Xcompression-level 9 \
 	-mkfs-time "$source_date_epoch"

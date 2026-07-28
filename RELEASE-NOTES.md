@@ -11,8 +11,12 @@ Zstandard SquashFS that the qualified kernel could not decompress. The
 corrected image uses the kernel-supported gzip codec, resolves the real live
 medium, carries the early display/input stack, and passes strengthened static
 package, firmware, privacy, initramfs, codec, service, EFI, GPT, and
-artifact-hash audits. The correction still needs a physical removable-media
-boot and is not a release. See `iso/LIVE-IMAGE.md`.
+artifact-hash audits. It reached GNOME with working OLED and touchscreen, but
+was then rejected because SquashFS's `-all-root` option changed the live
+user's private home ownership to root. The current image preserves staged
+numeric ownership and audits the finished SquashFS home metadata. It still
+needs a physical removable-media boot and is not a release. See
+`iso/LIVE-IMAGE.md`.
 
 ## Qualified kernel
 

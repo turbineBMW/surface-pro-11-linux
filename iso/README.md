@@ -100,9 +100,11 @@ root, initramfs, firmware boundary, ARM64 fallback loader, El Torito entry,
 GPT/ESP structure, and artifact manifest.
 
 The first physical boot rejected an incompatible live-root compression
-choice. The corrected audit-passing image and the new kernel-codec/early-boot
-gates are documented in `LIVE-IMAGE.md`. It remains under the binary/ISO hold
-and still requires removable-media hardware qualification.
+choice. The next image reached GNOME with working touch but exposed and
+rejected global SquashFS owner rewriting. The current audit-passing image,
+kernel-codec/early-boot gates, and live-home ownership gate are documented in
+`LIVE-IMAGE.md`. It remains under the binary/ISO hold and still requires
+removable-media hardware qualification.
 
 ## Hard exclusions
 
