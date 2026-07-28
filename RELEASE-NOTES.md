@@ -6,9 +6,13 @@ ISO. Binary and ISO publication remains blocked by
 install/rollback tests are complete.
 
 The first non-installing ARM64 UEFI GNOME image has now been assembled under
-that hold and passed its static package, firmware, privacy, initramfs,
-SquashFS, service, EFI, GPT, and artifact-hash audits. It has not yet been
-booted from removable media and is not a release. See `iso/LIVE-IMAGE.md`.
+that hold. Its first physical boot exposed and rejected an incompatible
+Zstandard SquashFS that the qualified kernel could not decompress. The
+corrected image uses the kernel-supported gzip codec, resolves the real live
+medium, carries the early display/input stack, and passes strengthened static
+package, firmware, privacy, initramfs, codec, service, EFI, GPT, and
+artifact-hash audits. The correction still needs a physical removable-media
+boot and is not a release. See `iso/LIVE-IMAGE.md`.
 
 ## Qualified kernel
 

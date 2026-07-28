@@ -107,6 +107,7 @@ expected_firmware="$(mktemp /tmp/sp11-audit-expected.XXXXXX)"
 initramfs_members="$(mktemp /tmp/sp11-audit-initramfs.XXXXXX)"
 iso_report="$(mktemp /tmp/sp11-audit-iso.XXXXXX)"
 partition_report="$(mktemp /tmp/sp11-audit-partitions.XXXXXX)"
+squashfs_report="$(mktemp /tmp/sp11-audit-squashfs.XXXXXX)"
 initramfs_extract="$(mktemp -d /tmp/sp11-audit-initramfs-tree.XXXXXX)"
 capability_extract="$(mktemp -d /tmp/sp11-audit-capability.XXXXXX)"
 cleanup() {
@@ -115,7 +116,8 @@ cleanup() {
 		"$expected_firmware" \
 		"$initramfs_members" \
 		"$iso_report" \
-		"$partition_report"
+		"$partition_report" \
+		"$squashfs_report"
 	find "$initramfs_extract" -depth -delete
 	find "$capability_extract" -depth -delete
 }
@@ -142,8 +144,13 @@ lsinitcpio "$initramfs" >"$initramfs_members"
 for required_member in \
 	hooks/sp11live \
 	"usr/lib/modules/$release/kernel/drivers/clk/qcom/videocc-sm8550.ko" \
+	"usr/lib/modules/$release/kernel/drivers/gpu/drm/msm/msm.ko" \
+	"usr/lib/modules/$release/kernel/drivers/gpu/drm/panel/panel-samsung-atna33xc20.ko" \
+	"usr/lib/modules/$release/kernel/drivers/hid/surface-hid/surface_hid.ko" \
+	"usr/lib/modules/$release/kernel/drivers/platform/surface/aggregator/surface_aggregator.ko" \
 	"usr/lib/modules/$release/kernel/drivers/usb/storage/uas.ko" \
 	"usr/lib/modules/$release/kernel/drivers/usb/storage/usb-storage.ko" \
+	"usr/lib/modules/$release/kernel/fs/isofs/isofs.ko" \
 	"usr/lib/modules/$release/kernel/fs/overlayfs/overlay.ko" \
 	"usr/lib/modules/$release/kernel/fs/squashfs/squashfs.ko"; do
 	grep -Fxq "$required_member" "$initramfs_members" || {
@@ -173,6 +180,25 @@ fi
 	cd -- "$initramfs_extract"
 	lsinitcpio -x "$initramfs"
 )
+initramfs_module_config="$(
+	sed -n 's/^MODULES="\([^"]*\)"$/\1/p' \
+		"$initramfs_extract/config"
+)"
+for early_module in \
+	isofs \
+	msm \
+	panel_samsung_atna33xc20 \
+	surface_aggregator \
+	surface_hid; do
+	case " $initramfs_module_config " in
+	*" $early_module "*) ;;
+	*)
+		printf 'Required initramfs module is not loaded early: %s\n' \
+			"$early_module" >&2
+		exit 1
+		;;
+	esac
+done
 if rg -Il -F \
 	-e "/home/$build_owner" \
 	-e archive-private \
@@ -218,6 +244,20 @@ systemd-analyze --man=no --root="$rootfs" verify \
 	sp11-noidle.service \
 	sp11-power-profile-cpufreq.service \
 	systemd-suspend.service
+"$tool_root/usr/bin/unsquashfs" -s "$squashfs" >"$squashfs_report"
+grep -Fq 'Compression gzip' "$squashfs_report" || {
+	printf 'Live SquashFS does not use the qualified kernel gzip codec.\n' >&2
+	exit 1
+}
+grep -Fxq 'CONFIG_SQUASHFS_ZLIB=y' "$repo_root/kernel/config" || {
+	printf 'Qualified kernel lacks the live SquashFS gzip codec.\n' >&2
+	exit 1
+}
+grep -Fq 'root=LABEL=SP11BETA' "$iso_tree/boot/grub/grub.cfg"
+if grep -Fq 'root=/dev/ram0' "$iso_tree/boot/grub/grub.cfg"; then
+	printf 'Live GRUB still requests the nonexistent ramdisk root.\n' >&2
+	exit 1
+fi
 "$tool_root/usr/bin/unsquashfs" \
 	-quiet \
 	-dest "$capability_extract" \

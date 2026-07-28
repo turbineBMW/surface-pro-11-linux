@@ -430,8 +430,8 @@ printf 'Compressing the live root filesystem ...\n'
 "$mksquashfs" "$rootfs" "$iso_tree/sp11/rootfs.sfs" \
 	-noappend \
 	-all-root \
-	-comp zstd \
-	-Xcompression-level 19 \
+	-comp gzip \
+	-Xcompression-level 9 \
 	-mkfs-time "$source_date_epoch"
 
 printf 'Building the removable ARM64 UEFI loader ...\n'

@@ -125,6 +125,10 @@ disable it must be stated before installation.
     662 packages, 3,759 review20 modules, 11 allowlisted firmware files,
     volatile SquashFS root, ARM64 GRUB fallback loader, El Torito, GPT, and
     EFI System Partition.
+  - [x] Reject the first physical-boot artifact after proving its Zstandard
+    SquashFS was incompatible with the exact kernel; rebuild with supported
+    gzip compression, real live-medium root resolution, early display/input
+    modules, and a codec/configuration audit gate.
   - [ ] Boot the exact image from removable media and qualify the live
     environment on target hardware.
 - [ ] Make installation preflight-only by default, collision-safe,
@@ -180,7 +184,7 @@ a moving packaging branch is not sufficient.
 
 The first held ISO and its complete static audit are documented in
 `iso/LIVE-IMAGE.md`. Its SHA-256 is
-`a8fd72ebe52a817634681b1ee827328b9cfdf24d6c6627957d736243f8e5c465`.
+`f6cae0d7a4fdd8691122288ff4d909607e84e5072c5442b89e6138df8d1a6cbf`.
 It contains no installer and remains local-only pending hardware boot,
 distribution source closure, and all publication gates.
 

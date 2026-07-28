@@ -1,13 +1,28 @@
 #!/usr/bin/env bash
 
 build() {
-	add_module loop
+	add_module videocc_sm8550
+	add_module dispcc_x1e80100
+	add_module gpucc_x1e80100
+	add_module phy_qcom_edp
+	add_module panel_samsung_atna33xc20
+	add_module msm
+	add_module tcsrcc_x1e80100
+	add_module phy_qcom_qmp_pcie
+	add_module phy_qcom_qmp_usb
+	add_module phy_qcom_qmp_usbc
+	add_module phy_qcom_eusb2_repeater
+	add_module phy_snps_eusb2
+	add_module phy_qcom_qmp_combo
+	add_module surface_hid
+	add_module surface_aggregator
+	add_module surface_aggregator_registry
+	add_module surface_aggregator_hub
+	add_module isofs
 	add_module squashfs
 	add_module overlay
-	add_module iso9660
 	add_module usb_storage
 	add_module uas
-	add_module videocc_sm8550
 	add_runscript
 }
 

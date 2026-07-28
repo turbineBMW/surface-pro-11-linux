@@ -1,12 +1,13 @@
-# Held ARM64 UEFI live image
+# Corrected held ARM64 UEFI live image
 
-The first non-installing GNOME engineering image was assembled and statically
-audited on 2026-07-28. It is a local test artifact, not a beta release:
+The corrected non-installing GNOME engineering image was assembled and
+statically audited on 2026-07-28. It is a local test artifact, not a beta
+release:
 
 - filename: `sp11-beta-review20-aarch64-HELD-local.iso`;
-- size: 1,159,137,280 bytes;
+- size: 1,284,163,584 bytes;
 - SHA-256:
-  `a8fd72ebe52a817634681b1ee827328b9cfdf24d6c6627957d736243f8e5c465`;
+  `f6cae0d7a4fdd8691122288ff4d909607e84e5072c5442b89e6138df8d1a6cbf`;
 - package root: 662 exact signed Arch Linux ARM packages;
 - custom kernel: `7.1.3-sp11-suspend-review20`, 3,759 modules;
 - firmware: exactly the 11 files in `firmware/allowlist.tsv`;
@@ -18,6 +19,29 @@ audited on 2026-07-28. It is a local test artifact, not a beta release:
 The ignored local artifact is under
 `work/live-image-review20-held-20260728/`. `ARTIFACTS.tsv` records the exact
 rootfs, initramfs, GRUB EFI, ESP, and ISO identities.
+
+## Rejected first boot
+
+The initial statically audited image, SHA-256
+`a8fd72ebe52a817634681b1ee827328b9cfdf24d6c6627957d736243f8e5c465`,
+is rejected. Both its normal and conservative entries reached the kernel's
+early EFI framebuffer but never reached the systemd boot display.
+
+The root cause was deterministic: its SquashFS used Zstandard compression
+while the qualified review20 kernel has `CONFIG_SQUASHFS_ZSTD` disabled. The
+kernel could not mount `rootfs.sfs` and entered the initramfs emergency path.
+The first initramfs also lacked the Surface keyboard stack, so TTY switching
+and Ctrl+Alt+Delete could not expose or leave that shell.
+
+The corrected image:
+
+- uses gzip SquashFS with the kernel's `CONFIG_SQUASHFS_ZLIB=y`;
+- identifies the real live medium with `root=LABEL=SP11BETA` instead of the
+  nonexistent `/dev/ram0`;
+- explicitly early-loads ISO9660, MSM display/panel, and Surface
+  keyboard/aggregator modules; and
+- audits the SquashFS codec against the exact kernel configuration and checks
+  the early module and root-device contract.
 
 ## Build and audit
 
@@ -52,7 +76,10 @@ The final audit verifies:
 - disabled sensor/IR units and absence of Howdy, v4l2loopback, installer,
   network profiles, Bluetooth state, and machine ID;
 - required live-mount, USB-storage, SquashFS, overlay, and VideoCC initramfs
-  members with no host modprobe policy;
+  members, plus the early ISO, MSM display/panel, and Surface input stack, with
+  no host modprobe policy;
+- gzip SquashFS compatibility with the exact kernel configuration and the
+  live-medium root-device contract;
 - preservation of required file capabilities through SquashFS;
 - ARM64 PE/COFF fallback loader, EFI FAT contents, El Torito UEFI boot entry,
   GPT, and EFI System Partition; and
