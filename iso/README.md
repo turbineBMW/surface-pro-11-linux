@@ -34,6 +34,19 @@ repository databases. It writes:
 - `repositories.lock.tsv`, containing the SHA-256 of every repository
   database used for dependency resolution.
 
+After packages are cached, `generate-package-recipe-lock.sh` derives
+`package-recipes.lock.tsv` from their signed `.BUILDINFO` metadata. It records
+the exact `pkgbuild_sha256sum` used for every distinct `pkgbase`, including
+split packages, rather than trusting a moving packaging branch.
+
+The first snapshot resolves to 595 distinct recipe identities. The
+`package-recipes.lock.tsv` SHA-256 is
+`1361fe0a28652ddb62003925603186fb0b90df3c10d9d02479e902230895eed5`.
+The Arch Linux ARM `Source Files` endpoint was returning HTTP 500 when this
+lock was created, so source staging must use the pinned Arch/Arch Linux ARM
+packaging histories as a fallback and reject any PKGBUILD whose checksum does
+not match the lock.
+
 The generated lock is a snapshot, not a promise that a rolling mirror will
 retain old files. Before an image can be released, the build must cache every
 exact signed package named by the lock and verify its SHA-256. The release

@@ -151,6 +151,8 @@ Snapshot identities:
   `469dfdf921d1376757d02c0a9492dec58f560c3e359d85c0ddf9e0f68785257e`;
 - repository database lock:
   `9dee549f5f9a867115e318448513cc9355b0bca5ab9a060462ff8792d770fd9a`.
+- exact 595-pkgbase recipe lock:
+  `1361fe0a28652ddb62003925603186fb0b90df3c10d9d02479e902230895eed5`.
 
 The live closure uses only `core`, `extra`, and the single ARM-specific
 `alarm/libpisp` dependency required by distribution libcamera. It contains no
@@ -163,6 +165,9 @@ signatures, and 2,016 extracted package metadata files. Every package
 signature and locked SHA-256 passed. Its `PACKAGE-SNAPSHOT.tsv` SHA-256 is
 `cb336c6fa1dfab9644f304e89a797ab70d2e1131c6192484a5d043559c7221fe`.
 The snapshot remains ignored local engineering output; it is not published.
+The signed `.BUILDINFO` files also pin 595 distinct PKGBUILD SHA-256 values.
+Those values are the acceptance criterion for the matching source snapshot;
+a moving packaging branch is not sufficient.
 
 ## Accepted beta limitations
 

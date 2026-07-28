@@ -11,6 +11,7 @@ required_files=(
 	"$iso_dir/packages-live.aarch64.tsv"
 	"$iso_dir/packages-build.aarch64.tsv"
 	"$iso_dir/packages.lock.tsv"
+	"$iso_dir/package-recipes.lock.tsv"
 	"$iso_dir/repositories.lock.tsv"
 )
 for required_file in "${required_files[@]}"; do
@@ -83,6 +84,39 @@ awk -F '\t' '
 	exit 1
 }
 
+awk -F '\t' '
+	NR == 1 {
+		if ($0 != "repository\tpkgbase\tversion\tpkgbuild_sha256\tpackages\tsource_files")
+			exit 1
+		next
+	}
+	NF != 6 { exit 1 }
+	$1 !~ /^(core|extra|alarm)$/ { exit 1 }
+	$4 !~ /^[0-9a-f]{64}$/ { exit 1 }
+	$6 !~ /^https:\/\/archlinuxarm\.org\/packages\/aarch64\/.*\/files$/ {
+		exit 1
+	}
+' "$iso_dir/package-recipes.lock.tsv" || {
+	printf 'Malformed package recipe lock.\n' >&2
+	exit 1
+}
+
+missing_recipes="$(
+	awk -F '\t' 'NR > 1 { print $2 "\t" $4 "\t" $5 }' \
+		"$iso_dir/packages.lock.tsv" |
+		LC_ALL=C sort -u |
+		comm -23 - <(
+			awk -F '\t' 'NR > 1 { print $1 "\t" $2 "\t" $3 }' \
+				"$iso_dir/package-recipes.lock.tsv" |
+				LC_ALL=C sort -u
+		)
+)"
+[[ -z "$missing_recipes" ]] || {
+	printf 'Package lock entries lack an exact recipe identity:\n%s\n' \
+		"$missing_recipes" >&2
+	exit 1
+}
+
 "$script_dir/generate-package-lock.sh" --check
 
 package_count="$(awk 'NR > 1 { count++ } END { print count + 0 }' \
@@ -96,6 +130,8 @@ build_count="$(awk -F '\t' \
 live_compressed="$(awk -F '\t' \
 	'NR > 1 && ($1 == "live" || $1 == "live+build") { total += $9 }
 	END { print total + 0 }' "$iso_dir/packages.lock.tsv")"
+recipe_count="$(awk 'NR > 1 { count++ } END { print count + 0 }' \
+	"$iso_dir/package-recipes.lock.tsv")"
 live_installed="$(awk -F '\t' \
 	'NR > 1 && ($1 == "live" || $1 == "live+build") { total += $10 }
 	END { print total + 0 }' "$iso_dir/packages.lock.tsv")"
@@ -104,3 +140,4 @@ printf 'Package lock audit passed: %s unique, %s live, %s build packages.\n' \
 	"$package_count" "$live_count" "$build_count"
 printf 'Repository package sizes: %s compressed bytes, %s installed bytes (live closure).\n' \
 	"$live_compressed" "$live_installed"
+printf 'Exact package recipes: %s distinct pkgbase identities.\n' "$recipe_count"
