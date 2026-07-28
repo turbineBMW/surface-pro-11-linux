@@ -178,6 +178,19 @@ if rg -q 'SP11_QUALIFIED_BOOT_DIR|-C /usr/lib/modules' \
 	exit 1
 fi
 
+rg -qF 'BINARY-RELEASE-HOLD.md' \
+	"$repo_root/scripts/build-held-live-image.sh"
+rg -qF -- '--local-staging' \
+	"$repo_root/scripts/build-held-live-image.sh"
+rg -qF 'audit-held-live-image.sh' \
+	"$repo_root/scripts/build-held-live-image.sh"
+rg -qF 'empty-pacman-hooks' \
+	"$repo_root/scripts/build-held-live-image.sh"
+if rg -q 'modconf' "$repo_root/iso/mkinitcpio.conf"; then
+	printf 'Generic host modprobe policy is enabled in the live initramfs.\n' >&2
+	exit 1
+fi
+
 for source_identity in \
 	18d7951a10dc49e383d16c6af82fc2c07784de3d \
 	a83bc1232f7096f8b33b50fdbda249cd640de670 \
@@ -267,13 +280,17 @@ fi
 	PYTHONDONTWRITEBYTECODE=1 \
 		python3 userspace/power-profiles-daemon/test_sp11_power_profile_cpufreq.py
 	bash -n scripts/*.sh rootfs/usr/local/libexec/sp11-bluetooth-address \
+		iso/mkinitcpio/install/sp11live \
 		rootfs/usr/lib/systemd/system-sleep/*.sh \
 		rootfs/usr/lib/systemd/system-sleep/sp11-charge-limit \
 		rootfs/usr/local/libexec/sp11-charge-limit \
 		rootfs/usr/local/libexec/sp11-runtime-idle-suspend-guard \
 		userspace/power/test-sp11-charge-limit.sh
+	bash -n iso/mkinitcpio/hooks/sp11live
 	if command -v shellcheck >/dev/null; then
-		shellcheck scripts/*.sh rootfs/usr/local/libexec/sp11-bluetooth-address \
+		shellcheck scripts/*.sh iso/mkinitcpio/install/sp11live \
+			iso/mkinitcpio/hooks/sp11live \
+			rootfs/usr/local/libexec/sp11-bluetooth-address \
 			rootfs/usr/lib/systemd/system-sleep/*.sh \
 			rootfs/usr/lib/systemd/system-sleep/sp11-charge-limit \
 			rootfs/usr/local/libexec/sp11-charge-limit \

@@ -1,0 +1,11 @@
+[Unit]
+Description=Surface Pro 11 held live-image marker
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/touch /run/sp11-live-session
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

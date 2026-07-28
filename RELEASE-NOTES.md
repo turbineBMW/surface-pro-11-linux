@@ -5,6 +5,11 @@ ISO. Binary and ISO publication remains blocked by
 `BINARY-RELEASE-HOLD.md` until clean reconstruction, archive review, and
 install/rollback tests are complete.
 
+The first non-installing ARM64 UEFI GNOME image has now been assembled under
+that hold and passed its static package, firmware, privacy, initramfs,
+SquashFS, service, EFI, GPT, and artifact-hash audits. It has not yet been
+booted from removable media and is not a release. See `iso/LIVE-IMAGE.md`.
+
 ## Qualified kernel
 
 - Linux release: `7.1.3-sp11-suspend-review20`

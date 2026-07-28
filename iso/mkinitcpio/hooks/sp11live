@@ -1,0 +1,55 @@
+#!/usr/bin/ash
+# shellcheck shell=dash
+# shellcheck disable=SC2034
+
+sp11_live_mount_handler() {
+	local destination="$1"
+	local live_source live_device attempt
+
+	live_source="${sp11live:-LABEL=SP11BETA}"
+	msg ":: locating SP11 live medium: $live_source"
+	attempt=0
+	live_device=
+	while [ "$attempt" -lt 30 ] && [ -z "$live_device" ]; do
+		live_device="$(resolve_device "$live_source")" || live_device=
+		[ -n "$live_device" ] || sleep 1
+		attempt=$((attempt + 1))
+	done
+	[ -n "$live_device" ] || {
+		err "SP11 live medium did not appear: $live_source"
+		return 1
+	}
+
+	mkdir -p /run/sp11-live
+	mount -t tmpfs -o mode=0755,size=80% sp11-live /run/sp11-live
+	mkdir -p \
+		/run/sp11-live/media \
+		/run/sp11-live/lower \
+		/run/sp11-live/upper \
+		/run/sp11-live/work \
+		"$destination"
+
+	msg ":: mounting SP11 live medium read-only"
+	mount -o ro "$live_device" /run/sp11-live/media || return 1
+	[ -f /run/sp11-live/media/sp11/rootfs.sfs ] || {
+		err "Missing /sp11/rootfs.sfs on SP11 live medium"
+		return 1
+	}
+
+	msg ":: mounting SP11 live SquashFS"
+	mount -t squashfs -o ro,loop \
+		/run/sp11-live/media/sp11/rootfs.sfs \
+		/run/sp11-live/lower || return 1
+
+	msg ":: creating volatile SP11 live overlay"
+	mount -t overlay overlay \
+		-o lowerdir=/run/sp11-live/lower,upperdir=/run/sp11-live/upper,workdir=/run/sp11-live/work \
+		"$destination" || return 1
+
+	mkdir -p "$destination/run/sp11-live"
+	mount --move /run/sp11-live "$destination/run/sp11-live"
+}
+
+run_hook() {
+	mount_handler=sp11_live_mount_handler
+}

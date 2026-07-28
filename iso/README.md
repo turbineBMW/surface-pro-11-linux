@@ -63,6 +63,8 @@ Arch Linux package recipes alone are not complete corresponding source: they
 normally contain URLs for acquiring upstream source. The upstream inputs must
 therefore be retained as well. Package recipes should be pinned by immutable
 commit or archived source snapshot rather than a moving branch.
+The current authoritative-source mismatch and acceptance criteria are
+recorded in `SOURCE-STATUS.md`.
 
 ## Inputs outside this lock
 
@@ -71,9 +73,11 @@ Daemon, rootfs overlay, and their corresponding-source archive are custom
 payload inputs. They remain covered by the separate held-payload manifests
 and are not represented as distribution packages here.
 
-Firmware is deliberately absent. A later firmware allowlist must identify
-each required blob and its redistribution terms before any firmware package
-or file is added.
+Firmware is separate from the distribution package closure. The first held
+image selects exactly the 11 redistributable files in
+`firmware/allowlist.tsv` from four verified signed packages and copies their
+license and notice material. Surface-specific ADSP/CDSP/audio files and the
+machine-local WCN7850 `board.bin` remain denied.
 
 Under the active binary/ISO hold,
 `scripts/cache-locked-packages.sh --local-staging` performs a non-installing
@@ -86,6 +90,18 @@ The first held snapshot contains all 672 packages and signatures plus 2,016
 extracted metadata files. Its `PACKAGE-SNAPSHOT.tsv` SHA-256 is
 `cb336c6fa1dfab9644f304e89a797ab70d2e1131c6192484a5d043559c7221fe`.
 It remains ignored local engineering output, not a release artifact.
+
+## First held image
+
+`scripts/build-held-live-image.sh` now assembles a non-installing ARM64 UEFI
+GNOME environment from the package snapshot, exact review20 custom payload,
+and firmware allowlist. `scripts/audit-held-live-image.sh` verifies the live
+root, initramfs, firmware boundary, ARM64 fallback loader, El Torito entry,
+GPT/ESP structure, and artifact manifest.
+
+The first audit-passing image is documented in `LIVE-IMAGE.md`. It remains
+under the binary/ISO hold and still requires removable-media hardware
+qualification.
 
 ## Hard exclusions
 

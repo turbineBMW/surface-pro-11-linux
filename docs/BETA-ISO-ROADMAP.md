@@ -110,6 +110,9 @@ disable it must be stated before installation.
     `.BUILDINFO`, `.PKGINFO`, and `.MTREE` under the release hold.
   - [ ] Stage every matching package recipe, upstream source input, and
     applicable license in a durable source snapshot or offer.
+    - [x] Prove that the canonical Arch recipe is not sufficient evidence for
+      at least one signed ARM package and document the authoritative-source
+      recovery hold in `iso/SOURCE-STATUS.md`.
 - [ ] Include every applicable license, notice, source identity, patch, and
   machine-readable build recipe.
 - [x] Define a firmware manifest containing only redistributable firmware.
@@ -118,6 +121,12 @@ disable it must be stated before installation.
   registry data.
 - [ ] Build a bootable ARM64 UEFI live environment with usable touch/keyboard
   input and an offline recovery path.
+  - [x] Assemble and statically audit the first non-installing held image:
+    662 packages, 3,759 review20 modules, 11 allowlisted firmware files,
+    volatile SquashFS root, ARM64 GRUB fallback loader, El Torito, GPT, and
+    EFI System Partition.
+  - [ ] Boot the exact image from removable media and qualify the live
+    environment on target hardware.
 - [ ] Make installation preflight-only by default, collision-safe,
   hardware-gated, repeatable, and rollback-aware.
 - [ ] Test the exact ISO through boot, installation, first one-shot boot,
@@ -168,6 +177,12 @@ The snapshot remains ignored local engineering output; it is not published.
 The signed `.BUILDINFO` files also pin 595 distinct PKGBUILD SHA-256 values.
 Those values are the acceptance criterion for the matching source snapshot;
 a moving packaging branch is not sufficient.
+
+The first held ISO and its complete static audit are documented in
+`iso/LIVE-IMAGE.md`. Its SHA-256 is
+`a8fd72ebe52a817634681b1ee827328b9cfdf24d6c6627957d736243f8e5c465`.
+It contains no installer and remains local-only pending hardware boot,
+distribution source closure, and all publication gates.
 
 ## Firmware allowlist
 
