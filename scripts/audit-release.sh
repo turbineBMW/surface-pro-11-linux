@@ -85,7 +85,7 @@ for withdrawn in \
 done
 
 if git -C "$repo_root" ls-files | rg -n \
-	'(^|/)(work|release)/|(^|/)(Image-[^/]*|[^/]*\.dtb|[^/]*\.ko|[^/]*\.zst|[^/]*\.iso|[^/]*\.img|[^/]*\.cab|[^/]*\.sys|[^/]*\.dll|[^/]*\.exe)$'; then
+	'(^|/)(work|release)/|(^|/)(Image-[^/]*|[^/]*\.dtb|[^/]*\.ko|[^/]*\.zst|[^/]*\.iso|[^/]*\.img|[^/]*\.cab|[^/]*\.sys|[^/]*\.dll|[^/]*\.exe|[^/]*\.mbn|[^/]*\.fw|[^/]*\.elf|[^/]*\.tlv|[^/]*\.p7s)$'; then
 	printf 'Tracked binary, payload, firmware-package, or work artifact found.\n' >&2
 	exit 1
 fi
@@ -281,6 +281,7 @@ fi
 			userspace/power/test-sp11-charge-limit.sh
 	fi
 	scripts/audit-package-lock.sh
+	scripts/audit-firmware-manifest.sh
 	userspace/power/test-sp11-charge-limit.sh
 )
 

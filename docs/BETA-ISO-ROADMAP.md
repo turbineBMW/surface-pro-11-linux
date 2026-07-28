@@ -112,7 +112,7 @@ disable it must be stated before installation.
     applicable license in a durable source snapshot or offer.
 - [ ] Include every applicable license, notice, source identity, patch, and
   machine-readable build recipe.
-- [ ] Define a firmware manifest containing only redistributable firmware.
+- [x] Define a firmware manifest containing only redistributable firmware.
   Never include Windows drivers, private traces, machine-specific Bluetooth
   identity/key material, sensor calibration, or generated proprietary
   registry data.
@@ -168,6 +168,21 @@ The snapshot remains ignored local engineering output; it is not published.
 The signed `.BUILDINFO` files also pin 595 distinct PKGBUILD SHA-256 values.
 Those values are the acceptance criterion for the matching source snapshot;
 a moving packaging branch is not sufficient.
+
+## Firmware allowlist
+
+The firmware manifest selects 11 exact files: official WCN7850 Wi-Fi and
+Bluetooth firmware, Adreno GPU firmware, X1E80100 QUPv3 firmware, and the
+signed wireless regulatory database. Each path is locked by package/version,
+size, SHA-256, upstream source identity, and required license/notice material.
+The audit rejects any extra firmware or tracked blob.
+
+Six Surface-specific ADSP/CDSP/audio files and one machine-local ath12k
+`board.bin` on the qualified host are unowned and absent from upstream
+linux-firmware. They are explicitly denied. A pristine beta live boot must
+report audio and ADSP/CDSP-backed sensors unavailable; an installer may offer
+only an explicit local import from operator-supplied files. Wi-Fi must be
+qualified with the denied `board.bin` absent before the ISO claims support.
 
 ## Accepted beta limitations
 

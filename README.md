@@ -119,10 +119,14 @@ provenance boundary.
 
 ## Firmware and Windows boundary
 
-Firmware remains an external prerequisite handled by the foundation project's
-workflow and is not redistributed here. The reviewed source contains no
-Windows driver package, proprietary firmware copied from Windows, raw WinDbg
-trace, memory dump, private capture, credential, or enrolled biometric data.
+This source repository redistributes no firmware blob. A future ISO may select
+only the exact redistributable files in `firmware/allowlist.tsv` from verified
+Arch Linux ARM packages. Surface-specific ADSP/CDSP images, audio topology,
+machine Wi-Fi board data, and sensor configuration remain external
+prerequisites handled by an explicit operator-supplied workflow. The reviewed
+source contains no Windows driver package, proprietary firmware copied from
+Windows, raw WinDbg trace, memory dump, private capture, credential, or
+enrolled biometric data.
 The independently observed touch/QSPI and camera boundaries are documented in
 [docs/TOUCH-QSPI-PROVENANCE.md](docs/TOUCH-QSPI-PROVENANCE.md) and
 [docs/CAMERA-REVIEW.md](docs/CAMERA-REVIEW.md).

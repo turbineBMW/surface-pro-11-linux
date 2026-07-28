@@ -1,0 +1,13 @@
+path_or_pattern	observed_sha256	reason
+ath12k/WCN7850/hw2.0/board.bin	0ef5f6f3cb124f33c6de52371819ccd7c13763ceb86d476a178fd56e4cdc26a3	Unowned machine-local board fallback; official board-2.bin must be tested alone
+qcom/x1e80100/X1E80100-Microsoft-Surface-Pro-11-tplg.bin	89b731f3f98fc2b84699bca39a56e390925a44a26d5aea80382cf617e00c08d8	Unowned Surface audio topology absent from upstream linux-firmware
+qcom/x1e80100/microsoft/Denali/adsp_dtb.mbn	544bd795cb06cf8dee8119ede2a667f01066b2f1b9e4348f1772d080e2026ff4	Unowned Surface ADSP device tree absent from upstream linux-firmware
+qcom/x1e80100/microsoft/Denali/cdsp_dtb.mbn	444f79a6eb0f5309e12a953be4fe15a76a633a7864ac5217d0cadd13427ed1fb	Unowned Surface CDSP device tree absent from upstream linux-firmware
+qcom/x1e80100/microsoft/Denali/qcadsp8380.mbn	921870a839ee2aba647b04598d62ed96f3d2d5dfbb2499fc842f9a6ff0e0da13	Unowned Surface ADSP image absent from upstream linux-firmware
+qcom/x1e80100/microsoft/Denali/qccdsp8380.mbn	b2ed1656c46b116f7a2adedce8e4502a2f8ed5e223b82e0ac6cc70e451d58ecc	Unowned Surface CDSP image absent from upstream linux-firmware
+qcom/x1e80100/microsoft/qcdxkmsuc8380.mbn	c89711a60240f29cb5df13f7b904642b78b7d9d6e614473751f7bf4049fab137	Unowned Surface secure firmware absent from upstream linux-firmware
+qcom/x1e80100/microsoft/Denali/**	-	Fail-closed denial of any other machine-specific Denali firmware
+**/surface-registry/**	-	Generated proprietary sensor registry or calibration
+**/Windows/System32/DriverStore/**	-	Windows driver-store content
+**/var/lib/bluetooth/**	-	Machine Bluetooth identity, bonds, and keys
+**/NetworkManager/system-connections/**	-	Network profiles and credentials

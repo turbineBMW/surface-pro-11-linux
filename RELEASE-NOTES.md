@@ -63,7 +63,11 @@ after resume only when the explicit `sp11_deep_idle=1` opt-in is present.
   platform sleep
 - Unguarded state1 is not supported, and the firmware boundary remains under
   investigation
-- Firmware is an external prerequisite and is not redistributed
+- Only a narrow official linux-firmware allowlist is eligible for the future
+  ISO. Surface-specific ADSP/CDSP images and audio topology are not upstream,
+  are not redistributable from the qualified host, and require an explicit
+  local operator import. A pristine live boot therefore has no audio or
+  ADSP/CDSP-backed sensor support.
 - Other Surface Pro 11 variants, distributions, and boot loaders are not yet
   qualified
 - Camera color tuning and ordinary desktop camera integration remain

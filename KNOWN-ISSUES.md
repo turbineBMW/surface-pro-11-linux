@@ -171,6 +171,14 @@ power-off behavior.
 Speakers and microphones work. Speaker volume is conservative; no software
 boost is included.
 
+Those results use Surface-specific ADSP firmware and audio topology already
+present on the qualified installed system. The files are unowned, are absent
+from upstream linux-firmware, and are denied by the beta firmware manifest.
+A pristine live image cannot provide audio until the operator explicitly
+imports compatible files from their own existing installation or
+user-supplied source. The project must not publish or automatically download
+those files.
+
 ## Ambient color sensor
 
 The sensor requires an external Microsoft/Qualcomm configuration tree,

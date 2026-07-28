@@ -1,0 +1,12 @@
+path	source_package	source_version	size	sha256	license_material	purpose
+ath12k/WCN7850/hw2.0/amss.bin	linux-firmware-atheros	20260622-1	6090816	43aadfd3df887f27de74020273aee484bac6a31dd53068f91baf2a9b094d6a68	LICENSE.QualcommAtheros_ath10k,WCN7850-Notice.txt,WHENCE	WCN7850 Wi-Fi firmware
+ath12k/WCN7850/hw2.0/board-2.bin	linux-firmware-atheros	20260622-1	2253964	1abee7132dbccb523cca44a8de4e8968aa7bf5a5fcc032c338f687f94ea5bf4e	LICENSE.QualcommAtheros_ath10k,WCN7850-Notice.txt,WHENCE	WCN7850 public board database
+ath12k/WCN7850/hw2.0/m3.bin	linux-firmware-atheros	20260622-1	299660	0e72f44df7defc269fe92dcea25d4d409046c04b77d41c510c52879b3dfc1055	LICENSE.QualcommAtheros_ath10k,WCN7850-Notice.txt,WHENCE	WCN7850 M3 firmware
+qca/hmtbtfw20.tlv	linux-firmware-atheros	20260622-1	270120	f1c00f4640a5c4e5dc36a2574d3d1d0afcfd1ab58a84f217dce4b1bb73cba981	LICENSE.qcom,NOTICE.qca,WHENCE	WCN7850 Bluetooth patch
+qca/hmtnv20.bin	linux-firmware-atheros	20260622-1	9508	c26b340bbc8b617304610c774627ac4879194705eea7a7c7b13e3593903befd9	LICENSE.qcom,NOTICE.qca,WHENCE	WCN7850 Bluetooth defaults
+qcom/gen70500_gmu.bin	linux-firmware-qcom	20260622-1	81312	5dfba247d548cabcb892ffa716e8dc82a345fd54b5dbae46ba523230e7ae37dd	LICENSE.qcom,NOTICE.qcom,WHENCE	Adreno GMU firmware
+qcom/gen70500_sqe.fw	linux-firmware-qcom	20260622-1	77332	05ae89e6dea62268cec3f4abb5d7d6db2c95270ff105fd056f77262e39d2e527	LICENSE.qcom,NOTICE.qcom,WHENCE	Adreno SQE firmware
+qcom/x1e80100/gen70500_zap.mbn	linux-firmware-qcom	20260622-1	12088	abaef5222856ce976014512d40f87d63b380a604dbb095c469f02feb924e0b26	LICENSE.qcom,NOTICE.qcom,WHENCE	X1E80100 Adreno secure firmware
+qcom/x1e80100/qupv3fw.elf	linux-firmware-qcom	20260622-1	52288	dcb4ca490098f081dd3f85d91ca230c4755d376a4cdca51e6a4ba918fa4ab077	LICENSE.qcom,NOTICE.qcom,WHENCE	X1E80100 QUPv3 serial-engine firmware
+regulatory.db	wireless-regdb	2026.05.30-1	6380	2fb33ca0074db573e05ef7dd50bb45b63c0ff98b7e852e1105ebad536fae8e6b	wireless-regdb-LICENSE	Wireless regulatory database
+regulatory.db.p7s	wireless-regdb	2026.05.30-1	1085	c941c08f51c93e46722293b85631604c3740d86c3de0c75f79aef50d2e919179	wireless-regdb-LICENSE	Wireless regulatory database signature
