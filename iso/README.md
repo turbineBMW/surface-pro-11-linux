@@ -62,6 +62,18 @@ Firmware is deliberately absent. A later firmware allowlist must identify
 each required blob and its redistribution terms before any firmware package
 or file is added.
 
+Under the active binary/ISO hold,
+`scripts/cache-locked-packages.sh --local-staging` performs a non-installing
+pacman download into `work/`, verifies repository and detached package
+signatures, checks every locked SHA-256 and size, and extracts package build
+metadata. It refuses release output and never modifies the host package
+database.
+
+The first held snapshot contains all 672 packages and signatures plus 2,016
+extracted metadata files. Its `PACKAGE-SNAPSHOT.tsv` SHA-256 is
+`cb336c6fa1dfab9644f304e89a797ab70d2e1131c6192484a5d043559c7221fe`.
+It remains ignored local engineering output, not a release artifact.
+
 ## Hard exclusions
 
 The first beta does not include:

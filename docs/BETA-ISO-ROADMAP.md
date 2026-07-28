@@ -106,8 +106,10 @@ disable it must be stated before installation.
   - [x] Freeze the recommended GNOME AArch64 direct profiles, complete
     transitive dependency lock, repository database identities, package
     hashes, source-retrieval contract, and hard exclusion audit.
-  - [ ] Cache every exact signed binary package and stage its matching
-    package recipe, upstream source inputs, build metadata, and licenses.
+  - [x] Cache and verify every exact signed binary package and extract its
+    `.BUILDINFO`, `.PKGINFO`, and `.MTREE` under the release hold.
+  - [ ] Stage every matching package recipe, upstream source input, and
+    applicable license in a durable source snapshot or offer.
 - [ ] Include every applicable license, notice, source identity, patch, and
   machine-readable build recipe.
 - [ ] Define a firmware manifest containing only redistributable firmware.
@@ -155,6 +157,12 @@ The live closure uses only `core`, `extra`, and the single ARM-specific
 firmware, alternate distribution kernel, AUR/foreign package, Howdy,
 v4l2loopback, Quickshell, Niri, container stack, or compiler. The exact lock
 and source-retention rules are documented in `iso/README.md`.
+
+The held package snapshot contains exactly 672 packages, 672 detached
+signatures, and 2,016 extracted package metadata files. Every package
+signature and locked SHA-256 passed. Its `PACKAGE-SNAPSHOT.tsv` SHA-256 is
+`cb336c6fa1dfab9644f304e89a797ab70d2e1131c6192484a5d043559c7221fe`.
+The snapshot remains ignored local engineering output; it is not published.
 
 ## Accepted beta limitations
 

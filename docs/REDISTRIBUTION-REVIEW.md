@@ -103,8 +103,10 @@ Practical8 commit, tree, Image, DTB, module, archive, or checksum values.
   - [x] Freeze and audit the GNOME AArch64 direct profiles, full dependency
     closure, exact binary hashes, repository database hashes, package source
     endpoints, and explicit exclusions.
-  - [ ] Cache the locked signed packages and retain their complete matching
-    package recipes, upstream source inputs, build metadata, and licenses.
+  - [x] Cache and verify all locked package files and detached signatures,
+    and extract their package build metadata under the binary/ISO hold.
+  - [ ] Retain the complete matching package recipes, upstream source inputs,
+    and applicable licenses in a durable source snapshot or offer.
 - [ ] Include all applicable license texts, copyright notices, source
   identities, build inputs, and machine-readable build instructions alongside
   the binaries.
