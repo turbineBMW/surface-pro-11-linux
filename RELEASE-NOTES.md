@@ -35,6 +35,13 @@ August 2026:
 The kernel (`7.1.3-sp11-suspend-review20`), package set, and installer
 executor logic are unchanged from the qualified August 2026 builds.
 
+Hardware check on 2026-08-28 (maintainer's unit, USB 2.0 stick, firmware
+collected by `RUN-IN-WINDOWS.cmd` on Windows): GRUB injected the five files,
+the initramfs validated them before module loading, the RAM copy verified in
+107 s, and GNOME came up with zero failed units and GPU acceleration; Wi-Fi,
+Bluetooth, touch, pen, cameras, microphones, and speakers worked. A fatal
+early-hook redirection found during this test is fixed (commit 3d5b372).
+
 # Review20 beta consolidation
 
 This branch prepares the exact, hardware-qualified review20 stack for a beta

@@ -13,11 +13,14 @@
 - **Windows Fast Startup / hibernation** leaves the NTFS volume dirty, so
   `sp11-firmware --from-windows` refuses to mount it. Shut Windows down
   fully (Shift + Shut down) or disable Fast Startup.
-- **Only one hardware unit** has been used for qualification. The GRUB
-  `newc:` firmware path was verified for syntax and the fallback paths
-  match what booted in July/August 2026, but the beta ISO built on
-  2026-08-28 has not yet been cold-booted on hardware by the maintainer;
-  reports welcome.
+- **Only one hardware unit** has been used for qualification. The
+  2026-08-28 beta was cold-booted on it from a USB 2.0 stick: GRUB firmware
+  injection, validation, RAM copy, GNOME, Wi-Fi, Bluetooth, touch, pen,
+  cameras, microphones, speakers, and GPU acceleration all worked with
+  zero failed units.
+- **The screen goes black for one to two minutes** after the first boot
+  messages while the live root is copied into RAM (107 s on a USB 2.0
+  stick; faster on USB 3). That is normal; wait for GNOME.
 - **Wipe mode** was exercised on loop devices, not on the maintainer's NVMe.
 - **ISO size.** Release assets larger than 2 GiB are split; join them with
   `cat` before writing (see the release README).

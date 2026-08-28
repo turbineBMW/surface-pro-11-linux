@@ -70,7 +70,9 @@ microphones, and no GPU acceleration**.
 2. Hold **Volume-Down** and press **Power**; release Volume-Down when the
    Surface logo appears. The tablet boots from USB.
 3. In the GRUB menu, take the first entry. GRUB says whether it found your
-   firmware on SP11FW. The live root is copied into RAM (a few seconds).
+   firmware on SP11FW. After the first kernel messages the screen goes
+   **black for one to two minutes** while the live root is copied into RAM
+   (USB 2.0 sticks are slow); GNOME appears afterwards.
 4. GNOME logs in automatically as user `live` (sudo without password).
 
 Try: touch, pen (Rnote is installed), keyboard/touchpad, Wi-Fi, Bluetooth,
