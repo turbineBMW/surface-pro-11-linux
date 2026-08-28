@@ -64,7 +64,8 @@ changes LGPL/CC0, the Power Profiles Daemon patch GPL-3.0. See
 ## Tested target
 
 - Microsoft Surface Pro, 11th Edition, OLED, Snapdragon X Elite (X1E80100)
-- One physical unit. The LCD, X Plus, 5G, and Laptop variants are untested;
+- One physical unit. The LCD, X Plus, 5G, and Surface Laptop variants are
+  **not supported** (different hardware, not just untested);
   see [SUPPORTED-HARDWARE.md](SUPPORTED-HARDWARE.md).
 
 ## Contributing and reporting

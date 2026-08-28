@@ -9,7 +9,8 @@ recovering a machine that does not boot. The whole flow is:
 4. (optional) install alongside Windows or wipe the disk.
 
 Everything below has been done on a Surface Pro 11 OLED / Snapdragon X Elite
-(device tree `microsoft,denali`). Other Surface variants are untested.
+(device tree `microsoft,denali`). **The LCD, X Plus, 5G, and Surface Laptop
+variants are not supported** — do not flash this on them.
 
 ## 0. Before you start
 

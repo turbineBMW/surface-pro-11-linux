@@ -16,18 +16,21 @@ The reviewed source was tested on one physical unit:
 | Preserved safe kernel | `7.1.3-sp11-camera-review12` |
 | Ambient color sensor | AMS TCS3430 through Qualcomm SSC |
 
-Any future installer must reject a device whose DMI product or live
-device-tree compatible string does not match unless the operator supplies an
-explicit unsafe override. The beta installer remains held for qualification.
+The installer rejects a device whose DMI product or live device-tree
+compatible string does not match.
 
-## Not qualified
+## Not supported
 
-- Surface Pro 11 LCD variants
-- Snapdragon X Plus variants
+This project supports **only** the Surface Pro 11 OLED with Snapdragon X
+Elite. The following are **not supported** — do not flash the image on them
+and do not open support issues for them:
+
+- Surface Pro 11 **LCD** variants
+- Snapdragon **X Plus** variants
 - 5G/mobile-broadband variants
-- Other Surface generations
+- Surface Laptop 7 and other Surface generations
 - Other distributions or boot loaders
 
-Reports from other variants are welcome, but similarity is not support. Never
-install the included DTB on a machine with a different hardware description
-without first reviewing the device-tree differences.
+They use different device trees, panels, and firmware; the included DTB and
+kernel configuration would be wrong for them. Porting to another variant is a
+separate development effort, not a configuration change.

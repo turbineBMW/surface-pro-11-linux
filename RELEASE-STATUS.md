@@ -22,7 +22,8 @@ honestly instead of blocking the release.
 
 - Not a supported product. Expect rough edges and read `KNOWN-ISSUES.md`.
 - Not Secure Boot capable. Secure Boot must be disabled in UEFI settings.
-- Not tested on the LCD, X Plus, 5G, or Surface Laptop variants.
+- Not for the LCD, X Plus, 5G, or Surface Laptop variants: they are
+  unsupported, not merely untested.
 - Not a replacement for the foundation project
   (`dwhinham/linux-surface-pro-11`) whose Arch Linux ARM bootstrap this
   builds on.
