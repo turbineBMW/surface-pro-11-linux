@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Install SP11 Linux
+Comment=Install alongside Windows or erase the internal disk
+Exec=kgx --wait -- /usr/local/bin/sp11-installer-ui
+Icon=drive-harddisk-system
+Terminal=false
+Categories=System;
+Keywords=install;dual boot;disk;Surface;
+StartupNotify=true

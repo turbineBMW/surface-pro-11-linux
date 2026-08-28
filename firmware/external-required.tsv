@@ -1,0 +1,6 @@
+path	bytes	sha256	candidate_names	purpose
+qcom/x1e80100/microsoft/Denali/adsp_dtb.mbn	73528	544bd795cb06cf8dee8119ede2a667f01066b2f1b9e4348f1772d080e2026ff4	adsp_dtb.mbn,adsp_dtbs.elf	Surface ADSP device tree
+qcom/x1e80100/microsoft/Denali/cdsp_dtb.mbn	40760	444f79a6eb0f5309e12a953be4fe15a76a633a7864ac5217d0cadd13427ed1fb	cdsp_dtb.mbn,cdsp_dtbs.elf	Surface CDSP device tree
+qcom/x1e80100/microsoft/Denali/qcadsp8380.mbn	22092168	921870a839ee2aba647b04598d62ed96f3d2d5dfbb2499fc842f9a6ff0e0da13	qcadsp8380.mbn	Surface ADSP image
+qcom/x1e80100/microsoft/Denali/qccdsp8380.mbn	3072424	b2ed1656c46b116f7a2adedce8e4502a2f8ed5e223b82e0ac6cc70e451d58ecc	qccdsp8380.mbn	Surface CDSP image
+qcom/x1e80100/microsoft/qcdxkmsuc8380.mbn	12088	c89711a60240f29cb5df13f7b904642b78b7d9d6e614473751f7bf4049fab137	qcdxkmsuc8380.mbn	Surface GPU secure firmware

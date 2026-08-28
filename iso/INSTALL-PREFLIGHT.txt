@@ -1,0 +1,39 @@
+SURFACE PRO 11 HELD INSTALLATION PREFLIGHT
+============================================================
+
+This image can inspect an existing SP11 Linux installation, but it cannot
+install through the live wrapper. The target root and EFI partitions are
+mounted read-only and unmounted when the check finishes.
+
+On the qualified development tablet the current partition paths are:
+
+    Linux root: /dev/nvme0n1p5
+    EFI system: /dev/nvme0n1p1
+
+Do not copy those paths to another machine without checking them in Disks or:
+
+    lsblk -o NAME,PATH,SIZE,FSTYPE,LABEL,MOUNTPOINTS
+
+If either target partition is mounted in Files, unmount it first. Then run:
+
+    sudo sp11-install-preflight \
+      --root-device /dev/nvme0n1p5 \
+      --efi-device /dev/nvme0n1p1 \
+      --reuse-compatible-modules \
+      --report /run/media/live/SP11FW/install-preflight.txt
+
+The compatible-module option is expected only on the development tablet,
+which already has the qualified review20 module ABI. Omit it for a genuinely
+fresh target.
+
+A passing report must show:
+
+* exact Surface Pro 11 / microsoft,denali hardware;
+* the intended Linux root and EFI devices;
+* Windows Boot Manager file and EFI entry present;
+* at least two preserved GRUB entries and no pending one-shot boot;
+* a fresh /boot/sp11-beta namespace; and
+* either a fresh module namespace or all 3,759 payload modules verified.
+
+This phase does not authorize --apply, repartitioning, formatting, EFI
+changes, GRUB regeneration, or an internal-system reboot.

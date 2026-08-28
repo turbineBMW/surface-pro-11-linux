@@ -5,6 +5,57 @@ set -euo pipefail
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 repo_root="$(cd -- "$script_dir/.." && pwd -P)"
 iso_dir="$repo_root/iso"
+allow_missing_recipes=0
+frozen_snapshot=""
+
+command -v rg >/dev/null || {
+	printf 'Missing audit command: rg\n' >&2
+	exit 1
+}
+
+usage() {
+	printf 'Usage: %s [--allow-missing-recipes] [--frozen-snapshot DIRECTORY]\n' \
+		"$0"
+}
+
+while (($#)); do
+	case "$1" in
+	--allow-missing-recipes)
+		allow_missing_recipes=1
+		shift
+		;;
+	--frozen-snapshot)
+		frozen_snapshot="${2:-}"
+		shift 2
+		;;
+	-h | --help)
+		usage
+		exit 0
+		;;
+	*)
+		usage >&2
+		exit 2
+		;;
+	esac
+done
+
+if [[ -n "$frozen_snapshot" ]]; then
+	frozen_snapshot="$(realpath -e -- "$frozen_snapshot")"
+	for frozen_lock in packages.lock.tsv repositories.lock.tsv; do
+		[[ -f "$frozen_snapshot/$frozen_lock" &&
+			! -L "$frozen_snapshot/$frozen_lock" ]] || {
+			printf 'Frozen snapshot lacks safe %s: %s\n' \
+				"$frozen_lock" "$frozen_snapshot" >&2
+			exit 1
+		}
+		cmp -- "$iso_dir/$frozen_lock" \
+			"$frozen_snapshot/$frozen_lock" || {
+			printf 'Frozen snapshot lock mismatch: %s\n' \
+				"$frozen_lock" >&2
+			exit 1
+		}
+	done
+fi
 
 required_files=(
 	"$iso_dir/README.md"
@@ -111,13 +162,23 @@ missing_recipes="$(
 				LC_ALL=C sort -u
 		)
 )"
-[[ -z "$missing_recipes" ]] || {
-	printf 'Package lock entries lack an exact recipe identity:\n%s\n' \
-		"$missing_recipes" >&2
-	exit 1
-}
+if [[ -n "$missing_recipes" ]]; then
+	if [[ "$allow_missing_recipes" -eq 1 ]]; then
+		printf 'Recipe identity refresh required after caching:\n%s\n' \
+			"$missing_recipes" >&2
+	else
+		printf 'Package lock entries lack an exact recipe identity:\n%s\n' \
+			"$missing_recipes" >&2
+		exit 1
+	fi
+fi
 
-"$script_dir/generate-package-lock.sh" --check
+if [[ -n "$frozen_snapshot" ]]; then
+	printf 'Using exact frozen package/repository locks from: %s\n' \
+		"$frozen_snapshot"
+else
+	"$script_dir/generate-package-lock.sh" --check
+fi
 
 package_count="$(awk 'NR > 1 { count++ } END { print count + 0 }' \
 	"$iso_dir/packages.lock.tsv")"

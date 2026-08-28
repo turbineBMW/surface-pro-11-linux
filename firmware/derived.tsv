@@ -1,0 +1,2 @@
+path	source_path	record_name	bytes	sha256	license_material	purpose
+ath12k/WCN7850/hw2.0/board.bin	ath12k/WCN7850/hw2.0/board-2.bin	bus=pci,vendor=17cb,device=1107,subsystem-vendor=17cb,subsystem-device=3378,qmi-chip-id=2,qmi-board-id=255	88872	0ef5f6f3cb124f33c6de52371819ccd7c13763ceb86d476a178fd56e4cdc26a3	LICENSE.QualcommAtheros_ath10k,WCN7850-Notice.txt,WHENCE	Qualified SP11 WCN7850 board record

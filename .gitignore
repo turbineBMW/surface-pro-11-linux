@@ -5,3 +5,5 @@
 /work/
 *.swp
 *~
+/lab-private/
+__pycache__/

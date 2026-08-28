@@ -1,3 +1,9 @@
+> **Beta note (2026-08-28):** the current builder invocation, inputs, and
+> release packaging are documented in [`docs/BUILD-ISO.md`](../docs/BUILD-ISO.md).
+> The image now uses SquashFS/xz and a 128 MiB `SP11FW` partition, and GRUB
+> passes owner firmware to the kernel via `initrd … newc:`. Earlier sections
+> below describe the held engineering images and remain as history.
+
 # SP11 beta live-image package profile
 
 This directory freezes the distribution-package input to the first
@@ -16,6 +22,10 @@ The live image uses a conservative GNOME 50 Wayland session:
   libcamera plugin, and the GStreamer libcamera plugin;
 - Snapshot, Sound Recorder, Firefox, Loupe, and Papers for live validation
   and documentation;
+- Rnote 0.14.2-2 for pressure, tilt, eraser, and handwriting validation with
+  the exact qualified project iptsd runtime;
+- an owner-supplied Tux Surface wallpaper and GNOME orange accent as
+  deterministic local engineering defaults; and
 - a bounded set of filesystem, partitioning, networking, and recovery tools.
 
 The direct runtime inputs are in `packages-live.aarch64.tsv`. The much
@@ -39,9 +49,9 @@ After packages are cached, `generate-package-recipe-lock.sh` derives
 the exact `pkgbuild_sha256sum` used for every distinct `pkgbase`, including
 split packages, rather than trusting a moving packaging branch.
 
-The first snapshot resolves to 595 distinct recipe identities. The
+The current snapshot resolves to 596 distinct recipe identities. The
 `package-recipes.lock.tsv` SHA-256 is
-`1361fe0a28652ddb62003925603186fb0b90df3c10d9d02479e902230895eed5`.
+`ee489a2f3931d0a424b56a4e5d6d004e8593805d4db56cc0f147bc9984879847`.
 The Arch Linux ARM `Source Files` endpoint was returning HTTP 500 when this
 lock was created, so source staging must use the pinned Arch/Arch Linux ARM
 packaging histories as a fallback and reject any PKGBUILD whose checksum does
@@ -76,8 +86,15 @@ and are not represented as distribution packages here.
 Firmware is separate from the distribution package closure. The first held
 image selects exactly the 11 redistributable files in
 `firmware/allowlist.tsv` from four verified signed packages and copies their
-license and notice material. Surface-specific ADSP/CDSP/audio files and the
-machine-local WCN7850 `board.bin` remain denied.
+license and notice material. It also extracts the exact qualified WCN7850
+board record described by `firmware/derived.tsv` without changing its bytes.
+The exact tested audio topology is built from tracked BSD-3-Clause source and
+paired with the tracked project UCM profile. Five owner-supplied DSP/GPU files
+remain denied from the ISO. A 64 MiB
+FAT32 `SP11FW` partition, containing only editable redistributable collector
+and diagnostic scripts, an exact-hash manifest, and quick-start instructions,
+is appended for safe post-write personalization and persistent, user-invoked
+issue capture on the same USB drive.
 
 Under the active binary/ISO hold,
 `scripts/cache-locked-packages.sh --local-staging` performs a non-installing
@@ -86,25 +103,34 @@ signatures, checks every locked SHA-256 and size, and extracts package build
 metadata. It refuses release output and never modifies the host package
 database.
 
-The first held snapshot contains all 672 packages and signatures plus 2,016
+The current held snapshot contains all 673 packages and signatures plus 2,019
 extracted metadata files. Its `PACKAGE-SNAPSHOT.tsv` SHA-256 is
-`cb336c6fa1dfab9644f304e89a797ab70d2e1131c6192484a5d043559c7221fe`.
+`60a1d33fd546985a9a73ce286fb34b1cbd9fb153436f6639a12fa55901e3cf14`.
 It remains ignored local engineering output, not a release artifact.
 
 ## First held image
 
-`scripts/build-held-live-image.sh` now assembles a non-installing ARM64 UEFI
-GNOME environment from the package snapshot, exact review20 custom payload,
-and firmware allowlist. `scripts/audit-held-live-image.sh` verifies the live
-root, initramfs, firmware boundary, ARM64 fallback loader, El Torito entry,
-GPT/ESP structure, and artifact manifest.
+`scripts/build-held-live-image.sh` now assembles an ARM64 UEFI GNOME
+environment from the package snapshot, exact review20 custom payload, and
+firmware allowlist. It embeds a manifest-covered held installer kit and a
+separate live wrapper that can only mount an explicitly selected internal
+root and ESP read-only and run installer preflight. It exposes no live apply
+path. The builder requires the exact local Tux Surface PNG by SHA-256, copies
+it only into held work output, compiles GNOME system defaults for both
+light/dark wallpaper and orange accent, and does not add the artwork to the
+public tree. `scripts/audit-held-live-image.sh` verifies those defaults,
+Rnote's exact package version, the qualified iptsd binary, live root,
+installer kit, module manifest, read-only wrapper policy, initramfs, firmware
+boundary, ARM64 fallback loader, El Torito entry, GPT/ESP structure, and
+artifact manifest.
 
 The first physical boot rejected an incompatible live-root compression
 choice. The next image reached GNOME with working touch but exposed and
-rejected global SquashFS owner rewriting. The current audit-passing image,
-kernel-codec/early-boot gates, and live-home ownership gate are documented in
-`LIVE-IMAGE.md`. It remains under the binary/ISO hold and still requires
-removable-media hardware qualification.
+rejected global SquashFS owner rewriting. The repair3 image copied and
+verified the live root in RAM to survive the tested USB hub reset, then passed
+OLED, touch, pen, Wi-Fi, speakers, microphones, and cameras on target
+hardware. The artifact and remaining publication gates are documented in
+`LIVE-IMAGE.md`. It remains under the binary/ISO hold.
 
 ## Hard exclusions
 

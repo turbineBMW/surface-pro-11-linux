@@ -1,0 +1,46 @@
+SURFACE PRO 11 HELD OFFLINE ROLLBACK
+============================================================
+
+The live image can remove an installation created by its exact held installer
+without booting an obsolete installed kernel. Rollback is read-only by default.
+Apply requires a separate explicit confirmation and writes only the selected
+Linux root and EFI partitions.
+
+On the qualified development tablet the current partition paths are:
+
+    Linux root: /dev/nvme0n1p5
+    EFI system: /dev/nvme0n1p1
+
+Always verify them on the current machine:
+
+    lsblk -o NAME,PATH,SIZE,FSTYPE,LABEL,MOUNTPOINTS
+
+Unmount either target if Files mounted it. First run the read-only preflight:
+
+    sudo sp11-rollback-live \
+      --root-device /dev/nvme0n1p5 \
+      --efi-device /dev/nvme0n1p1 \
+      --report /run/media/live/SP11FW/rollback-preflight.txt
+
+The default state is `/var/lib/sp11-beta/latest` inside the selected target.
+A passing preflight verifies the complete transaction manifest and every saved
+symlink identity without modifying either target filesystem.
+
+Only after reviewing that report, apply the exact transaction with a new
+report filename:
+
+    sudo sp11-rollback-live \
+      --root-device /dev/nvme0n1p5 \
+      --efi-device /dev/nvme0n1p1 \
+      --apply \
+      --confirm-held-local-rollback sp11-beta-review20 \
+      --report /run/media/live/SP11FW/rollback-apply.txt
+
+Apply removes only transaction-recorded new files and trees, restores saved
+files and service enablement, regenerates module metadata and GRUB, and checks
+the Windows loader file, chainloader, and EFI entry. A compatible module tree
+that existed before installation is never removed.
+
+After a passing apply, shut down the live image, remove the USB, and boot the
+restored internal system. Do not interrupt an apply or reboot before its final
+success message.

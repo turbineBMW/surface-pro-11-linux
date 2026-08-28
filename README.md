@@ -1,145 +1,79 @@
-# Experimental Linux support for the Surface Pro 11
+# Linux for the Surface Pro 11 (Snapdragon X Elite) — public beta
 
-> This is an experimental, works-on-one-machine hardware-enablement project.
-> It is intended for developers and experienced Surface Pro 11 owners who can
-> build a kernel, recover an unbootable system, and keep a known-good boot
-> entry. It is not a distribution, supported product, or finished installer.
+> Experimental. For people who can use a terminal, keep backups, and recover
+> a tablet that does not boot. Read [RELEASE-STATUS.md](RELEASE-STATUS.md)
+> and [KNOWN-ISSUES.md](KNOWN-ISSUES.md) before flashing anything.
 
-This repository publishes the reviewed source used to run Linux on a Microsoft
-Surface Pro 11 OLED with Snapdragon X Elite. The current reviewed source
-has working audio, microphones, front and rear RGB cameras, an IR camera and
-illuminator, touch, pen input through iptsd, volume buttons, an ambient color
-sensor, conservative power profiles, USB runtime power management, and
-suspend with guarded firmware-managed CPU idle.
+This repository is the source, tooling, and documentation behind a live and
+installer ISO for the Microsoft Surface Pro 11 OLED with Snapdragon X Elite
+(`microsoft,denali`). On the tested unit the following work: OLED display,
+touch, pen (through iptsd), attached and Bluetooth Flex Keyboard and haptic
+touchpad, Wi-Fi, Bluetooth, speakers, microphones, front/rear cameras, IR
+camera, volume buttons, battery charge limit, ambient colour sensor, power
+profiles, and suspend/resume (s2idle, with the documented CPU-idle
+mitigation).
 
-No prebuilt kernel, module archive, firmware, disk image, ISO, biometric model,
-or camera capture is distributed here. See
-[BINARY-RELEASE-HOLD.md](BINARY-RELEASE-HOLD.md). The long-term goal is an
-installable image comparable to the project that bootstrapped this work, but
-that is a later milestone with separate source-compliance and safety gates.
+## Try it
+
+1. Download the ISO from the releases page and write it to a USB stick.
+2. In Windows, open the stick's `SP11FW` drive and run `RUN-IN-WINDOWS.cmd`.
+   It copies five firmware files (audio/compute DSP, GPU) from your own
+   Windows installation onto the stick; they cannot be shipped in the ISO.
+3. Disable Secure Boot, boot the stick (Volume-Down + Power), test.
+4. Optionally run **Install SP11 Linux** for dual boot or a full wipe.
+
+Full walkthrough: **[docs/GETTING-STARTED.md](docs/GETTING-STARTED.md)**.
+Firmware details and alternatives: [docs/FIRMWARE.md](docs/FIRMWARE.md).
+Removing it again: [docs/UNINSTALL.md](docs/UNINSTALL.md).
+
+## What is in the box
+
+- Kernel `7.1.3-sp11-suspend-review20`: upstream Linux 7.1.3 plus the
+  patches in `kernel/` (camera, touch, tablet mode, DP DDC, charge limit,
+  suspend/idle work). Reproducible builds; see `docs/BUILD.md`.
+- Arch Linux ARM package set (GNOME 50, PipeWire, libcamera, NetworkManager,
+  Rnote, Firefox, …) pinned in `iso/packages.lock.tsv`.
+- `rootfs/`: the services and helpers that make the hardware behave (iptsd
+  lifecycle, charge limit, power profiles, Bluetooth address, deep-idle
+  mitigation, …).
+- `scripts/`: firmware collectors (`sp11-collect-firmware.ps1`,
+  `sp11-firmware.py`), the installer (`sp11-install-plan.py`,
+  `sp11-install-executor.py`, `sp11-installer-ui.py`), the live-image builder
+  and audits, and the overlay installer for existing Arch Linux ARM systems.
+- Only redistributable firmware (`firmware/allowlist.tsv`). No Windows
+  driver files, traces, or private data are tracked.
 
 ## Foundation and credit
 
-The installation foundation is
-[dwhinham/linux-surface-pro-11](https://github.com/dwhinham/linux-surface-pro-11),
-which provides the original Arch Linux ARM bootstrap, firmware workflow, and
-early SP11 enablement. This repository is an experimental enhancement layer,
-not a replacement for that project.
-
-The kernel work also incorporates or adapts attributed GPL-licensed work from
-Linux kernel contributors, Dale Whinham, Bryan O'Donoghue and Linaro,
-Qualcomm, and STMicroelectronics. Original commit authorship, SPDX identifiers,
-copyright notices, exact source revisions, and the detailed research boundary
-are preserved in [NOTICE.md](NOTICE.md),
-[docs/PROVENANCE.md](docs/PROVENANCE.md), and
-[docs/CAMERA-REVIEW.md](docs/CAMERA-REVIEW.md).
-The unrelated public-repository root and final object-graph checks are recorded
-in [docs/PUBLICATION.md](docs/PUBLICATION.md).
-
-AI tools materially assisted development, cleanup, and validation. The scope
-and limits of that assistance are disclosed in
-[docs/AI-ASSISTANCE.md](docs/AI-ASSISTANCE.md).
+The Arch Linux ARM bootstrap, firmware workflow, and early SP11 enablement
+come from [dwhinham/linux-surface-pro-11](https://github.com/dwhinham/linux-surface-pro-11).
+The kernel work incorporates GPL-licensed work from Linux contributors, Dale
+Whinham, Bryan O'Donoghue and Linaro, Qualcomm, and STMicroelectronics;
+authorship and provenance are preserved in [NOTICE.md](NOTICE.md),
+[docs/PROVENANCE.md](docs/PROVENANCE.md), and [docs/CAMERA-REVIEW.md](docs/CAMERA-REVIEW.md).
+AI tools materially assisted development and validation
+([docs/AI-ASSISTANCE.md](docs/AI-ASSISTANCE.md)).
 
 ## Licensing
 
-This repository is an aggregate. The top-level MIT license applies to original
-project integration scripts and documentation; it does not relicense Linux,
-libcamera, Power Profiles Daemon, iptsd, or other imported and modified work.
-Kernel artifacts retain their compatible GPL-2.0 and per-file licenses,
-libcamera changes retain LGPL/CC0 terms, and the PPD patch retains GPL-3.0.
-See [docs/LICENSING.md](docs/LICENSING.md) and the file-level REUSE metadata.
+Aggregate: the MIT licence covers the project's own scripts and
+documentation; kernel material keeps GPL-2.0 and per-file licences, libcamera
+changes LGPL/CC0, the Power Profiles Daemon patch GPL-3.0. See
+[docs/LICENSING.md](docs/LICENSING.md) and the REUSE metadata.
 
 ## Tested target
 
-- Product: Microsoft Surface Pro, 11th Edition
-- Device-tree compatible: `microsoft,denali`
-- SoC/display: Snapdragon X Elite / X1E80100 / OLED
-- Boot environment: UEFI and GRUB on the Arch Linux ARM foundation
-- Reviewed kernel source: `7.1.3-sp11-suspend-review20`
-- Exact source commit: `18d7951a10dc49e383d16c6af82fc2c07784de3d`
-- Exact source tree: `b820f10abba096e23a28506d7ad591dffdedf1a8`
-- Preserved safe source: `7.1.3-sp11-camera-review12` at
-  `a3e71f7080ee40dccfdd9500b8957a7c143fb6a2`
+- Microsoft Surface Pro, 11th Edition, OLED, Snapdragon X Elite (X1E80100)
+- One physical unit. The LCD, X Plus, 5G, and Laptop variants are untested;
+  see [SUPPORTED-HARDWARE.md](SUPPORTED-HARDWARE.md).
 
-Only one physical OLED/X Elite unit has been qualified. Do not assume that the
-LCD, X Plus, 5G, or other Surface variants use an interchangeable device tree.
-See [SUPPORTED-HARDWARE.md](SUPPORTED-HARDWARE.md).
+## Contributing and reporting
 
-## Current status
-
-Validated on the tested unit:
-
-- OLED display, Wi-Fi, Bluetooth, attached keyboard, detached Flex Keyboard,
-  and haptic touchpad
-- Laptop, detached, and folded-back posture transitions, including
-  keyboard and touchpad suppression while folded behind the tablet
-- Touch, multitouch, pen hover/strokes, and eraser through iptsd
-- Speakers, microphones, volume rocker, SAM fan telemetry, and qualified
-  three-tier power profiles
-- Verified 75–80% battery charge window, reapplied at boot and after resume
-- TCS3430 ambient color sensor through Qualcomm SSC and iio-sensor-proxy
-- Short, repeated, ten-minute, and overnight suspend/resume tests
-- Front IMX681, rear OV13858, and IR VD55G0 capture, including repeated
-  front/rear switching
-- PM8550 IR illuminator and a bounded local Howdy proof of concept
-- Guarded firmware-managed CPU idle during runtime, disabled across suspend
-- USB runtime power management with repeated dock/thumb-drive hotplug
-
-Still experimental:
-
-- Concurrent camera capture
-- Camera color processing, tuning, and normal desktop application integration
-- Firmware-limited suspend efficiency; the overnight test drew about 1.7–1.8 W
-- Other SP11 variants and distributions
-- The beta installer, binary payload, and ISO are still under release hold
-
-Read [KNOWN-ISSUES.md](KNOWN-ISSUES.md) before testing. Lid-triggered suspend
-diagnosis and the opt-in logind watchdog workaround are documented in
-[docs/SUSPEND.md](docs/SUSPEND.md).
-
-## Repository contents
-
-- `kernel/`: incremental Git bundles, cumulative patches, config, build
-  identity, and the camera config fragment
-- `userspace/`: pinned iptsd identity, optional libcamera/Power Profiles
-  Daemon source changes, and battery charge-limit tests
-- `rootfs/`: reviewed services, udev rules, helpers, and tuning data
-- `scripts/`: source build, static audit, and currently held binary tooling
-- `docs/`: build, provenance, validation, limitations, and recovery records
-
-Start with [docs/BUILD.md](docs/BUILD.md) and [kernel/README.md](kernel/README.md).
-Flex Keyboard Bluetooth identity setup is documented in
-[docs/BLUETOOTH.md](docs/BLUETOOTH.md).
-The ambient color sensor architecture, private configuration prerequisite, and
-developer installation are documented in [docs/SENSORS.md](docs/SENSORS.md).
-The source is shared so other developers can reproduce, review, test, and
-improve it; publication does not imply upstream readiness. Before sharing logs
-or patches, read [CONTRIBUTING.md](CONTRIBUTING.md) for the privacy and
-provenance boundary.
-
-## Firmware and Windows boundary
-
-This source repository redistributes no firmware blob. A future ISO may select
-only the exact redistributable files in `firmware/allowlist.tsv` from verified
-Arch Linux ARM packages. Surface-specific ADSP/CDSP images, audio topology,
-machine Wi-Fi board data, and sensor configuration remain external
-prerequisites handled by an explicit operator-supplied workflow. The reviewed
-source contains no Windows driver package, proprietary firmware copied from
-Windows, raw WinDbg trace, memory dump, private capture, credential, or
-enrolled biometric data.
-The independently observed touch/QSPI and camera boundaries are documented in
-[docs/TOUCH-QSPI-PROVENANCE.md](docs/TOUCH-QSPI-PROVENANCE.md) and
-[docs/CAMERA-REVIEW.md](docs/CAMERA-REVIEW.md).
-
-## Recovery first
-
-Before trying any build:
-
-1. Keep the known-good foundation kernel and its GRUB entry.
-2. Keep recovery media available.
-3. Verify that you can restore the boot files from another environment.
-4. Never make an experimental kernel the only bootable entry.
+Open issues with the diagnostics report from
+`sp11-live-firstboot-capture.sh` (review it first: it contains device
+identifiers). Read [CONTRIBUTING.md](CONTRIBUTING.md) for the privacy and
+provenance boundary; never attach firmware packs or Windows driver files.
 
 Microsoft and Surface are names used only to identify compatible hardware.
-This independent project is not affiliated with or endorsed by Microsoft,
-Qualcomm, Linaro, STMicroelectronics, or the Linux kernel project.
+This project is not affiliated with or endorsed by Microsoft, Qualcomm,
+Linaro, STMicroelectronics, or the Linux kernel project.

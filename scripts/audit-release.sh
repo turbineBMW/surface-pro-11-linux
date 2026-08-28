@@ -63,8 +63,8 @@ for command_name in git reuse rg sha256sum; do
 	}
 done
 
-[[ -f "$repo_root/BINARY-RELEASE-HOLD.md" ]] || {
-	printf 'Binary/ISO release hold disappeared before the gates were closed.\n' >&2
+[[ -f "$repo_root/RELEASE-STATUS.md" ]] || {
+	printf 'RELEASE-STATUS.md is missing.\n' >&2
 	exit 1
 }
 
@@ -178,8 +178,6 @@ if rg -q 'SP11_QUALIFIED_BOOT_DIR|-C /usr/lib/modules' \
 	exit 1
 fi
 
-rg -qF 'BINARY-RELEASE-HOLD.md' \
-	"$repo_root/scripts/build-held-live-image.sh"
 rg -qF -- '--local-staging' \
 	"$repo_root/scripts/build-held-live-image.sh"
 rg -qF 'audit-held-live-image.sh' \
@@ -279,6 +277,8 @@ fi
 	git diff --check
 	PYTHONDONTWRITEBYTECODE=1 \
 		python3 userspace/power-profiles-daemon/test_sp11_power_profile_cpufreq.py
+	PYTHONDONTWRITEBYTECODE=1 \
+		python3 scripts/test-manifest-installed-rootfs.py
 	bash -n scripts/*.sh rootfs/usr/local/libexec/sp11-bluetooth-address \
 		iso/mkinitcpio/install/sp11live \
 		rootfs/usr/lib/systemd/system-sleep/*.sh \
@@ -297,9 +297,22 @@ fi
 			rootfs/usr/local/libexec/sp11-runtime-idle-suspend-guard \
 			userspace/power/test-sp11-charge-limit.sh
 	fi
-	scripts/audit-package-lock.sh
+	frozen_snapshot="${SP11_PACKAGE_SNAPSHOT:-}"
+	for snapshot_candidate in \
+		work/package-snapshot-rnote-20260729 \
+		work/firmware-v2-rebuild-inputs/package-snapshot-rnote-20260729; do
+		[[ -n "$frozen_snapshot" || ! -d "$snapshot_candidate" ]] ||
+			frozen_snapshot="$snapshot_candidate"
+	done
+	if [[ -n "$frozen_snapshot" ]]; then
+		scripts/audit-package-lock.sh --frozen-snapshot "$frozen_snapshot"
+	else
+		# Without a frozen snapshot this compares against the host's current
+		# mirrors, which drift as Arch Linux ARM moves; expect a drift report.
+		scripts/audit-package-lock.sh
+	fi
 	scripts/audit-firmware-manifest.sh
 	userspace/power/test-sp11-charge-limit.sh
 )
 
-printf 'Static source-publication audit passed; the binary/ISO hold and unchecked binary gates remain active.\n'
+printf 'Static source-publication audit passed.\n'

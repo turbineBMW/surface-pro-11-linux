@@ -11,13 +11,16 @@ lock="$repo_root/iso/packages.lock.tsv"
 repository_lock="$repo_root/iso/repositories.lock.tsv"
 output_dir="$repo_root/work/package-snapshot"
 local_staging=0
+reuse_snapshot=""
 
 usage() {
 	cat <<EOF
-Usage: $0 --local-staging [--output DIRECTORY]
+Usage: $0 --local-staging [--output DIRECTORY] [--reuse-snapshot DIRECTORY]
 
 The output must be a new directory below this repository's ignored work/
-directory. No package is installed on the host.
+directory. A prior snapshot may supply byte-identical packages and signatures;
+every reused input is still hash- and signature-verified. No package is
+installed on the host.
 EOF
 }
 
@@ -35,6 +38,14 @@ while (($#)); do
 		output_dir="$2"
 		shift 2
 		;;
+	--reuse-snapshot)
+		[[ $# -ge 2 ]] || {
+			usage >&2
+			exit 2
+		}
+		reuse_snapshot="$2"
+		shift 2
+		;;
 	-h | --help)
 		usage
 		exit 0
@@ -50,10 +61,6 @@ done
 	printf 'Package caching requires explicit --local-staging.\n' >&2
 	exit 1
 }
-[[ -e "$repo_root/BINARY-RELEASE-HOLD.md" ]] || {
-	printf 'This helper is only for held local engineering staging.\n' >&2
-	exit 1
-}
 [[ "$(uname -m)" == "aarch64" ]] || {
 	printf 'Package caching requires native aarch64.\n' >&2
 	exit 1
@@ -67,7 +74,7 @@ for command_name in awk bsdtar cp fakeroot pacman pacman-key \
 	}
 done
 
-"$script_dir/audit-package-lock.sh"
+"$script_dir/audit-package-lock.sh" --allow-missing-recipes
 
 mkdir -p -- "$repo_root/work"
 output_dir="$(realpath -m -- "$output_dir")"
@@ -83,6 +90,14 @@ esac
 	printf 'Refusing to replace existing output: %s\n' "$output_dir" >&2
 	exit 1
 }
+if [[ -n "$reuse_snapshot" ]]; then
+	reuse_snapshot="$(realpath -e -- "$reuse_snapshot")"
+	[[ -d "$reuse_snapshot/packages" ]] || {
+		printf 'Reuse snapshot lacks a packages directory: %s\n' \
+			"$reuse_snapshot" >&2
+		exit 1
+	}
+fi
 
 temporary="$(mktemp -d "$repo_root/work/package-download.XXXXXX")"
 cleanup() {
@@ -106,6 +121,24 @@ while IFS=$'\t' read -r repo database_file expected_hash; do
 	}
 	cp -- "$source_db" "$database/sync/$database_file"
 done <"$repository_lock"
+
+# Reuse exact packages from a previously audited snapshot before consulting the
+# host cache or network. Later checks still verify every hash and signature.
+if [[ -n "$reuse_snapshot" ]]; then
+	while IFS=$'\t' read -r scope repo package pkgbase version architecture \
+		filename expected_hash compressed _installed _unused; do
+		[[ "$scope" != "scope" ]] || continue
+		reused_package="$reuse_snapshot/packages/$filename"
+		reused_signature="$reused_package.sig"
+		[[ -f "$reused_package" && -f "$reused_signature" ]] || continue
+		[[ "$(sha256sum "$reused_package" | awk '{print $1}')" == \
+			"$expected_hash" ]] || continue
+		cp --reflink=auto --preserve=timestamps \
+			"$reused_package" "$cache/$filename"
+		cp --reflink=auto --preserve=timestamps \
+			"$reused_signature" "$cache/$filename.sig"
+	done <"$lock"
+fi
 
 # Reuse byte-identical packages already present in the host package cache.
 while IFS=$'\t' read -r scope repo package pkgbase version architecture \

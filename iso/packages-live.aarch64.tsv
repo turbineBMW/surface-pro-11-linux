@@ -70,6 +70,7 @@ pipewire-libcamera	camera	Expose libcamera cameras through PipeWire
 gst-plugin-libcamera	camera	Expose libcamera cameras to GStreamer
 snapshot	camera	GNOME camera validation application
 gnome-sound-recorder	audio	GNOME microphone validation application
+rnote	pen	Handwritten note and drawing application for full stylus validation
 polkit	desktop	Desktop authorization broker
 upower	power	Desktop battery integration
 power-profiles-daemon	power	Distribution package replaced at runtime by audited SP11 daemon

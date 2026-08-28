@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 build() {
+	local staged_root python_binary python_version python_source python_dest
+
 	add_module videocc_sm8550
 	add_module dispcc_x1e80100
 	add_module gpucc_x1e80100
@@ -19,16 +21,57 @@ build() {
 	add_module surface_aggregator_registry
 	add_module surface_aggregator_hub
 	add_module isofs
+	add_module fat
+	add_module vfat
+	add_module nls_cp437
+	add_module nls_ascii
 	add_module squashfs
 	add_module overlay
 	add_module usb_storage
 	add_module uas
+	staged_root="${SP11_INITRAMFS_STAGED_ROOT:-}"
+	[[ -n "$staged_root" && -d "$staged_root/usr/lib/python3.14" ]] || {
+		error 'SP11 staged Python root was not supplied to mkinitcpio'
+		return 1
+	}
+	python_binary="$staged_root/usr/bin/python3.14"
+	python_version=python3.14
+	add_binary "$python_binary" "/usr/bin/$python_version"
+	add_symlink /usr/bin/python3 "$python_version"
+	while IFS= read -r python_source; do
+		python_dest="${python_source#"$staged_root"}"
+		if [[ -L "$python_source" ]]; then
+			add_symlink "$python_dest" "$(readlink "$python_source")"
+		elif [[ "$python_source" == *.so ]]; then
+			add_binary "$python_source" "$python_dest"
+		else
+			add_file "$python_source" "$python_dest"
+		fi
+	done < <(
+		PYTHONHOME="$staged_root/usr" "$python_binary" -c '
+import codecs, contextlib, io, runpy, sys
+codecs.lookup("utf-8-sig")
+validator = sys.argv[1]
+sys.argv = [validator, "--help"]
+with contextlib.redirect_stdout(io.StringIO()):
+    try:
+        runpy.run_path(validator, run_name="__main__")
+    except SystemExit:
+        pass
+files = {getattr(module, "__file__", None) for module in sys.modules.values()}
+print("\n".join(sorted(path for path in files if path)))
+' "$staged_root/usr/local/libexec/sp11-validate-external-firmware"
+	)
+	add_file \
+		"$staged_root/usr/local/libexec/sp11-validate-external-firmware" \
+		/usr/local/libexec/sp11-validate-external-firmware
 	add_runscript
 }
 
 help() {
 	cat <<HELPEOF
-Mount the SP11 live-image SquashFS from removable media and place a volatile
-tmpfs overlay above it.
+Validate and stage owner-supplied firmware before hardware coldplug, copy and
+verify the SP11 live-image SquashFS from removable media into RAM, and place a
+volatile tmpfs overlay above it.
 HELPEOF
 }

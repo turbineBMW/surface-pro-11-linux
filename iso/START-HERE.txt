@@ -1,0 +1,47 @@
+SURFACE PRO 11 LINUX BETA - START HERE
+============================================================
+
+This USB stick has three partitions. Windows can only open this one, SP11FW.
+If Windows offers to FORMAT the other two: say NO. They hold the live system.
+
+STEP 1 - IN WINDOWS: COPY THE FIRMWARE (2 minutes)
+--------------------------------------------------
+Double-click  RUN-IN-WINDOWS.cmd  on this drive.
+
+It copies five firmware files (audio DSP, compute DSP, GPU) from your own
+Windows installation onto this partition and shows what it picked. Nothing is
+downloaded or uploaded. Then "safely remove" the USB stick.
+
+Without this step Linux boots, but has no sound, no microphones and no GPU
+acceleration. If it fails, keep the file SP11-FIRMWARE-COLLECTOR-REPORT.tsv
+it writes and see FIRMWARE.md for other ways (BitLocker, Linux, download).
+
+Dual boot?  Shrink C: in Windows Disk Management first and leave >= 33 GiB
+UNALLOCATED. Do not format it. Also disable Fast Startup, and disable
+Secure Boot in UEFI settings (the live system is not signed).
+
+STEP 2 - BOOT THE STICK
+-----------------------
+Shut Windows down fully. Hold Volume-Down, press Power, release when the
+logo shows. Take the first GRUB entry. GNOME logs in automatically (user
+"live", sudo without password). Test touch, pen, Wi-Fi, sound, cameras.
+
+  sp11-firmware status      -> shows whether your firmware was imported
+  bash /run/media/live/SP11FW/sp11-live-firstboot-capture.sh
+                            -> saves a diagnostics report onto this partition
+
+STEP 3 - INSTALL (OPTIONAL)
+---------------------------
+App grid -> "Install SP11 Linux". Dual boot keeps Windows; wipe erases the
+whole internal disk. Two exact confirmations are required before anything is
+written. Details, troubleshooting and removal: GETTING-STARTED.md and
+UNINSTALL.md (in /usr/share/doc/sp11-beta on the live system).
+
+FILES ON THIS PARTITION
+-----------------------
+RUN-IN-WINDOWS.cmd, sp11-collect-firmware.ps1   Windows firmware collector
+sp11-firmware.py                                Linux firmware tool (python3)
+sp11-live-firstboot-capture.sh                  diagnostics report
+GETTING-STARTED.md, FIRMWARE.md                 documentation
+
+Project: https://github.com/turbineBMW/surface-pro-11-linux

@@ -1,0 +1,9 @@
+key	value	rationale
+schema	sp11.installed-rootfs.v1	Immutable installed-system artifact contract
+package-selection	live,live+build	Reuse the exact 663-package qualified GNOME closure without copying the live root
+expected-package-count	663	Fail closed if the locked closure changes
+kernel-release	7.1.3-sp11-suspend-review20	Qualified SP11 kernel ABI
+external-firmware-policy	excluded-required-at-install	Five owner-supplied files must be imported and verified by the future executor
+account-policy	no-user-root-locked	The interactive installer creates the named user after extraction
+boot-policy	executor-generated	The executor writes fstab, initramfs, GRUB, and EFI state for the selected partitions
+secure-boot-policy	unsigned-disabled	Separate signed-UKI qualification is required

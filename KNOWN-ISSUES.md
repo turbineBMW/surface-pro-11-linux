@@ -1,6 +1,30 @@
 # Known issues and sharp edges
 
-This list is part of the release contract. The alpha is useful, but it is not
+## Beta ISO and installer (2026-08-28)
+
+- **Secure Boot must be off.** The live image and the installed GRUB are not
+  signed. The installer does not touch Microsoft's keys.
+- **No firmware, no sound/GPU.** Until the five owner files are on `SP11FW`
+  (or installed with `sp11-firmware`), audio, microphones, the ambient
+  sensor, and GPU acceleration are unavailable and Mesa logs
+  `get_param failed`. `sp11-firmware status` tells you which case you are in.
+- **BitLocker.** The Linux-side collector cannot read a BitLocker volume;
+  run `RUN-IN-WINDOWS.cmd` from Windows instead.
+- **Windows Fast Startup / hibernation** leaves the NTFS volume dirty, so
+  `sp11-firmware --from-windows` refuses to mount it. Shut Windows down
+  fully (Shift + Shut down) or disable Fast Startup.
+- **Only one hardware unit** has been used for qualification. The GRUB
+  `newc:` firmware path was verified for syntax and the fallback paths
+  match what booted in July/August 2026, but the beta ISO built on
+  2026-08-28 has not yet been cold-booted on hardware by the maintainer;
+  reports welcome.
+- **Wipe mode** was exercised on loop devices, not on the maintainer's NVMe.
+- **ISO size.** Release assets larger than 2 GiB are split; join them with
+  `cat` before writing (see the release README).
+- The live root is copied into RAM: 3 GB of RAM is used by the live system
+  before applications start.
+
+This list is part of the release contract. The beta is useful, but it is not
 finished.
 
 ## Cameras are experimental
@@ -171,13 +195,26 @@ power-off behavior.
 Speakers and microphones work. Speaker volume is conservative; no software
 boost is included.
 
-Those results use Surface-specific ADSP firmware and audio topology already
-present on the qualified installed system. The files are unowned, are absent
-from upstream linux-firmware, and are denied by the beta firmware manifest.
-A pristine live image cannot provide audio until the operator explicitly
-imports compatible files from their own existing installation or
-user-supplied source. The project must not publish or automatically download
-those files.
+Those results require Surface-specific ADSP firmware. The five exact
+owner-supplied DSP/GPU files are unowned, absent from upstream linux-firmware,
+and denied from the published ISO. The topology itself is
+reproducibly built from tracked BSD-3-Clause source and the UCM routing is
+project-authored. The live image obtains the remaining files only from the
+exact-hash FAT32 `SP11FW` partition on the owner's live USB. That partition
+ships only with editable redistributable collector/diagnostic tools and
+instructions; it does not publish or automatically download the firmware or
+transmit diagnostics.
+
+Qualcomm Windows driver 1.0.4374.1300 supplies an 88,780-byte Microsoft-signed
+`bdwlan.elf`. It is not a compatible replacement for the qualified board
+record: ath12k times out loading the BDF with `-110`. The working 88,872-byte
+`board.bin` is instead extracted without modification from the
+redistributable WCN7850 `board-2.bin` selected from the locked
+`linux-firmware-atheros` package and is included in the live root.
+The device-specific 88,792-byte DPP `WLAN_CLPC.PROVISION` ELF also timed out
+with `-110`. Replacing only its ELF envelope with the qualified legacy layout
+produced the same failure, so the incompatibility is in the DPP payload rather
+than merely the newer ELF structure. Both DPP-derived hashes are rejected.
 
 ## Ambient color sensor
 

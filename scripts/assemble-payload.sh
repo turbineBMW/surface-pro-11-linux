@@ -142,6 +142,24 @@ install -m0755 "$checker" "$output_dir/sp11-iptsd-check-device"
 install -m0755 "$ppd" "$output_dir/power-profiles-daemon-sp11"
 install -m0644 "$repo_root/kernel/BUILDINFO" "$output_dir/BUILDINFO"
 
+{
+	printf 'path\tbytes\tsha256\n'
+	while IFS= read -r -d '' module_file; do
+		printf '%s\t%s\t%s\n' \
+			"${module_file#"$stage_modules/"}" \
+			"$(stat -c '%s' "$module_file")" \
+			"$(sha256sum "$module_file" | awk '{print $1}')"
+	done < <(
+		find "$stage_modules" -type f -name '*.ko' -print0 |
+			LC_ALL=C sort -z
+	)
+} >"$output_dir/MODULES.tsv"
+[[ "$(awk 'NR > 1 { count++ } END { print count + 0 }' \
+	"$output_dir/MODULES.tsv")" -eq "$expected_module_count" ]] || {
+	printf 'Unexpected module-manifest count.\n' >&2
+	exit 1
+}
+
 if ((hold_active == 1)); then
 	printf '%s\n' \
 		'BINARY/ISO RELEASE HOLD ACTIVE — LOCAL ENGINEERING STAGING ONLY' \
@@ -163,11 +181,7 @@ tar --sort=name --mtime="@$source_date_epoch" --owner=0 --group=0 \
 	sha256sum "${checksum_files[@]}" >SHA256SUMS
 )
 
-archive_name="sp11-beta-review20-aarch64-payload.tar.zst"
-if ((hold_active == 1)); then
-	archive_name="sp11-beta-review20-aarch64-payload-HELD-local.tar.zst"
-fi
-archive="$(dirname -- "$output_dir")/$archive_name"
+archive="$output_dir.tar.zst"
 if [[ -e "$archive" ]]; then
 	printf 'Refusing to replace existing archive: %s\n' "$archive" >&2
 	exit 1

@@ -1,0 +1,5 @@
+path	type	identity
+Qualcomm/x1e80100/MICROSOFT-Surface-Pro-11.conf	file	826d17f17d95e1eabdd11144d720cf6189e8f8f5a2c3ecd3b620963fc63f02e3
+Qualcomm/x1e80100/Surface11-HiFi.conf	file	90ff91bd86bc2777c46d3e3e475ff48174f62f0be158e48291dd77f3dfb6dd54
+conf.d/x1e80100/X1E80100-Microsoft-Surface-Pro-11.conf	symlink	../../Qualcomm/x1e80100/MICROSOFT-Surface-Pro-11.conf
+conf.d/x1e80100/MicrosoftCorporation-MicrosoftSurfacePro11thEdition-124I00117T000M0000000F0.conf	symlink	../../Qualcomm/x1e80100/MICROSOFT-Surface-Pro-11.conf

@@ -1,25 +1,216 @@
 #!/usr/bin/ash
 # shellcheck shell=dash
 # shellcheck disable=SC2034
+#
+# SP11 live-image initramfs hook.
+#
+# 1. Owner firmware. GRUB normally wraps the five owner-supplied firmware
+#    files from the SP11FW partition into this initramfs (newc:), so they are
+#    already under /usr/lib/firmware when the early hook runs, i.e. before any
+#    module loads. The early hook validates them and removes them if they are
+#    unusable. If GRUB found nothing, the mount handler later tries to import
+#    them from the SP11FW partition directly. Whatever was imported is copied
+#    into the live root together with a marker and the manifest.
+#
+# 2. Live root. The SquashFS is copied into RAM and verified before use so a
+#    flaky USB hub cannot corrupt the running system; a tmpfs overlay makes
+#    it writable and volatile.
+
+SP11_FW_FILES="qcom/x1e80100/microsoft/Denali/adsp_dtb.mbn
+qcom/x1e80100/microsoft/Denali/cdsp_dtb.mbn
+qcom/x1e80100/microsoft/Denali/qcadsp8380.mbn
+qcom/x1e80100/microsoft/Denali/qccdsp8380.mbn
+qcom/x1e80100/microsoft/qcdxkmsuc8380.mbn"
+SP11_STATUS=/run/sp11-firmware/status
+SP11_STAGE=/run/sp11-firmware/stage
+SP11_VALIDATOR=/usr/local/libexec/sp11-validate-external-firmware
+# Root that GRUB's newc: files land in (empty = the initramfs root). Only
+# overridden by the offline test harness.
+SP11_ROOT="${SP11_ROOT:-}"
+
+sp11_status() {
+	mkdir -p /run/sp11-firmware
+	printf '%s\n' "$*" >>"$SP11_STATUS"
+}
+
+# Copy the five files (+ manifest) from pack root $1 into the stage.
+sp11_stage_pack() {
+	local pack="$1" relative
+	rm -rf "$SP11_STAGE"
+	mkdir -p "$SP11_STAGE"
+	for relative in $SP11_FW_FILES; do
+		[ -f "$pack/usr/lib/firmware/$relative" ] || return 1
+		mkdir -p "$SP11_STAGE/usr/lib/firmware/${relative%/*}"
+		cp "$pack/usr/lib/firmware/$relative" \
+			"$SP11_STAGE/usr/lib/firmware/$relative" || return 1
+		chmod 0644 "$SP11_STAGE/usr/lib/firmware/$relative"
+	done
+	cp "$pack/SP11-FIRMWARE-MANIFEST.tsv" "$SP11_STAGE/" || return 1
+	if [ -f "$pack/SP11-FIRMWARE-REPORT.txt" ]; then
+		cp "$pack/SP11-FIRMWARE-REPORT.txt" "$SP11_STAGE/"
+	fi
+	return 0
+}
+
+sp11_validate_pack() {
+	local pack="$1" output
+	[ -x /usr/bin/python3 ] && [ -f "$SP11_VALIDATOR" ] || {
+		sp11_status "validator unavailable in initramfs"
+		return 1
+	}
+	if output="$(/usr/bin/python3 "$SP11_VALIDATOR" --quiet "$pack" 2>&1)"; then
+		return 0
+	fi
+	sp11_status "rejected: $output"
+	return 1
+}
+
+# Remove owner firmware from the initramfs root (after a failed validation).
+sp11_drop_initramfs_firmware() {
+	local relative
+	for relative in $SP11_FW_FILES; do
+		rm -f "$SP11_ROOT/usr/lib/firmware/$relative"
+	done
+	rm -f "$SP11_ROOT/SP11-FIRMWARE-MANIFEST.tsv"
+}
+
+run_earlyhook() {
+	local relative present=0
+	: >"$SP11_STATUS" 2>/dev/null || {
+		mkdir -p /run/sp11-firmware
+		: >"$SP11_STATUS"
+	}
+	for relative in $SP11_FW_FILES; do
+		[ -f "$SP11_ROOT/usr/lib/firmware/$relative" ] && present=$((present + 1))
+	done
+	if [ "$present" -eq 0 ]; then
+		sp11_status "grub: no owner firmware was passed with the initramfs"
+		return 0
+	fi
+	if [ "$present" -ne 5 ] || [ ! -f "$SP11_ROOT/SP11-FIRMWARE-MANIFEST.tsv" ]; then
+		sp11_status "grub: incomplete owner firmware ($present of 5 files) - ignored"
+		sp11_drop_initramfs_firmware
+		return 0
+	fi
+	if sp11_validate_pack "${SP11_ROOT:-/}" && sp11_stage_pack "${SP11_ROOT:-/}"; then
+		sp11_status "grub: five owner firmware files validated before module loading"
+	else
+		sp11_status "grub: owner firmware failed validation - removed from the initramfs"
+		sp11_drop_initramfs_firmware
+	fi
+}
+
+# Locate the SP11FW partition (fallback path). Prints the device.
+sp11_find_sp11fw() {
+	local live_device="$1" device sys_live parent candidate label attempt
+
+	# 1. The way that worked on hardware first: udev/blkid label lookup.
+	device="$(resolve_device LABEL=SP11FW 2>/dev/null)" && [ -b "$device" ] && {
+		printf '%s\n' "$device"
+		return 0
+	}
+	# 2. Siblings of the live device on the same disk.
+	sys_live="$(readlink -f "/sys/class/block/${live_device##*/}" 2>/dev/null)"
+	if [ -n "$sys_live" ]; then
+		if [ -f "$sys_live/partition" ]; then parent="${sys_live%/*}"; else parent="$sys_live"; fi
+		for candidate in "$parent"/*/; do
+			candidate="${candidate%/}"
+			[ -f "$candidate/partition" ] || continue
+			candidate="/dev/${candidate##*/}"
+			[ -b "$candidate" ] || continue
+			label="$(blkid -s LABEL -o value "$candidate" 2>/dev/null)"
+			[ "$label" = SP11FW ] && {
+				printf '%s\n' "$candidate"
+				return 0
+			}
+		done
+	fi
+	# 3. Any block device at all, a few times.
+	attempt=0
+	while [ "$attempt" -lt 10 ]; do
+		device="$(blkid -lt LABEL=SP11FW -o device 2>/dev/null)"
+		[ -n "$device" ] && [ -b "$device" ] && {
+			printf '%s\n' "$device"
+			return 0
+		}
+		sleep 1
+		attempt=$((attempt + 1))
+	done
+	return 1
+}
+
+sp11_import_from_partition() {
+	local live_device="$1" device media
+	device="$(sp11_find_sp11fw "$live_device")" || {
+		sp11_status "partition: SP11FW not found"
+		return 1
+	}
+	sp11_status "partition: SP11FW is $device"
+	media=/run/sp11-firmware/media
+	mkdir -p "$media"
+	mount -o ro "$device" "$media" || {
+		sp11_status "partition: mount failed"
+		return 1
+	}
+	if [ ! -f "$media/SP11-FIRMWARE-MANIFEST.tsv" ]; then
+		sp11_status "partition: no firmware pack on SP11FW (run RUN-IN-WINDOWS.cmd or sp11-firmware)"
+		umount "$media" 2>/dev/null || umount -l "$media"
+		return 1
+	fi
+	if sp11_validate_pack "$media" && sp11_stage_pack "$media"; then
+		sp11_status "partition: five owner firmware files validated"
+		umount "$media" 2>/dev/null || umount -l "$media"
+		return 0
+	fi
+	umount "$media" 2>/dev/null || umount -l "$media"
+	return 1
+}
+
+sp11_activate_firmware() {
+	local destination="$1" source="$2"
+	mkdir -p "$destination/usr/lib/firmware" "$destination/etc"
+	cp -a "$SP11_STAGE/usr/lib/firmware/." "$destination/usr/lib/firmware/"
+	{
+		printf 'SP11 owner firmware imported at boot (%s)\n' "$source"
+		awk -F '\t' 'NR == 1 { for (i = 1; i <= NF; i++) { n = $i; gsub(/^[^a-z_]+/, "", n); c[n] = i }; next }
+			{ print $c["path"] "\t" $c["sha256"] }' "$SP11_STAGE/SP11-FIRMWARE-MANIFEST.tsv"
+	} >"$destination/etc/sp11-external-firmware"
+	cp "$SP11_STAGE/SP11-FIRMWARE-MANIFEST.tsv" \
+		"$destination/etc/sp11-external-firmware-manifest.tsv"
+	if [ -f "$SP11_STAGE/SP11-FIRMWARE-REPORT.txt" ]; then
+		cp "$SP11_STAGE/SP11-FIRMWARE-REPORT.txt" \
+			"$destination/etc/sp11-external-firmware-report.txt"
+	fi
+	return 0
+}
+
+sp11_finish_firmware() {
+	local destination="$1" live_device="$2" source=""
+	if [ -f "$SP11_STAGE/SP11-FIRMWARE-MANIFEST.tsv" ]; then
+		source="GRUB initramfs"
+	elif sp11_import_from_partition "$live_device"; then
+		source="SP11FW partition"
+	fi
+	if [ -n "$source" ]; then
+		sp11_activate_firmware "$destination" "$source"
+		sp11_status "success: owner firmware active in the live root ($source)"
+		msg ":: owner firmware imported ($source)"
+	else
+		sp11_status "none: continuing without owner firmware (no audio, no GPU acceleration)"
+		msg ":: no owner firmware; run RUN-IN-WINDOWS.cmd or sp11-firmware to add it"
+	fi
+	mkdir -p "$destination/etc"
+	cp "$SP11_STATUS" "$destination/etc/sp11-external-firmware-status"
+	rm -rf "$SP11_STAGE"
+}
 
 sp11_live_mount_handler() {
 	local destination="$1"
-	local live_source live_device attempt
+	local live_source live_device attempt resolve_attempt
+	local copy_partial copy_path copy_ready
+	local expected_sha actual_sha source_size copied_size
 
 	live_source="${sp11live:-LABEL=SP11BETA}"
-	msg ":: locating SP11 live medium: $live_source"
-	attempt=0
-	live_device=
-	while [ "$attempt" -lt 30 ] && [ -z "$live_device" ]; do
-		live_device="$(resolve_device "$live_source")" || live_device=
-		[ -n "$live_device" ] || sleep 1
-		attempt=$((attempt + 1))
-	done
-	[ -n "$live_device" ] || {
-		err "SP11 live medium did not appear: $live_source"
-		return 1
-	}
-
 	mkdir -p /run/sp11-live
 	mount -t tmpfs -o mode=0755,size=80% sp11-live /run/sp11-live
 	mkdir -p \
@@ -29,16 +220,78 @@ sp11_live_mount_handler() {
 		/run/sp11-live/work \
 		"$destination"
 
-	msg ":: mounting SP11 live medium read-only"
-	mount -o ro "$live_device" /run/sp11-live/media || return 1
-	[ -f /run/sp11-live/media/sp11/rootfs.sfs ] || {
-		err "Missing /sp11/rootfs.sfs on SP11 live medium"
+	copy_path=/run/sp11-live/rootfs.sfs
+	copy_partial=/run/sp11-live/rootfs.sfs.partial
+	copy_ready=0
+	attempt=1
+	while [ "$attempt" -le 3 ] && [ "$copy_ready" -eq 0 ]; do
+		msg ":: locating SP11 live medium (attempt $attempt): $live_source"
+		resolve_attempt=0
+		live_device=
+		while [ "$resolve_attempt" -lt 30 ] && [ -z "$live_device" ]; do
+			live_device="$(resolve_device "$live_source")" ||
+				live_device=
+			[ -n "$live_device" ] || sleep 1
+			resolve_attempt=$((resolve_attempt + 1))
+		done
+		if [ -z "$live_device" ]; then
+			err "SP11 live medium did not appear on attempt $attempt"
+			attempt=$((attempt + 1))
+			continue
+		fi
+
+		msg ":: mounting SP11 live medium read-only"
+		if ! mount -o ro "$live_device" /run/sp11-live/media; then
+			err "Unable to mount SP11 live medium on attempt $attempt"
+			sleep 2
+			attempt=$((attempt + 1))
+			continue
+		fi
+		if [ ! -f /run/sp11-live/media/sp11/rootfs.sfs ] ||
+			[ ! -f /run/sp11-live/media/sp11/rootfs.sfs.sha256 ]; then
+			err "Missing SquashFS or checksum on SP11 live medium"
+		else
+			IFS=' ' read -r expected_sha _ \
+				</run/sp11-live/media/sp11/rootfs.sfs.sha256
+			source_size="$(
+				stat -c '%s' \
+					/run/sp11-live/media/sp11/rootfs.sfs
+			)"
+			rm -f "$copy_partial"
+			msg ":: copying SP11 live SquashFS into RAM"
+			if cp /run/sp11-live/media/sp11/rootfs.sfs \
+				"$copy_partial"; then
+				copied_size="$(stat -c '%s' "$copy_partial")"
+				actual_sha="$(sha256sum "$copy_partial")"
+				actual_sha="${actual_sha%% *}"
+				if [ "$copied_size" = "$source_size" ] &&
+					[ "$actual_sha" = "$expected_sha" ]; then
+					mv "$copy_partial" "$copy_path"
+					copy_ready=1
+				else
+					err "RAM copy identity mismatch on attempt $attempt"
+				fi
+			else
+				err "USB read failed while copying on attempt $attempt"
+			fi
+		fi
+
+		umount /run/sp11-live/media ||
+			umount -l /run/sp11-live/media || true
+		rm -f "$copy_partial"
+		if [ "$copy_ready" -eq 0 ]; then
+			sleep 2
+		fi
+		attempt=$((attempt + 1))
+	done
+	[ "$copy_ready" -eq 1 ] || {
+		err "Unable to make a verified RAM copy of the SP11 live root"
 		return 1
 	}
 
-	msg ":: mounting SP11 live SquashFS"
+	msg ":: mounting verified RAM-backed SP11 live SquashFS"
 	mount -t squashfs -o ro,loop \
-		/run/sp11-live/media/sp11/rootfs.sfs \
+		"$copy_path" \
 		/run/sp11-live/lower || return 1
 
 	msg ":: creating volatile SP11 live overlay"
@@ -46,6 +299,7 @@ sp11_live_mount_handler() {
 		-o lowerdir=/run/sp11-live/lower,upperdir=/run/sp11-live/upper,workdir=/run/sp11-live/work \
 		"$destination" || return 1
 
+	sp11_finish_firmware "$destination" "$live_device"
 	mkdir -p "$destination/run/sp11-live"
 	mount --move /run/sp11-live "$destination/run/sp11-live"
 }

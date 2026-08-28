@@ -25,6 +25,12 @@ SPDX-FileCopyrightText = "2026 turbinebmw"
 SPDX-License-Identifier = "MIT"
 
 [[annotations]]
+path = "rootfs/usr/share/alsa/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 turbinebmw"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
 path = ["kernel/BUILDINFO", "kernel/config", "kernel/Module.symvers"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 turbinebmw"
@@ -35,6 +41,12 @@ path = "kernel/camera-review.config.fragment"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 turbinebmw"
 SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = "userspace/audio/X1E80100-Microsoft-Surface-Pro-11.m4"
+precedence = "override"
+SPDX-FileCopyrightText = "2025 Linaro Ltd"
+SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]
 path = [

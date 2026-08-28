@@ -1,0 +1,18 @@
+[Unit]
+Description=Surface Pro 11 owner firmware import fallback (SP11FW partition)
+# Normally GRUB and the initramfs have already placed the firmware. This
+# runs only when that did not happen, before the display manager starts so
+# the GPU zap shader is present for the first login.
+ConditionPathExists=!/etc/sp11-external-firmware
+DefaultDependencies=no
+After=local-fs.target systemd-udevd.service
+Before=display-manager.service gdm.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/sp11-firmware import-live --wait 25
+RemainAfterExit=yes
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target

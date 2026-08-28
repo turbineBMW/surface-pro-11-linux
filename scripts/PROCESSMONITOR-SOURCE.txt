@@ -1,0 +1,10 @@
+Process Monitor v4.04
+Downloaded: 2026-07-29
+Source: https://download.sysinternals.com/files/ProcessMonitor.zip
+Bytes: 3099732
+SHA-256: dc2ccfa360e5f94ac535f3fa14ba27578049b16290cbbfe5d2f11debf29efe8c
+
+The ZIP was downloaded directly from Microsoft Sysinternals and passed
+unzip's complete archive integrity test before being copied to SP11FW.
+The Windows probe also verifies that the selected Procmon executable has
+an embedded Microsoft Authenticode signer before running it.

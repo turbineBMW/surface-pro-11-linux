@@ -1,6 +1,7 @@
 path_or_pattern	observed_sha256	reason
-ath12k/WCN7850/hw2.0/board.bin	0ef5f6f3cb124f33c6de52371819ccd7c13763ceb86d476a178fd56e4cdc26a3	Unowned machine-local board fallback; official board-2.bin must be tested alone
-qcom/x1e80100/X1E80100-Microsoft-Surface-Pro-11-tplg.bin	89b731f3f98fc2b84699bca39a56e390925a44a26d5aea80382cf617e00c08d8	Unowned Surface audio topology absent from upstream linux-firmware
+ath12k/WCN7850/hw2.0/board.bin	b24438910ff0383d299798a997d3ef3484be624ac013aec2ce7939ec32900c4f	Microsoft-signed Windows driver 1.0.4374.1300 board data; rejected after ath12k BDF load timed out with -110
+ath12k/WCN7850/hw2.0/board.bin	571c97ae80c80268f2f34203a7c4857e6ffb9f7dd1421a619b68bf843a2135e5	Device DPP WLAN_CLPC.PROVISION board data; rejected after ath12k BDF load timed out with -110
+ath12k/WCN7850/hw2.0/board.bin	c07cef280f8aa23d34aabd6b6e81ae7c7b3bc31c8a137e32e51bc6be0eb322f0	Device DPP payload in the qualified legacy ELF envelope; rejected after ath12k BDF load timed out with -110
 qcom/x1e80100/microsoft/Denali/adsp_dtb.mbn	544bd795cb06cf8dee8119ede2a667f01066b2f1b9e4348f1772d080e2026ff4	Unowned Surface ADSP device tree absent from upstream linux-firmware
 qcom/x1e80100/microsoft/Denali/cdsp_dtb.mbn	444f79a6eb0f5309e12a953be4fe15a76a633a7864ac5217d0cadd13427ed1fb	Unowned Surface CDSP device tree absent from upstream linux-firmware
 qcom/x1e80100/microsoft/Denali/qcadsp8380.mbn	921870a839ee2aba647b04598d62ed96f3d2d5dfbb2499fc842f9a6ff0e0da13	Unowned Surface ADSP image absent from upstream linux-firmware

@@ -1,0 +1,7 @@
+[org/gnome/desktop/background]
+picture-uri='file:///usr/share/backgrounds/sp11/tux-surface.png'
+picture-uri-dark='file:///usr/share/backgrounds/sp11/tux-surface.png'
+picture-options='zoom'
+
+[org/gnome/desktop/interface]
+accent-color='orange'
