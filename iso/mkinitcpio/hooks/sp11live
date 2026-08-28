@@ -100,6 +100,25 @@ run_earlyhook() {
 	fi
 }
 
+# Boot trace: append a breadcrumb plus the kernel log tail to
+# boot-trace.txt on SP11FW so a boot that dies without a display can still
+# be diagnosed. Best effort; never fails the boot.
+sp11_trace() {
+	local stage="$1" device log
+	device="$(blkid -lt LABEL=SP11FW -o device 2>/dev/null)"
+	[ -n "$device" ] && [ -b "$device" ] || return 0
+	log=/run/sp11-firmware/trace
+	mkdir -p "$log"
+	mount -o rw "$device" "$log" 2>/dev/null || return 0
+	{
+		printf '\n===== initramfs stage: %s (uptime %s)\n' "$stage" "$(cut -d' ' -f1 /proc/uptime)"
+		dmesg 2>/dev/null | tail -n 40
+	} >>"$log/boot-trace.txt"
+	sync
+	umount "$log" 2>/dev/null || umount -l "$log" 2>/dev/null
+	return 0
+}
+
 # Locate the SP11FW partition (fallback path). Prints the device.
 sp11_find_sp11fw() {
 	local live_device="$1" device sys_live parent candidate label attempt
@@ -211,6 +230,7 @@ sp11_live_mount_handler() {
 	local expected_sha actual_sha source_size copied_size
 
 	live_source="${sp11live:-LABEL=SP11BETA}"
+	sp11_trace "mount handler start"
 	mkdir -p /run/sp11-live
 	mount -t tmpfs -o mode=0755,size=80% sp11-live /run/sp11-live
 	mkdir -p \
@@ -286,8 +306,10 @@ sp11_live_mount_handler() {
 	done
 	[ "$copy_ready" -eq 1 ] || {
 		err "Unable to make a verified RAM copy of the SP11 live root"
+		sp11_trace "FAILED: RAM copy of the live root"
 		return 1
 	}
+	sp11_trace "RAM copy verified"
 
 	msg ":: mounting verified RAM-backed SP11 live SquashFS"
 	mount -t squashfs -o ro,loop \
@@ -299,11 +321,14 @@ sp11_live_mount_handler() {
 		-o lowerdir=/run/sp11-live/lower,upperdir=/run/sp11-live/upper,workdir=/run/sp11-live/work \
 		"$destination" || return 1
 
+	sp11_trace "squashfs and overlay mounted"
 	sp11_finish_firmware "$destination" "$live_device"
+	sp11_trace "firmware step done; handing over to systemd"
 	mkdir -p "$destination/run/sp11-live"
 	mount --move /run/sp11-live "$destination/run/sp11-live"
 }
 
 run_hook() {
+	sp11_trace "modules loaded, udev coldplug done"
 	mount_handler=sp11_live_mount_handler
 }

@@ -1,0 +1,29 @@
+#!/bin/bash
+# SPDX-License-Identifier: MIT
+# Beta diagnostics: copy the boot journal onto the SP11FW partition a few
+# times during the first minutes so a boot without a working display can
+# still be analysed. Nothing is transmitted anywhere.
+set -u
+for round in 1 2 3 4 5 6; do
+	device="$(readlink -e /dev/disk/by-label/SP11FW 2>/dev/null || true)"
+	if [[ -n "$device" ]]; then
+		mountpoint="$(findmnt -rn -S "$device" -o TARGET | head -n1 || true)"
+		mounted_here=0
+		if [[ -z "$mountpoint" ]]; then
+			mountpoint="$(mktemp -d /run/sp11-boot-trace.XXXXXX)"
+			mount -o rw "$device" "$mountpoint" 2>/dev/null && mounted_here=1
+		fi
+		if [[ -d "$mountpoint" && -w "$mountpoint" ]]; then
+			{
+				printf '===== userspace trace round %s, uptime %s\n' "$round" "$(cut -d" " -f1 /proc/uptime)"
+				systemctl list-units --failed --no-pager 2>/dev/null
+				journalctl -b --no-pager -o short-monotonic 2>/dev/null | tail -n 400
+			} >"$mountpoint/boot-trace-userspace-$round.txt" 2>&1
+			sync
+		fi
+		if [[ "$mounted_here" -eq 1 ]]; then
+			umount "$mountpoint" 2>/dev/null; rmdir "$mountpoint" 2>/dev/null
+		fi
+	fi
+	sleep 20
+done

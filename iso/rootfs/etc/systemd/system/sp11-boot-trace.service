@@ -1,0 +1,11 @@
+[Unit]
+Description=Surface Pro 11 beta boot trace onto SP11FW (diagnostics)
+DefaultDependencies=no
+After=local-fs.target systemd-udevd.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/libexec/sp11-boot-trace
+
+[Install]
+WantedBy=multi-user.target

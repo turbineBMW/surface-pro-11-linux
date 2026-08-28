@@ -544,6 +544,7 @@ for unit in \
 	systemd-resolved.service \
 	power-profiles-daemon.service \
 	sp11-bluetooth-address.service \
+	sp11-boot-trace.service \
 	sp11-firmware-import.service \
 	sp11-live-session.service \
 	sp11-noidle.service \
