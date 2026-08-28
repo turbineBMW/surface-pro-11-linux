@@ -104,8 +104,13 @@ run_earlyhook() {
 # boot-trace.txt on SP11FW so a boot that dies without a display can still
 # be diagnosed. Best effort; never fails the boot.
 sp11_trace() {
-	local stage="$1" device log
-	device="$(blkid -lt LABEL=SP11FW -o device 2>/dev/null)"
+	local stage="$1" device log attempt=0
+	while [ "$attempt" -lt 15 ]; do
+		device="$(blkid -lt LABEL=SP11FW -o device 2>/dev/null)"
+		[ -n "$device" ] && [ -b "$device" ] && break
+		sleep 1
+		attempt=$((attempt + 1))
+	done
 	[ -n "$device" ] && [ -b "$device" ] || return 0
 	log=/run/sp11-firmware/trace
 	mkdir -p "$log"
@@ -244,7 +249,7 @@ sp11_live_mount_handler() {
 	copy_partial=/run/sp11-live/rootfs.sfs.partial
 	copy_ready=0
 	attempt=1
-	while [ "$attempt" -le 3 ] && [ "$copy_ready" -eq 0 ]; do
+	while [ "$attempt" -le 6 ] && [ "$copy_ready" -eq 0 ]; do
 		msg ":: locating SP11 live medium (attempt $attempt): $live_source"
 		resolve_attempt=0
 		live_device=
@@ -256,9 +261,11 @@ sp11_live_mount_handler() {
 		done
 		if [ -z "$live_device" ]; then
 			err "SP11 live medium did not appear on attempt $attempt"
+			sp11_trace "live medium not found (attempt $attempt)"
 			attempt=$((attempt + 1))
 			continue
 		fi
+		sp11_trace "live medium is $live_device (attempt $attempt)"
 
 		msg ":: mounting SP11 live medium read-only"
 		if ! mount -o ro "$live_device" /run/sp11-live/media; then
@@ -267,19 +274,19 @@ sp11_live_mount_handler() {
 			attempt=$((attempt + 1))
 			continue
 		fi
-		if [ ! -f /run/sp11-live/media/sp11/rootfs.sfs ] ||
-			[ ! -f /run/sp11-live/media/sp11/rootfs.sfs.sha256 ]; then
+		if [ ! -f /run/sp11-live/media/${sp11sfs:-sp11/rootfs.sfs} ] ||
+			[ ! -f /run/sp11-live/media/${sp11sfs:-sp11/rootfs.sfs}.sha256 ]; then
 			err "Missing SquashFS or checksum on SP11 live medium"
 		else
 			IFS=' ' read -r expected_sha _ \
-				</run/sp11-live/media/sp11/rootfs.sfs.sha256
+				</run/sp11-live/media/${sp11sfs:-sp11/rootfs.sfs}.sha256
 			source_size="$(
 				stat -c '%s' \
-					/run/sp11-live/media/sp11/rootfs.sfs
+					/run/sp11-live/media/${sp11sfs:-sp11/rootfs.sfs}
 			)"
 			rm -f "$copy_partial"
 			msg ":: copying SP11 live SquashFS into RAM"
-			if cp /run/sp11-live/media/sp11/rootfs.sfs \
+			if cp /run/sp11-live/media/${sp11sfs:-sp11/rootfs.sfs} \
 				"$copy_partial"; then
 				copied_size="$(stat -c '%s' "$copy_partial")"
 				actual_sha="$(sha256sum "$copy_partial")"
@@ -290,9 +297,11 @@ sp11_live_mount_handler() {
 					copy_ready=1
 				else
 					err "RAM copy identity mismatch on attempt $attempt"
+					sp11_trace "RAM copy hash mismatch (attempt $attempt)"
 				fi
 			else
 				err "USB read failed while copying on attempt $attempt"
+				sp11_trace "USB read failed during copy (attempt $attempt)"
 			fi
 		fi
 

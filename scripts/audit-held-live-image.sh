@@ -521,7 +521,7 @@ grep -Fq 'copying SP11 live SquashFS into RAM' \
 	printf 'Initramfs does not copy the live root into RAM.\n' >&2
 	exit 1
 }
-grep -Fq 'rootfs.sfs.sha256' \
+grep -Fq 'rootfs.sfs}.sha256' \
 	"$initramfs_extract/hooks/sp11live" || {
 	printf 'Initramfs does not verify the RAM-backed live root.\n' >&2
 	exit 1
