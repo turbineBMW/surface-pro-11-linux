@@ -139,6 +139,7 @@ for existing in \
 	/usr/local/lib/sp11/libhexagonrpc.so.0.4 \
 	/usr/local/lib/sp11/libssc.so.2 \
 	/etc/systemd/system/sp11-sensors.service \
+	/etc/systemd/system/iio-sensor-proxy.service \
 	/etc/systemd/system/iio-sensor-proxy.service.d/10-sp11-sensors.conf \
 	"$destination_root"; do
 	if [[ -e "$existing" || -L "$existing" ]]; then
@@ -186,6 +187,7 @@ mkdir -p -- "$(dirname -- "$destination_root")"
 mv -- "$staged_root" "$destination_root"
 trap - EXIT
 
+systemctl unmask iio-sensor-proxy.service
 systemctl daemon-reload
 systemctl enable sp11-sensors.service
 systemctl restart sp11-sensors.service

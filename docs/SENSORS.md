@@ -89,7 +89,10 @@ After reviewing the resolved paths, repeat with `--apply`. The helper:
   `/var/lib/sp11-sensors/root`;
 - starts `sp11-sensors.service`;
 - makes only the persistent registry writable to the daemon; and
-- points iio-sensor-proxy at the private patched library.
+- points iio-sensor-proxy at the private patched library; and
+- unmasks `iio-sensor-proxy.service` if the host had it masked (a masked unit
+  is the one failure mode where `sp11-sensors.service` is healthy and nothing
+  ever consumes the sensor).
 
 The helper records replaced files under
 `/var/lib/sp11-sensor-install/backups/`. A full host reboot is required for the
