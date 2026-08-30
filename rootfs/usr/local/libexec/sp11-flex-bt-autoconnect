@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Reconnect the Flex Keyboard over Bluetooth when it is detached.
+#
+# The keyboard advertises ADV_DIRECT_IND at its bonded host's *public* identity.
+# bluetoothd's background auto-connect did not pick this up on this system, but
+# an explicit connect (which puts the controller in the initiator state) does.
+# This just issues that connect, with retries, when the wired KIP endpoints go.
+set -u
+KBD="${1:-}"
+[ -n "$KBD" ] || KBD=$(cat /etc/sp11/flex-keyboard-address 2>/dev/null || true)
+[ -n "$KBD" ] || exit 0
+
+# Already connected? nothing to do.
+bluetoothctl info "$KBD" 2>/dev/null | grep -q 'Connected: yes' && exit 0
+
+for _ in $(seq 1 10); do
+    # Still attached over the wire? then we are not wanted.
+    ls /sys/bus/hid/devices/ 2>/dev/null | grep -q '045E:0C8B' && exit 0
+    timeout 25 bluetoothctl connect "$KBD" >/dev/null 2>&1
+    if bluetoothctl info "$KBD" 2>/dev/null | grep -q 'Connected: yes'; then
+        logger -t flex-bt "connected $KBD over Bluetooth"
+        exit 0
+    fi
+    sleep 3
+done
+logger -t flex-bt "failed to connect $KBD after retries"

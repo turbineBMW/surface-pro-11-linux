@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# Pair the Surface Slim Pen 2 over ordinary BLE so its tail button reaches the
+# desktop. No root needed.
+#
+# Windows never bonds the pen: it runs a "loosely-coupled" GATT + AES-CMAC
+# scheme instead (see docs/BLUETOOTH.md), so a bond made here is Linux-only and
+# Windows keeps working untouched. Once bonded the pen shows up as a keyboard
+# node ("Surface Slim Pen 2 Keyboard") and the tail button sends
+# Meta+F19 (click) / Meta+F20 (double click); long press follows the same
+# scheme as Meta+F18. Bind those in the compositor.
+#
+#   sp11-pen-pair [--wait SECONDS]
+#
+# Hold the pen's tail button 5-7 s until the LED blinks: that is pairing mode.
+# The pen only advertises during that window; it is silent at all other times.
+# The same 7 s hold is also how a bonded pen is reconnected later (docking it
+# in the keyboard puts it back to sleep). PEN=<address> pins a known address.
+set -u
+PEN=${PEN:-}
+WAIT=120
+[ "${1:-}" = --wait ] && WAIT=$2
+pattern="^Device .* .*Pen"
+[ -n "$PEN" ] && pattern="^Device ($PEN|.* .*Pen)"
+
+echo "watching for a Surface Pen for ${WAIT}s -- hold the tail button until the LED blinks"
+found=
+end=$((SECONDS+WAIT))
+# Discovery has to stay running while we look; bluetoothctl exits => scan stops.
+coproc BT { bluetoothctl; }
+echo "scan le" >&"${BT[1]}"
+while [ $SECONDS -lt $end ]; do
+    found=$(bluetoothctl devices | grep -i -E "$pattern" | head -1 | awk '{print $2}')
+    [ -n "$found" ] && break
+    sleep 1
+done
+echo "scan off" >&"${BT[1]}"
+if [ -z "$found" ]; then
+    echo "pen not seen. Is it in pairing mode (LED blinking)? Try again."
+    echo "quit" >&"${BT[1]}"; exit 1
+fi
+echo "found $found: $(bluetoothctl info "$found" | grep -E 'Name|Alias' | head -1)"
+for cmd in "pair $found" "trust $found" "connect $found"; do
+    echo "-> $cmd"; echo "$cmd" >&"${BT[1]}"; sleep 6
+done
+echo "quit" >&"${BT[1]}"; wait "$BT_PID" 2>/dev/null
+echo; bluetoothctl info "$found" | grep -E 'Name|Paired|Bonded|Trusted|Connected|Battery|UUID: Human'
+echo; echo "input nodes from the pen:"
+grep -l -i "$(echo "$found" | tr ':' '_')\|pen" /sys/class/input/event*/device/uniq /sys/class/input/event*/device/name 2>/dev/null | sed 's#/sys/class/input/##; s#/device.*##'

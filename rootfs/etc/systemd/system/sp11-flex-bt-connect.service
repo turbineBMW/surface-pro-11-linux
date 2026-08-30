@@ -1,0 +1,8 @@
+[Unit]
+Description=Connect the Surface Flex Keyboard over Bluetooth after detach
+After=bluetooth.service
+Wants=bluetooth.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/sp11-flex-bt-autoconnect

@@ -1,0 +1,191 @@
+#!/usr/bin/env python3
+"""Pair the Surface Pro Flex Keyboard for detached Bluetooth use. No Windows.
+
+Drives Microsoft's "Bluetooth OOB Coupling" HID collection (usage page 0xFFF4)
+on the keyboard's PID 0C8F endpoint, which hands the host's Bluetooth address
+and a 128-bit pairing key to the keyboard over the wired connector. The keyboard
+then authenticates with LE *legacy* out-of-band pairing using that key as the TK.
+
+Requires:
+  * a kernel registering SSAM KIP HID instance 0x09 (so 0C8F exists), and
+  * LE legacy SMP OOB support in the Bluetooth stack.
+Both ship as kernel/sp11-flex-bt-oob-pairing.patch in this project.
+
+    sudo sp11-flex-pair            # pair (prompts to detach at the right moment)
+    sudo sp11-flex-pair --status   # read the channel, change nothing
+
+On success the keyboard's address is recorded in /etc/sp11/flex-keyboard-address
+so sp11-flex-bt-connect.service can reconnect it on every detach.
+"""
+import argparse, fcntl, glob, os, re, select, socket, struct, subprocess, sys, time
+
+OOB_PID = "0C8F"
+RID_CAPABILITY, RID_HOST_BT, RID_DEVICE_BT, RID_PAIRING_KEY = 0x70, 0x56, 0x6E, 0x6F
+ADDRESS_FILE = "/etc/sp11/flex-keyboard-address"
+
+HCI_CHANNEL_CONTROL, HCI_DEV_NONE = 3, 0xFFFF
+MGMT_OP_ADD_REMOTE_OOB_DATA = 0x0021
+MGMT_EV_CMD_COMPLETE, MGMT_EV_CMD_STATUS = 0x0001, 0x0002
+BDADDR_LE_PUBLIC, BDADDR_LE_RANDOM = 0x01, 0x02
+
+
+def ioc(d, t, nr, size):
+    return (d << 30) | (size << 16) | (ord(t) << 8) | nr
+
+
+def hidraw_path():
+    for d in glob.glob(f"/sys/bus/hid/devices/*:045E:{OOB_PID}.*/hidraw/hidraw*"):
+        return "/dev/" + os.path.basename(d)
+    return None
+
+
+def get_feature(fd, rid, length):
+    buf = bytearray(length + 1)
+    buf[0] = rid
+    fcntl.ioctl(fd, ioc(3, "H", 0x07, len(buf)), buf, True)
+    return bytes(buf)
+
+
+def set_feature(fd, rid, payload):
+    buf = bytearray(bytes([rid]) + payload)
+    fcntl.ioctl(fd, ioc(3, "H", 0x06, len(buf)), buf, True)
+
+
+def local_addr():
+    out = subprocess.run(["btmgmt", "info"], capture_output=True, text=True).stdout
+    m = re.search(r"addr ([0-9A-F:]{17})", out)
+    if not m:
+        sys.exit("could not read the local controller address")
+    return m.group(1)
+
+
+def add_remote_oob_tk(addr, addr_type, tk, index=0):
+    """Register the TK so SMP can authenticate with it (P-192 random field)."""
+    s = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_RAW, socket.BTPROTO_HCI)
+    s.bind((HCI_DEV_NONE, HCI_CHANNEL_CONTROL))
+    s.settimeout(5)
+    raw = bytes.fromhex(addr.replace(":", ""))[::-1]
+    params = raw + bytes([addr_type]) + bytes(16) + tk + bytes(16) + bytes(16)
+    s.send(struct.pack("<HHH", MGMT_OP_ADD_REMOTE_OOB_DATA, index, len(params)) + params)
+    deadline = time.time() + 5
+    while time.time() < deadline:
+        try:
+            pkt = s.recv(1024)
+        except socket.timeout:
+            break
+        if len(pkt) < 9:
+            continue
+        ev, _, plen = struct.unpack_from("<HHH", pkt, 0)
+        body = pkt[6:6 + plen]
+        if ev in (MGMT_EV_CMD_COMPLETE, MGMT_EV_CMD_STATUS) and len(body) >= 3:
+            op, status = struct.unpack_from("<HB", body, 0)
+            if op == MGMT_OP_ADD_REMOTE_OOB_DATA:
+                s.close()
+                if status != 0:
+                    raise RuntimeError(f"ADD_REMOTE_OOB_DATA failed 0x{status:02x}")
+                return
+    s.close()
+    raise RuntimeError("no reply to ADD_REMOTE_OOB_DATA")
+
+
+def read_device_report(fd, timeout):
+    """Await input report 0x6E: the keyboard's address and pairing state."""
+    end = time.time() + timeout
+    while time.time() < end:
+        r, _, _ = select.select([fd], [], [], 1.0)
+        if not r:
+            continue
+        data = os.read(fd, 64)
+        if data and data[0] == RID_DEVICE_BT and len(data) >= 8:
+            addr = data[1:7][::-1].hex(":").upper()
+            return addr, data[7] & 1, (data[7] >> 1) & 1
+    return None, None, None
+
+
+def wired_attached():
+    return any("045E:0C8B" in p for p in os.listdir("/sys/bus/hid/devices"))
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--status", action="store_true", help="read only, change nothing")
+    ap.add_argument("--wait", type=int, default=20)
+    a = ap.parse_args()
+    if os.geteuid() != 0:
+        sys.exit("must run as root")
+
+    node = hidraw_path()
+    if not node:
+        sys.exit(f"no {OOB_PID} HID device. The kernel must register SSAM KIP HID "
+                 f"instance 0x09; keyboard must be attached.")
+    print(f"OOB pairing channel: {node}")
+    fd = os.open(node, os.O_RDWR | os.O_NONBLOCK)
+
+    cap = get_feature(fd, RID_CAPABILITY, 1)
+    if not (cap[1] & 1):
+        sys.exit(f"keyboard reports Seamless Pair Capable = 0 ({cap.hex(' ')})")
+    print("capability          : Seamless Pair Capable = 1")
+
+    host = local_addr()
+    set_feature(fd, RID_HOST_BT, bytes.fromhex(host.replace(":", ""))[::-1] + b"\x00")
+    print(f"host address sent   : {host} (public)")
+
+    kbd, kbd_random, exists = read_device_report(fd, a.wait)
+    if kbd is None:
+        sys.exit("no device report (0x6E) -- it is only sent when the keyboard has "
+                 "something to report; try detaching and reattaching first")
+    print(f"keyboard            : {kbd} ({'random' if kbd_random else 'public'}) "
+          f"HostPairingExists={exists}")
+
+    if a.status:
+        print("\n(status only -- nothing sent)")
+        return
+
+    tk = os.urandom(16)
+    os.write(fd, bytes([RID_PAIRING_KEY]) + bytes.fromhex(kbd.replace(":", ""))[::-1]
+             + bytes([kbd_random]) + tk)
+    print("pairing key sent    : 128-bit TK (not printed)")
+
+    add_remote_oob_tk(kbd, BDADDR_LE_RANDOM if kbd_random else BDADDR_LE_PUBLIC, tk)
+    print("TK registered with the kernel as LE legacy OOB data")
+
+    # No need to touch Secure Connections: with only a legacy TK registered for
+    # this peer, the kernel stops requesting SC for it automatically.
+    print("\n" + "=" * 60)
+    print("  DETACH THE KEYBOARD NOW -- it uses the wire while attached")
+    print("=" * 60)
+    while wired_attached():
+        time.sleep(2)
+    print("detached; pairing ...")
+    time.sleep(2)
+    paired = False
+    for cap_io in ("3", "4"):
+        p = subprocess.run(["btmgmt", "pair", "-c", cap_io, "-t",
+                            "2" if kbd_random else "1", kbd],
+                           capture_output=True, text=True)
+        print("  " + (p.stdout.strip().splitlines() or ["(no output)"])[-1])
+        info = subprocess.run(["bluetoothctl", "info", kbd],
+                              capture_output=True, text=True).stdout
+        if "Paired: yes" in info:
+            paired = True
+            break
+
+    subprocess.run(["bluetoothctl", "trust", kbd], capture_output=True)
+    info = subprocess.run(["bluetoothctl", "info", kbd], capture_output=True, text=True).stdout
+    print()
+    for line in info.splitlines():
+        if re.search(r"Name|Paired|Bonded|Trusted|Connected", line):
+            print(" " + line.strip())
+    os.close(fd)
+    if not paired:
+        sys.exit("pairing did not complete; reattach the keyboard and run again")
+
+    # Record the address for the detach hook (sp11-flex-bt-connect.service).
+    os.makedirs(os.path.dirname(ADDRESS_FILE), mode=0o755, exist_ok=True)
+    with open(ADDRESS_FILE, "w") as f:
+        f.write(kbd + "\n")
+    os.chmod(ADDRESS_FILE, 0o644)
+    print(f"address recorded in {ADDRESS_FILE} for reconnect-on-detach")
+
+
+main()
