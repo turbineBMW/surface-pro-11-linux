@@ -275,3 +275,27 @@ the 20-message `sp11-suspend-review20.patch` series to that same commit.
 Runtime state1 must not be enabled without the fail-closed userspace suspend
 guard in the rootfs overlay. See `docs/SUSPEND.md`,
 `docs/REVIEW20-CONSOLIDATION.md`, and `docs/BETA-ISO-ROADMAP.md`.
+
+## Half-screen colour tint after resume or DPMS (DSPP gamma LUT)
+
+`sp11-dpu-gc-lut-after-modeset.patch` fixes a random colour tint with
+artifacts on one half of the internal panel after every suspend/resume or
+DPMS off/on whenever a compositor applies a `GAMMA_LUT` (for example Hyprland
+with wlsunset). On a modeset the DPU driver programs the DSPP gamma (GC) LUT
+before the first flush has activated the block: the enable bit sticks but the
+SRAM LUT writes are lost, so gamma runs over uninitialised memory until the
+next colour-management commit. The patch repeats the colour-processing
+programming on the commit after a modeset.
+
+Register evidence and the verification (DPMS off/on 10/10 clean, previously
+defective every cycle) are in the commit message. The change touches only
+`drivers/gpu/drm/msm/disp/dpu1/dpu_crtc.{c,h}` and needs no configuration
+change.
+
+This patch was developed and verified on the local 7.3 port branch
+(`port/sp11-7.3`, commit `a2c103f964eb9cc9a6799b567d81357504a62d3a`); it has
+been checked to apply cleanly with `git apply --check` to the exact review20
+tip `18d7951a10dc49e383d16c6af82fc2c07784de3d`, but no reproducible 7.1.3
+build including it has been published yet, so it ships as a patch only, with
+no bundle. It is also a candidate for upstream `drm/msm`, since the GC LUT
+support it corrects is upstream code.

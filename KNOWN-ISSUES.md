@@ -80,6 +80,17 @@ Until that is resolved, the desktop brightness sliders in GNOME and KDE will
 not work either, since they use ddcutil's library. Talking to the monitor
 directly does work.
 
+## Half-screen colour tint after resume or screen off/on
+
+Fixed in source, not yet in a published build. With a gamma LUT applied by the
+compositor (night-light tools such as wlsunset), every suspend/resume or DPMS
+off/on left one half of the panel with a random colour tint and artifacts.
+Root cause is in the upstream DPU driver: the gamma LUT SRAM is written during
+the modeset before the block is active, and the write is lost. The fix is
+`kernel/sp11-dpu-gc-lut-after-modeset.patch`; see `kernel/README.md`. Until a
+build with it ships, changing the gamma (toggling or restarting the night-light
+tool) clears the corruption immediately.
+
 ## GPU hang investigation
 
 After approximately 16 hours and 49 minutes of extended use, the qualified
