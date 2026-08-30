@@ -1,3 +1,24 @@
+# Unreleased source (2026-08-29)
+
+Source-only changes since the beta ISO; no new image has been built.
+
+- **Linux 7.3 forward port** (`kernel/port-7.3/`): the review20 series on
+  mainline 7.3 with the upstreamed PDC/idle commits dropped and deep idle
+  unrestricted. About 3.7 W less at idle, 0.535 W in deep suspend, a clean
+  overnight cycle and a full day of suspend/resume. Evaluation source; the
+  reproducible beta kernel is unchanged.
+- **Flex Keyboard pairs natively over Bluetooth** with no Windows keys:
+  `kernel/sp11-flex-bt-oob-pairing.patch` (KIP OOB HID node + LE legacy OOB
+  pairing in SMP) and `sp11-flex-pair`, plus a udev hook that reconnects the
+  keyboard on every detach. The Bluetooth address documentation was corrected
+  (the EFI value is the Wi-Fi MAC; the adapter is one lower).
+- **Slim Pen 2 tail button** via a plain BLE bond (`sp11-pen-pair`), arriving
+  as Meta+F19/F20.
+- **Half-screen colour tint after resume/DPMS** fixed in the DPU driver
+  (`kernel/sp11-dpu-gc-lut-after-modeset.patch`).
+- **Ambient light sensor:** `install-sensors.sh` unmasks
+  `iio-sensor-proxy.service`, which a masked host unit had silently disabled.
+
 # Public beta (2026-08-28)
 
 First public beta ISO. Compared with the held engineering images of July and

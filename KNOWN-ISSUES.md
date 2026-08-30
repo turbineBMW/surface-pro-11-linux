@@ -82,8 +82,9 @@ directly does work.
 
 ## Half-screen colour tint after resume or screen off/on
 
-Fixed in source, not yet in a published build. With a gamma LUT applied by the
-compositor (night-light tools such as wlsunset), every suspend/resume or DPMS
+Fixed in source and running on the maintainer's 7.3 port kernel
+(`kernel/port-7.3/`), not yet in a published review20 build. With a gamma LUT
+applied by the compositor (night-light tools such as wlsunset), every suspend/resume or DPMS
 off/on left one half of the panel with a random colour tint and artifacts.
 Root cause is in the upstream DPU driver: the gamma LUT SRAM is written during
 the modeset before the block is active, and the write is lost. The fix is
@@ -136,6 +137,15 @@ audio, and both cameras working.
 
 Do not enable `sp11_deep_idle=1` without the guard. A boot without that opt-in
 retains the conservative `sp11-noidle.service` state1 block.
+
+The picture is different on the Linux 7.3 forward port published in
+`kernel/port-7.3/`. Upstream 7.3 merged the PDC and idle-state work the
+review20 series carried, the guards were dropped, and deep idle runs
+unrestricted: idle draw fell by about 3.7 W, deep suspend measured 0.535 W
+over a 7 h overnight cycle (roughly 90 h of standby instead of one day), and a
+full working day with dozens of suspend/resume cycles was clean. That kernel
+is an evaluation build, not the reproducible beta kernel; see its README for
+the remaining open items before relying on it.
 
 Suspend power remains poor. During the overnight cycle APSS was suspended for
 99.986% of the wall interval, but AOSS, CXSD, and DDR-collapse counters stayed
@@ -237,6 +247,12 @@ hexagonrpcd registry-write support, and the SP11 libssc color-endpoint mapping.
 None of the proprietary configuration, calibration, or generated registry is
 distributed here.
 
+If `iio-sensor-proxy.service` is masked on the host (`systemctl is-enabled`
+prints `masked`), automatic brightness silently never starts even though
+`sp11-sensors.service` is healthy; `scripts/install-sensors.sh` now unmasks it,
+and an existing installation can be fixed with `systemctl unmask
+iio-sensor-proxy.service`.
+
 An empty `color_calibration.bin` crashes the Qualcomm sensor process; leave the
 file absent when no valid record exists. Validate every installation after a
 full host boot. Manually restarting the shared ADSP can incur long
@@ -247,10 +263,27 @@ substitute for that reboot test. See
 ## Flex Keyboard
 
 Attached and detached Flex Keyboard modes work on the tested unit. Detached
-mode currently requires importing a bond created by Windows and using the same
-local controller identity. Native Linux pairing has not been implemented, and
-no machine-specific address or Bluetooth key is distributed here. See
-[docs/BLUETOOTH.md](docs/BLUETOOTH.md).
+mode pairs natively on Linux over the wired connector, with no Windows keys
+(`sudo sp11-flex-pair`); this needs the two kernel patches in
+`kernel/sp11-flex-bt-oob-pairing.patch` (KIP HID instance 9 registration, and
+LE legacy out-of-band pairing support), which are part of the 7.3 port. A
+udev-triggered service reconnects the keyboard on every detach. No
+machine-specific address or Bluetooth key is distributed here.
+
+Two caveats. The Bluetooth adapter identity is *not* the
+`MacAddressEmulationAddress` EFI value -- that is the Wi-Fi MAC, and on the
+tested unit Bluetooth is one lower. And on a dual-boot machine Windows re-pairs
+the keyboard on its own schedule, invalidating the Linux bond; pairing again
+resolves it. See [docs/BLUETOOTH.md](docs/BLUETOOTH.md).
+
+## Slim Pen 2 buttons
+
+The tail button only works over Bluetooth. `sp11-pen-pair` bonds the pen as a
+plain BLE HID device and the button arrives as Meta+F19/F20 on a keyboard
+node. The pen never advertises on its own, so after it has been docked it must
+be woken with a ~7 s tail-button hold before the bond reconnects; there is no
+automatic pickup, and the Windows-style loosely-coupled provisioning that
+would give one is not implemented. See [docs/BLUETOOTH.md](docs/BLUETOOTH.md).
 
 ## Boot warnings and probe order
 

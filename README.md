@@ -31,11 +31,16 @@ Removing it again: [docs/UNINSTALL.md](docs/UNINSTALL.md).
 - Kernel `7.1.3-sp11-suspend-review20`: upstream Linux 7.1.3 plus the
   patches in `kernel/` (camera, touch, tablet mode, DP DDC, charge limit,
   suspend/idle work). Reproducible builds; see `docs/BUILD.md`.
+- `kernel/port-7.3/`: the same series carried forward onto Linux 7.3 with
+  deep idle unrestricted (about 3.7 W less at idle, 0.5 W in suspend), plus
+  native Flex Keyboard Bluetooth pairing and the half-screen tint fix.
+  Evaluation source, the maintainer's daily kernel since 2026-08-28.
 - Arch Linux ARM package set (GNOME 50, PipeWire, libcamera, NetworkManager,
   Rnote, Firefox, …) pinned in `iso/packages.lock.tsv`.
 - `rootfs/`: the services and helpers that make the hardware behave (iptsd
   lifecycle, charge limit, power profiles, Bluetooth address, deep-idle
-  mitigation, …).
+  mitigation, …) and the Bluetooth pairing tools for the detached Flex
+  Keyboard (`sp11-flex-pair`) and the Slim Pen 2 (`sp11-pen-pair`).
 - `scripts/`: firmware collectors (`sp11-collect-firmware.ps1`,
   `sp11-firmware.py`), the installer (`sp11-install-plan.py`,
   `sp11-install-executor.py`, `sp11-installer-ui.py`), the live-image builder

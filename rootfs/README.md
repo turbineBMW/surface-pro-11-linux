@@ -4,6 +4,10 @@ This allowlisted tree contains only the integrations required by the qualified
 machine:
 
 - Bluetooth EFI-address setup service/helper
+- native Flex Keyboard Bluetooth pairing (`sp11-flex-pair`, needs the
+  `kernel/sp11-flex-bt-oob-pairing.patch` kernel) with a udev-triggered
+  reconnect-on-detach unit, and Slim Pen 2 pairing (`sp11-pen-pair`)
+- cpufreq boost enable, gated to the 7.3 port kernel release string
 - conservative deep-idle fallback plus the qualified fail-closed runtime-idle
   suspend guard
 - systemd-logind watchdog override qualified for long lid-triggered suspend
