@@ -1,0 +1,24 @@
+#!/bin/sh
+# Summarise what sp11-suspend-tracker recorded: recent cycles, unfinished
+# suspends (hangs), loop flags, and any pstore crash dumps.
+set -u
+state=/var/lib/sp11-suspend-tracker
+n=${1:-25}
+if [ -r "$state/current" ]; then
+	echo "!! UNFINISHED SUSPEND (never resumed): $(sed -n 's/^entered=//p' "$state/current" | xargs -I{} date -d @{} --iso-8601=seconds)  bt=$(sed -n 's/^bt=//p' "$state/current")"
+	echo "   (still inside a suspend cycle if you are reading this from the post hook)"
+fi
+[ -r "$state/LOOP" ] && echo "!! last suspend loop flagged at $(cat "$state/LOOP")"
+if [ -r "$state/history.tsv" ]; then
+	echo "== last $n cycles (slept_s, drain_uWh, wake_irq, fail, last_failed_dev/step, bt, wakeup sources fired) =="
+	tail -n "$n" "$state/history.tsv" | awk -F'\t' 'NR==1 && $1=="entered"{next} { d=($4=="-"||$5=="-")?"-":$4-$5; printf "%s  %7ss  %8s  irq=%s fail=%s %s/%s  bt=%s  %s  irq:%s\n", substr($1,1,19), $3, d, $6, $7, $8, $9, $10, $11, $12 }'
+else
+	echo "no history yet ($state/history.tsv)"
+fi
+echo "== pstore dumps (panic/oops captured across a reset) =="
+ls -la /var/lib/systemd/pstore/ 2>/dev/null | grep -v '^total' | grep -v ' \.\.\?$' || true
+[ -d /sys/fs/pstore ] && [ "$(id -u)" = 0 ] && ls -la /sys/fs/pstore/ | grep -v '^total' | grep -v ' \.\.\?$'
+echo "== journal: tracker warnings this boot =="
+journalctl -b --no-pager -q -t sp11-suspend-tracker -p warning 2>/dev/null | tail -5
+echo "== journal: suspend/resume kernel errors this boot (pm_debug_messages is on) =="
+journalctl -b -k --no-pager -q 2>/dev/null | grep -iE 'PM: (suspend|resume).*(fail|abort|error)|Wakeup|aborting suspend|hung_task|soft lockup|cut here' | tail -10

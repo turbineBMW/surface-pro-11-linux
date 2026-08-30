@@ -18,6 +18,12 @@ Source-only changes since the beta ISO; no new image has been built.
   (`kernel/sp11-dpu-gc-lut-after-modeset.patch`).
 - **Ambient light sensor:** `install-sensors.sh` unmasks
   `iio-sensor-proxy.service`, which a masked host unit had silently disabled.
+- **Suspend self-wake fixed:** once anything claimed the ambient light sensor,
+  iio-sensor-proxy left the ADSP sensor stream running and it woke the SoC
+  under a second into every suspend (the 2026-08-29 overnight lid cycle looped
+  46 times and then hung). `sp11-sensors-sleep` now stops the proxy across
+  sleep; a `sp11-suspend-tracker` hook and `sp11-suspend-report` record every
+  cycle (duration, drain, wake IRQ, wakeup sources, IRQs that ticked).
 
 # Public beta (2026-08-28)
 

@@ -1,0 +1,92 @@
+#!/bin/sh
+# sp11-suspend-tracker: record every suspend/resume cycle so short-sleep loops
+# and hangs are diagnosable afterwards.
+#
+# pre : enable kernel PM debug output, snapshot wakeup sources / battery /
+#       Bluetooth links, write a synced "entered" marker.
+# post: compute sleep length, drain, wake IRQ, suspend_stats, which wakeup
+#       sources fired, append one TSV row, and warn (journal, priority
+#       warning) when several consecutive sleeps were shorter than 20 s.
+#
+# A marker file with no matching post row means the machine never came back
+# from that suspend (hang / hard reset).  `sp11-suspend-report` reads it all.
+set -u
+
+state=/var/lib/sp11-suspend-tracker
+log=$state/history.tsv
+marker=$state/current
+ws=/sys/kernel/debug/wakeup_sources
+bat=/sys/class/power_supply/qcom-battmgr-bat
+short=20   # seconds; a resume sooner than this counts as a loop iteration
+loop_n=3   # consecutive short sleeps before we shout
+
+install -d -m0755 "$state"
+[ -s "$log" ] || printf 'entered\tresumed\tslept_s\tenergy_pre_uWh\tenergy_post_uWh\twake_irq\tsuspend_fail\tlast_failed_dev\tlast_failed_step\tbt_connected\twakeup_sources_fired\tirqs_ticked\n' >"$log"
+
+energy() { cat "$bat/energy_now" 2>/dev/null || echo -; }
+bt_links() { timeout 5 bluetoothctl devices Connected 2>/dev/null | awk '{print $2}' | paste -sd, - ; }
+snap_ws() { [ -r "$ws" ] && awk 'NR>1{print $1, $2, $3}' "$ws" | sort >"$1" 2>/dev/null; }
+
+case "${1:-}" in
+pre)
+	echo 1 >/sys/power/pm_debug_messages 2>/dev/null
+	echo 1 >/sys/power/pm_print_times 2>/dev/null
+	snap_ws "$state/ws.pre"
+	cp /proc/interrupts "$state/irq.pre" 2>/dev/null
+	# trace ADSP<->AP smp2p / remoteproc events across the cycle (names the ADSP signal)
+	tr=/sys/kernel/tracing
+	if [ -d "$tr/events/smp2p" ]; then
+		echo 0 >"$tr/tracing_on"; echo >"$tr/trace"
+		echo 1 >"$tr/events/smp2p/enable" 2>/dev/null
+		echo 1 >"$tr/events/remoteproc/enable" 2>/dev/null
+		echo 1 >"$tr/tracing_on"
+	fi
+	cat /sys/kernel/debug/qcom_stats/aosd "$state/dummy" 2>/dev/null | head -20 >"$state/aoss.pre" || true
+	printf 'entered=%s\nenergy=%s\nbt=%s\n' "$(date +%s)" "$(energy)" "$(bt_links)" >"$marker"
+	sync -f "$marker" 2>/dev/null || sync
+	;;
+post)
+	now=$(date +%s)
+	entered=; energy_pre=; bt=
+	[ -r "$marker" ] && { entered=$(sed -n 's/^entered=//p' "$marker"); energy_pre=$(sed -n 's/^energy=//p' "$marker"); bt=$(sed -n 's/^bt=//p' "$marker"); }
+	slept=$(( now - ${entered:-$now} ))
+	irq=$(cat /sys/power/pm_wakeup_irq 2>/dev/null || echo -)
+	fail=$(cat /sys/power/suspend_stats/fail 2>/dev/null || echo -)
+	ldev=$(cat /sys/power/suspend_stats/last_failed_dev 2>/dev/null | head -1); ldev=${ldev:--}
+	lstep=$(cat /sys/power/suspend_stats/last_failed_step 2>/dev/null | head -1); lstep=${lstep:--}
+	fired=-
+	if [ -r "$state/ws.pre" ] && [ -r "$ws" ]; then
+		snap_ws "$state/ws.post"
+		# names whose active_count or event_count moved during the cycle
+		fired=$(join -a2 "$state/ws.pre" "$state/ws.post" | awk '{ if (NF==5 && ($2!=$4 || $3!=$5)) printf "%s(+%d)%s", $1, $5-$3, ","; else if (NF==3) printf "%s(new),", $1 }' | sed 's/,$//')
+		[ -n "$fired" ] || fired=none
+	fi
+	tr=/sys/kernel/tracing
+	if [ -d "$tr/events/smp2p" ]; then
+		echo 0 >"$tr/tracing_on"
+		grep -v '^#' "$tr/trace" | tail -200 >"$state/trace.last" 2>/dev/null
+		echo 0 >"$tr/events/smp2p/enable" 2>/dev/null; echo 0 >"$tr/events/remoteproc/enable" 2>/dev/null
+	fi
+	# IRQ lines that ticked during the cycle (excluding per-cpu timer/IPI noise)
+	irqs=-
+	if [ -r "$state/irq.pre" ]; then
+		irqs=$(awk 'NR==FNR{ if($1~/^[0-9]+:$/){s=0; for(i=2;i<=NF && $i~/^[0-9]+$/;i++) s+=$i; pre[$1]=s; name[$1]=$NF} next }
+		            $1~/^[0-9]+:$/{ s=0; for(i=2;i<=NF && $i~/^[0-9]+$/;i++) s+=$i; d=s-pre[$1]; if(d>0 && $NF!~/arch_timer|IPI|rescheduling|Function/) printf "%s%s(+%d),", $1, $NF, d }' "$state/irq.pre" /proc/interrupts | sed 's/,$//')
+		[ -n "$irqs" ] || irqs=none
+		mv -f "$state/irq.pre" "$state/irq.prev" 2>/dev/null
+	fi
+	row=$(printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s' \
+		"$(date -d "@${entered:-$now}" --iso-8601=seconds)" "$(date -d "@$now" --iso-8601=seconds)" \
+		"$slept" "${energy_pre:--}" "$(energy)" "$irq" "$fail" "$ldev" "$lstep" "${bt:--}" "$fired" "$irqs")
+	printf '%s\n' "$row" >>"$log"
+	rm -f "$marker"; sync -f "$log" 2>/dev/null || sync
+	logger -t sp11-suspend-tracker -- "slept ${slept}s wake_irq=$irq fail=$fail last_failed_dev=$ldev fired=$fired irqs=$irqs"
+	# loop detection over the trailing rows
+	streak=$(tail -n "$loop_n" "$log" | awk -F'\t' -v s="$short" 'NR>0 && $3+0 < s {c++} END{print c+0}')
+	if [ "$streak" -ge "$loop_n" ]; then
+		logger -p daemon.warning -t sp11-suspend-tracker -- "SUSPEND LOOP: $streak consecutive sleeps under ${short}s (last wake_irq=$irq, fired=$fired, bt=${bt:--}). See sp11-suspend-report."
+		date --iso-8601=seconds >"$state/LOOP"
+	fi
+	;;
+esac
+exit 0

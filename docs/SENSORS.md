@@ -119,3 +119,15 @@ change by orders of magnitude. A static zero does not qualify the setup.
 Do not repeatedly stop/start the ADSP remote processor as a substitute for a
 host reboot. Other firmware clients share that processor, and peripheral
 power state after a manual DSP restart is not equivalent to a cold boot.
+
+## Suspend interaction (2026-08-30)
+
+Once any client claims the light sensor, iio-sensor-proxy's SSC driver never
+disables the ADSP stream again — `ReleaseLight` leaves it running at 1 Hz, and
+the stream's QMI indications wake the SoC 0.2–0.8 s into every deep suspend
+(visible as IRQ 16 `smp2p-adsp` ticks in `sp11-suspend-report`; this caused the
+2026-08-29 overnight suspend loop and hang). The stream only ends when the QMI
+client process exits, so `usr/lib/systemd/system-sleep/sp11-sensors-sleep`
+stops `iio-sensor-proxy.service` before suspend and starts it again afterwards;
+willshell's `monitor-sensor` reconnects and re-claims by itself. A proper fix
+belongs in the proxy's SSC driver (disable the stream on release / on sleep).

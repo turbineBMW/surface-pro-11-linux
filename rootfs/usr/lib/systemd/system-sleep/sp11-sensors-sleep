@@ -1,0 +1,30 @@
+#!/bin/sh
+# sp11-sensors-sleep: stop iio-sensor-proxy across suspend, restart it after.
+#
+# Why: the ambient light sensor is served by the ADSP sensor core (libssc/QMI).
+# Once a client claims the light sensor, iio-sensor-proxy's SSC driver never
+# disables the stream again (ReleaseLight leaves it running at 1 Hz), and the
+# stream's indications wake the SoC 0.2-0.8 s into every deep suspend
+# (IRQ 16 smp2p-adsp ticks; 2026-08-29 overnight loop + hang). The stream only
+# ends when the QMI client process exits, so we stop the daemon for the sleep.
+# willshell's monitor-sensor reconnects and re-claims on its own afterwards.
+set -u
+unit=iio-sensor-proxy.service
+flag=/run/sp11-sensors-sleep.stopped
+case "${1:-}" in
+pre)
+	rm -f "$flag"
+	if systemctl is-active --quiet "$unit"; then
+		systemctl stop "$unit" && touch "$flag"
+		logger -t sp11-sensors-sleep -- "pre: stopped $unit for ${2:-sleep}"
+	fi
+	;;
+post)
+	if [ -e "$flag" ]; then
+		rm -f "$flag"
+		systemctl start "$unit"
+		logger -t sp11-sensors-sleep -- "post: started $unit"
+	fi
+	;;
+esac
+exit 0

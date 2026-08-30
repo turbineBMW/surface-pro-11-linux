@@ -138,6 +138,15 @@ audio, and both cameras working.
 Do not enable `sp11_deep_idle=1` without the guard. A boot without that opt-in
 retains the conservative `sp11-noidle.service` state1 block.
 
+Ambient light sensor stream (fixed 2026-08-30): with the sensor stack installed,
+a light claim (any `monitor-sensor --light` or desktop auto-brightness client)
+starts an ADSP sensor stream that iio-sensor-proxy never disables; its
+indications woke the SoC 0.2–0.8 s into every deep suspend, so a closed lid
+cycled suspend every 30 s and eventually hung. `sp11-sensors-sleep` stops
+iio-sensor-proxy across sleep. Diagnose future cases with `sp11-suspend-report`
+(a short `slept_s` with IRQ 16 `smp2p-adsp` ticking is this signature). See
+docs/SENSORS.md.
+
 The picture is different on the Linux 7.3 forward port published in
 `kernel/port-7.3/`. Upstream 7.3 merged the PDC and idle-state work the
 review20 series carried, the guards were dropped, and deep idle runs
