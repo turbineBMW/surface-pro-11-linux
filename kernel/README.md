@@ -299,3 +299,35 @@ tip `18d7951a10dc49e383d16c6af82fc2c07784de3d`, but no reproducible 7.1.3
 build including it has been published yet, so it ships as a patch only, with
 no bundle. It is also a candidate for upstream `drm/msm`, since the GC LUT
 support it corrects is upstream code.
+
+## Native Flex Keyboard Bluetooth pairing
+
+`sp11-flex-bt-oob-pairing.patch` is a two-message series:
+
+1. `platform/surface: aggregator_registry: add KIP OOB pairing node for SP11`
+   registers KIP HID instance `0x09`, so the keyboard's Microsoft "Bluetooth
+   OOB Coupling" collection (PID `0C8F`, usage page `0xFFF4`) is enumerated as
+   a HID device. Without it nothing on Linux can provision a bond, and an
+   unprovisioned keyboard never advertises.
+2. `Bluetooth: SMP: implement LE legacy out-of-band pairing` fills the gap the
+   subsystem left open: `mgmt` accepted only zero-valued P-192 OOB parameters
+   for LE "as long as legacy SMP OOB isn't implemented", and SMP built the OOB
+   flag only on the Secure Connections path. The patch carries a 128-bit
+   legacy TK through `ADD_REMOTE_OOB_DATA`, uses it in the legacy pairing
+   path with MITM bookkeeping, and drops `SMP_AUTH_SC` per peer when only a
+   legacy TK is held, so the adapter's Secure Connections setting is
+   unaffected for other devices.
+
+The series was developed on `port/sp11-7.3` and applies cleanly to the exact
+review20 tip `18d7951a10dc49e383d16c6af82fc2c07784de3d`; it ships as a patch
+only until a reproducible 7.1.3 build includes it. Both halves are upstream
+candidates. The userspace side is `rootfs/usr/local/bin/sp11-flex-pair`; see
+`docs/BLUETOOTH.md`.
+
+## Linux 7.3 forward port
+
+`port-7.3/` carries the whole series forward onto the 7.3 merge window, with
+the commits upstream has since merged dropped and deep idle unrestricted. It is
+evaluation source with its own README; the reproducible build remains
+review20.
+

@@ -12,6 +12,7 @@ path = [
   "firmware/**",
   "iso/**",
   "kernel/README.md",
+  "kernel/port-7.3/README.md",
   "rootfs/README.md",
   "rootfs/etc/**",
   "rootfs/usr/lib/**",
@@ -31,7 +32,7 @@ SPDX-FileCopyrightText = "2026 turbinebmw"
 SPDX-License-Identifier = "MIT"
 
 [[annotations]]
-path = ["kernel/BUILDINFO", "kernel/config", "kernel/Module.symvers"]
+path = ["kernel/BUILDINFO", "kernel/config", "kernel/Module.symvers", "kernel/port-7.3/config"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 turbinebmw"
 SPDX-License-Identifier = "CC0-1.0"
@@ -156,6 +157,42 @@ SPDX-FileCopyrightText = [
   "2026 turbinebmw",
 ]
 SPDX-License-Identifier = "GPL-2.0-only"
+
+[[annotations]]
+path = "kernel/sp11-flex-bt-oob-pairing.patch"
+precedence = "aggregate"
+SPDX-FileCopyrightText = [
+  "1991-2026 Linux kernel contributors",
+  "2010-2011 Nokia Corporation",
+  "2011-2012 Intel Corporation",
+  "2020-2022 Maximilian Luz",
+  "2026 turbinebmw",
+]
+SPDX-License-Identifier = "GPL-2.0-only"
+
+[[annotations]]
+path = [
+  "kernel/port-7.3/sp11-port-7.3.bundle",
+  "kernel/port-7.3/sp11-port-7.3.patch",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = [
+  "1991-2026 Linux kernel contributors",
+  "2010-2011 Nokia Corporation",
+  "2011-2012 Intel Corporation",
+  "2013 Red Hat",
+  "2014-2026 The Linux Foundation",
+  "2017 Intel Corporation",
+  "2019-2026 Qualcomm Technologies, Inc. and/or its subsidiaries",
+  "2021-2023 Qualcomm Innovation Center, Inc.",
+  "2021 Microsoft Corporation",
+  "2020-2022 Maximilian Luz",
+  "2022-2026 Linaro Ltd",
+  "2024 STMicroelectronics SA",
+  "2026 Google LLC",
+  "2026 turbinebmw",
+]
+SPDX-License-Identifier = "GPL-2.0-only AND BSD-2-Clause AND BSD-3-Clause"
 
 [[annotations]]
 path = "userspace/iptsd/LICENSE.upstream"

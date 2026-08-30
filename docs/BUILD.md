@@ -132,3 +132,12 @@ The local Y10P-to-GREY bridge, Howdy enrollment, and separately built
 `v4l2loopback` module used during validation are deliberately not included in
 this source preview. They require their own packaging and safety review before
 distribution.
+
+## Linux 7.3 forward port
+
+`kernel/port-7.3/` publishes the series carried forward onto mainline
+`548e7bcd0c54` (7.3 merge window) as a bundle, an end-state patch and the
+running configuration. It is not built by `scripts/build-kernel.sh` and has
+no `BUILDINFO`; see `kernel/port-7.3/README.md` for the identities, what was
+dropped and why, and the command-line and unit changes that accompany it.
+

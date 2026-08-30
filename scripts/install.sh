@@ -530,6 +530,7 @@ systemctl enable sp11-bluetooth-address.service
 systemctl enable sp11-noidle.service
 systemctl enable sp11-power-profile-cpufreq.service
 systemctl enable sp11-charge-limit.service
+systemctl enable sp11-cpufreq-boost.service
 
 [[ "$(sha256sum "$windows_loader" | awk '{print $1}')" == \
 	"$windows_loader_sha" ]] || {
