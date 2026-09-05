@@ -5245,6 +5245,37 @@ index 000000000000..c5c25f1934d0
 +extern const struct dev_pm_ops spi_hid_core_pm;
 +
 +#endif /* SPI_HID_H */
+diff --git a/drivers/hid/surface-hid/surface_hid.c b/drivers/hid/surface-hid/surface_hid.c
+index eae47e0d95ed..5a341b2aeb01 100644
+--- a/drivers/hid/surface-hid/surface_hid.c
++++ b/drivers/hid/surface-hid/surface_hid.c
+@@ -229,6 +229,18 @@ static void surface_hid_remove(struct ssam_device *sdev)
+ 	surface_hid_device_destroy(ssam_device_get_drvdata(sdev));
+ }
+ 
++static void surface_hid_shutdown(struct device *dev)
++{
++	struct surface_hid_device *shid = dev_get_drvdata(dev);
++	int status;
++
++	/* Put HID clients into their low-power mode before SAM shuts down. */
++	status = hid_driver_suspend(shid->hid, PMSG_SUSPEND);
++	if (status)
++		dev_warn(dev, "failed to suspend HID device for shutdown: %d\n",
++			 status);
++}
++
+ static const struct ssam_device_id surface_hid_match[] = {
+ 	{ SSAM_SDEV(HID, ANY, SSAM_SSH_IID_ANY, 0x00) },
+ 	{ },
+@@ -241,6 +253,7 @@ static struct ssam_device_driver surface_hid_driver = {
+ 	.match_table = surface_hid_match,
+ 	.driver = {
+ 		.name = "surface_hid",
++		.shutdown = surface_hid_shutdown,
+ 		.pm = &surface_hid_pm_ops,
+ 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
+ 	},
 diff --git a/drivers/irqchip/qcom-pdc.c b/drivers/irqchip/qcom-pdc.c
 index ce6d80c7f17a..97835e1542e7 100644
 --- a/drivers/irqchip/qcom-pdc.c
@@ -5782,7 +5813,7 @@ index 000000000000..3b492c21da7b
 +#endif /* __IMX681_TABLES_H */
 diff --git a/drivers/media/i2c/imx681.c b/drivers/media/i2c/imx681.c
 new file mode 100644
-index 000000000000..cf99dd211dc0
+index 000000000000..b963373951de
 --- /dev/null
 +++ b/drivers/media/i2c/imx681.c
 @@ -0,0 +1,554 @@
@@ -5818,7 +5849,7 @@ index 000000000000..cf99dd211dc0
 +#define IMX681_MODE_STREAMING	1
 +#define IMX681_MODE_STANDBY	0
 +#define IMX681_REG_GROUP_HOLD	CCI_REG8(0x0104)
-+#define IMX681_REG_EXPOSURE	CCI_REG16(0x0202)
++#define IMX681_REG_EXPOSURE	CCI_REG24(0x0229)
 +#define IMX681_REG_ANALOG_GAIN	CCI_REG16(0x0204)
 +#define IMX681_REG_DIGITAL_GAIN	CCI_REG16(0x020e)
 +#define IMX681_REG_FRAME_LENGTH	CCI_REG16(0x0340)

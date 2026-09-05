@@ -14,6 +14,24 @@ firmware file is included here.
 
 ## Kernel
 
+The separate `kernel/sp11-surface-hid-shutdown.patch` adds an original shutdown
+callback using the existing in-tree HID suspend API in the GPL-2.0-or-later
+Surface HID transport. It contains no firmware-derived code or vendor report
+payloads. It makes poweroff issue the same touchpad report-disable sequence as
+suspend; captured traces confirmed the commands succeed, and also that a
+battery-powered poweroff can leave the attached Flex Keyboard's haptics on
+regardless, so the callback is correct but not a complete fix
+(`KNOWN-ISSUES.md`). It is part of the 7.3 port branch.
+
+The separate `kernel/sp11-imx681-exposure.patch` adapts Leon Silcott's
+GPL-2.0-only IMX681 register correction from
+[`ooaklee/linux_ms_dev_kit-sp11` commit `b1754869f458`](https://github.com/ooaklee/linux_ms_dev_kit-sp11/commit/b1754869f458).
+It changes only the exposure-register definition to `CCI_REG24(0x0229)`.
+It imports no firmware or sensor-table bytes and does not change the historical
+review20 bundle identities below. External hardware evidence motivated the
+correction and local fixed-gain measurements confirmed it. It is part of the
+7.3 port branch.
+
 - Upstream: Linux stable
 - Upstream URL: `https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git`
 - Base tag: `v7.1.3`

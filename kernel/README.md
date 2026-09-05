@@ -1,5 +1,9 @@
 # Reviewed SP11 kernel reconstruction
 
+> The beta ISO ships the Linux 7.3 forward port in `port-7.3/` since
+> 2026-09-05; the sections below document the 7.1.3-based history it was
+> carried forward from, which is still buildable as the `review20` profile.
+
 The experimental source is reconstructed incrementally on Linux stable
 `v7.1.3`. The published stages preserve the conservative SP11/HID-over-SPI
 prerequisite, reviewed camera branch, touch autoload, tablet-mode
@@ -324,10 +328,37 @@ only until a reproducible 7.1.3 build includes it. Both halves are upstream
 candidates. The userspace side is `rootfs/usr/local/bin/sp11-flex-pair`; see
 `docs/BLUETOOTH.md`.
 
-## Linux 7.3 forward port
+## Front camera exposure (IMX681)
+
+`sp11-imx681-exposure.patch` is Leon Silcott's one-line correction from
+`ooaklee/linux_ms_dev_kit-sp11` (commit `b1754869f458`): the driver's
+`V4L2_CID_EXPOSURE` wrote the 16-bit register at `0x0202`, which the sensor
+ignores, while the mode table initialises the 24-bit coarse-integration latch
+at `0x0229`. The control now writes that latch. Fixed-gain RAW measurements on
+the 7.3 port confirmed the old control was inert and the corrected one
+responds monotonically and returns to its starting level, including across a
+stream restart. It applies to both the review20 tip and the 7.3 port and is
+part of the 7.3 port branch.
+
+## Surface HID shutdown callback
+
+`sp11-surface-hid-shutdown.patch` gives `surface_hid` a `.shutdown` callback
+that runs `hid_driver_suspend(PMSG_SUSPEND)` before the Surface Aggregator
+goes down, so the attached Flex Keyboard touchpad receives at poweroff the
+same report-disable sequence it receives at suspend. It is symmetric with
+suspend and correct, but it is not a complete fix for the keyboard's haptics
+staying on after a battery-powered poweroff: EFI-side captures of one
+successful and one failed poweroff carried byte-identical successful wired
+commands, so the remaining difference is on the EC/pogo power hand-off side.
+Part of the 7.3 port branch; also applies to the review20 tip.
+
+## Linux 7.3 forward port (the beta kernel)
 
 `port-7.3/` carries the whole series forward onto the 7.3 merge window, with
-the commits upstream has since merged dropped and deep idle unrestricted. It is
-evaluation source with its own README; the reproducible build remains
-review20.
+the commits upstream has since merged dropped and deep idle unrestricted.
+Since the 2026-09-05 beta it is the kernel the ISO ships, built reproducibly
+as `7.2.0-sp11-73beta1` by `scripts/build-kernel.sh` (default profile) with
+its own `BUILDINFO`, `config` and `Module.symvers` in `port-7.3/`. The
+review20 kernel above remains available as the `review20` build profile and
+is the kernel of the 2026-08-28 beta. See `port-7.3/README.md`.
 

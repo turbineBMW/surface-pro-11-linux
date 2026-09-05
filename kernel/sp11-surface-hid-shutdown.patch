@@ -1,0 +1,54 @@
+Subject: [PATCH] HID: surface-hid: suspend HID clients before shutdown
+
+The Surface HID transport forwards system-sleep callbacks to its HID
+clients but lacks a shutdown callback. Invoke the existing HID suspend
+routine before the SAM controller shuts down so touchpad reporting is
+quiesced on poweroff too.
+
+On an attached Surface Pro Flex Keyboard, a bounded reporting-switch test
+stopped haptic clicking and restored it afterward. With this callback
+loaded on 7.2.0-sp11-73wip3, the maintainer reports clicking stopped on
+full shutdown and input returned on the subsequent boot. That boot used
+the original on-disk module. Subsequent reported cold-boot failures may
+have involved premature checks: a later captured shutdown confirmed
+successful disable commands before SAM shutdown, and the maintainer
+confirmed haptics were off after a 20-second settling window. This is not
+a measured delay; actual cutoff latency and repeated reliability remain
+unqualified. Battery savings and Bluetooth behavior are unmeasured.
+A subsequent uninstrumented shutdown again left haptics active, so this
+remains an unresolved/intermittent fix. The successful instrumented trace
+does not establish ordinary shutdown reliability.
+
+Normal operation and existing suspend/resume callbacks are unchanged.
+---
+diff --git a/drivers/hid/surface-hid/surface_hid.c b/drivers/hid/surface-hid/surface_hid.c
+index eae47e0d95ed..5a341b2aeb01 100644
+--- a/drivers/hid/surface-hid/surface_hid.c
++++ b/drivers/hid/surface-hid/surface_hid.c
+@@ -229,6 +229,18 @@ static void surface_hid_remove(struct ssam_device *sdev)
+ 	surface_hid_device_destroy(ssam_device_get_drvdata(sdev));
+ }
+ 
++static void surface_hid_shutdown(struct device *dev)
++{
++	struct surface_hid_device *shid = dev_get_drvdata(dev);
++	int status;
++
++	/* Put HID clients into their low-power mode before SAM shuts down. */
++	status = hid_driver_suspend(shid->hid, PMSG_SUSPEND);
++	if (status)
++		dev_warn(dev, "failed to suspend HID device for shutdown: %d\n",
++			 status);
++}
++
+ static const struct ssam_device_id surface_hid_match[] = {
+ 	{ SSAM_SDEV(HID, ANY, SSAM_SSH_IID_ANY, 0x00) },
+ 	{ },
+@@ -241,6 +253,7 @@ static struct ssam_device_driver surface_hid_driver = {
+ 	.match_table = surface_hid_match,
+ 	.driver = {
+ 		.name = "surface_hid",
++		.shutdown = surface_hid_shutdown,
+ 		.pm = &surface_hid_pm_ops,
+ 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
+ 	},

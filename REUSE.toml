@@ -4,6 +4,18 @@ SPDX-PackageSupplier = "turbinebmw <turbine.bmw@gmail.com>"
 SPDX-PackageDownloadLocation = "https://github.com/turbineBMW/surface-pro-11-linux"
 
 [[annotations]]
+path = "kernel/sp11-surface-hid-shutdown.patch"
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2019-2021 Blaž Hrastnik", "2019-2021 Maximilian Luz", "2026 turbinebmw"]
+SPDX-License-Identifier = "GPL-2.0-or-later"
+
+[[annotations]]
+path = "kernel/sp11-imx681-exposure.patch"
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2026 Leon Silcott", "2026 turbinebmw"]
+SPDX-License-Identifier = "GPL-2.0-only"
+
+[[annotations]]
 path = [
   ".gitattributes",
   ".gitignore",
@@ -32,7 +44,7 @@ SPDX-FileCopyrightText = "2026 turbinebmw"
 SPDX-License-Identifier = "MIT"
 
 [[annotations]]
-path = ["kernel/BUILDINFO", "kernel/config", "kernel/Module.symvers", "kernel/port-7.3/config"]
+path = ["kernel/BUILDINFO", "kernel/config", "kernel/Module.symvers", "kernel/port-7.3/config", "kernel/port-7.3/BUILDINFO", "kernel/port-7.3/Module.symvers"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 turbinebmw"
 SPDX-License-Identifier = "CC0-1.0"
