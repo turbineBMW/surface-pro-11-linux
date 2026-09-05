@@ -1,0 +1,25 @@
+[Unit]
+Description=Restore Flex Bluetooth at startup and quiesce attached keyboard at poweroff
+Requires=bluetooth.service
+After=bluetooth.service dbus.service
+PartOf=bluetooth.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/libexec/sp11-flex-shutdown restore
+ExecStop=/usr/local/libexec/sp11-flex-shutdown prepare
+TimeoutStartSec=35
+TimeoutStopSec=35
+StateDirectory=sp11-flex-shutdown
+StateDirectoryMode=0700
+UMask=0077
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+
+[Install]
+WantedBy=bluetooth.service

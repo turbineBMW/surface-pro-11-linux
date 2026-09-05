@@ -45,10 +45,10 @@ Pairing is repeatable and may be re-run at any time. That matters on a
 dual-boot machine: Windows re-pairs the keyboard on its own schedule, which
 invalidates the Linux bond, and the fix is simply to pair again.
 
-Note that the keyboard uses the wired link whenever it is attached, so it must
-be detached for the Bluetooth connection to come up. `bluetoothd` background
-auto-connect does not reliably pick it up; an explicit connect does, so a
-detach hook is the practical arrangement.
+The wired HID endpoints are present while the keyboard is attached, but a
+Bluetooth connection can also remain active or reconnect in that state.
+`bluetoothd` background auto-connect does not reliably pick it up when detached;
+an explicit connect does, so a detach hook is the practical arrangement.
 
 ### Pairing on Linux
 
@@ -75,6 +75,42 @@ when the wired `045E:0C8B` HID endpoint disappears it starts
 `sp11-flex-bt-connect.service`, which issues an explicit `bluetoothctl connect`
 to the recorded address with retries and logs under `journalctl -t flex-bt`.
 Nothing happens if the address file is absent.
+
+### Attached-keyboard poweroff guard (experimental, opt-in, inconclusive)
+
+The attached Flex Keyboard's haptic clicking can stay on after a
+battery-powered poweroff (AC poweroff and suspend always quiesce it). A day of
+instrumented shutdowns on 2026-09-05 established that the wired HID shutdown
+path is byte-identical between successful and failed poweroffs (the
+`sp11-surface-hid-shutdown.patch` kernel callback makes it identical to
+suspend), that the keyboard sleeps and then wakes on its own power when host
+power drops, and that the successful battery poweroffs coincided with the
+keyboard being disrupted at that moment (a reboot, or `bluetoothd` crashing
+mid-block), not with any particular Bluetooth state. Bluetooth is most likely
+a red herring; the remaining suspects live on the EC/pogo power hand-off side.
+
+`sp11-flex-shutdown.service` is the workaround that was built before that
+conclusion: during a systemd poweroff only, with both wired keyboard and
+touchpad interfaces present, it blocks the paired Flex Keyboard identified by
+`/etc/sp11/flex-keyboard-address` (saving a private restoration record under
+`/var/lib/sp11-flex-shutdown/`), verifies disconnection, and unblocks only a
+device it blocked itself at the next BlueZ startup. It never removes pairing
+or touches other devices. It helped in some battery poweroffs and not in
+others, so it ships as source and is **not** enabled by the installer or by
+`scripts/install.sh`. Two cautions before enabling it: `bluetoothd` 5.87
+segfaulted twice while the block was in flight (recovery at next boot
+worked), and a keyboard left blocked while attached reboots every ~12 s
+because the kernel keeps auto-connecting it (see `KNOWN-ISSUES.md`), so never
+leave a block in place manually.
+
+To try it, install `python-dbus` (Debian/Ubuntu: `python3-dbus`) along with
+the helper and unit from `rootfs/`, then enable `sp11-flex-shutdown.service`.
+Do not remove the helper while it has pending restoration state. To recover
+or uninstall, run its `restore` action as root before disabling the service.
+The `check` action reads readiness; `test` briefly blocks and automatically
+restores the attached keyboard without powering off.
+
+Tests: `python3 userspace/power/test_sp11_flex_shutdown.py`.
 
 If the keyboard has been re-paired by Windows since, the Linux bond is stale;
 `sp11-flex-pair --status` shows `HostPairingExists=0` and running the pairing

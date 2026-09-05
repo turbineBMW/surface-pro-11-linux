@@ -1,0 +1,263 @@
+#!/usr/bin/python3
+# SPDX-License-Identifier: MIT
+"""Block only the attached Flex Keyboard at poweroff; restore our block at boot.
+
+Requires python-dbus. Never edits BlueZ bond files, adapter state or firmware.
+"""
+import argparse
+import contextlib
+import fcntl
+import json
+import os
+from pathlib import Path
+import re
+import sys
+import tempfile
+import time
+
+DEVICE = "org.bluez.Device1"
+ADAPTER = "org.bluez.Adapter1"
+PROPERTIES = "org.freedesktop.DBus.Properties"
+MAC = re.compile(r"(?:[0-9A-F]{2}:){5}[0-9A-F]{2}\Z")
+
+
+def address(value):
+    value = str(value).strip().upper()
+    if not MAC.fullmatch(value):
+        raise ValueError("Invalid Bluetooth address")
+    return value
+
+
+def log(message):
+    print(f"sp11-flex-shutdown: {message}", flush=True)
+
+
+def attached(root=Path("/sys/bus/hid/devices")):
+    # Require BOTH wired interfaces and the expected Surface transport parent.
+    for product, driver in (("0C8B", "hid-generic"), ("0C8D", "hid-multitouch")):
+        matches = list(root.glob(f"0019:045E:{product}.*"))
+        if len(matches) != 1:
+            return False
+        dev = matches[0]
+        if (dev / "driver").resolve().name != driver:
+            return False
+        if (dev.resolve().parent / "driver").resolve().name != "surface_hid":
+            return False
+    return True
+
+
+class Bluez:
+    def __init__(self):
+        import dbus
+        self.dbus = dbus
+        self.bus = dbus.SystemBus()
+
+    def poweroff_pending(self):
+        obj = self.bus.get_object("org.freedesktop.systemd1", "/org/freedesktop/systemd1")
+        manager = self.dbus.Interface(obj, "org.freedesktop.systemd1.Manager")
+        return any(str(job[1]) in ("poweroff.target", "systemd-poweroff.service")
+                   and str(job[2]) == "start" for job in manager.ListJobs(timeout=3))
+
+    def find(self, device_address, adapter_address=None):
+        manager = self.dbus.Interface(self.bus.get_object("org.bluez", "/"),
+                                      "org.freedesktop.DBus.ObjectManager")
+        objects = manager.GetManagedObjects(timeout=3)
+        matches = []
+        for path, interfaces in objects.items():
+            props = interfaces.get(DEVICE, {})
+            if str(props.get("Address", "")).upper() != device_address:
+                continue
+            adapter = objects.get(props.get("Adapter"), {}).get(ADAPTER, {})
+            adapter_mac = address(adapter.get("Address", ""))
+            if adapter_address is not None and adapter_mac != adapter_address:
+                continue
+            if not re.fullmatch(r"(?:usb|bluetooth):v045Ep0C7Ad[0-9a-fA-F]{4}",
+                                str(props.get("Modalias", ""))):
+                raise ValueError("Configured device is not the expected Flex Keyboard")
+            if not props.get("Paired", False):
+                raise ValueError("Configured Flex Keyboard is not paired")
+            matches.append((str(path), adapter_mac))
+        if len(matches) != 1:
+            raise RuntimeError("Expected exactly one matching paired Flex Keyboard")
+        return matches[0]
+
+    def properties(self, path):
+        obj = self.bus.get_object("org.bluez", path)
+        return self.dbus.Interface(obj, PROPERTIES).GetAll(DEVICE, timeout=3)
+
+    def block(self, path, value):
+        obj = self.bus.get_object("org.bluez", path)
+        self.dbus.Interface(obj, PROPERTIES).Set(
+            DEVICE, "Blocked", self.dbus.Boolean(value), timeout=3)
+
+
+class State:
+    def __init__(self, directory):
+        self.directory = Path(directory)
+        self.path = self.directory / "restore.json"
+
+    def sync(self):
+        fd = os.open(self.directory, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+
+    def read(self):
+        if not self.path.exists():
+            return None
+        if self.path.is_symlink() or self.path.stat().st_size > 4096:
+            raise ValueError("Unsafe restoration state")
+        value = json.loads(self.path.read_text())
+        if (value.get("version") != 1 or value.get("original_blocked") is not False
+                or not isinstance(value.get("boot_id"), str)):
+            raise ValueError("Invalid restoration state; preserving it for recovery")
+        address(value["device"])
+        address(value["adapter"])
+        return value
+
+    def write(self, value):
+        if self.path.exists():
+            raise RuntimeError("Restoration state already exists; refusing overwrite")
+        fd, temporary = tempfile.mkstemp(prefix=".restore-", dir=self.directory)
+        try:
+            with os.fdopen(fd, "w") as stream:
+                json.dump(value, stream)
+                stream.write("\n")
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(temporary, self.path)
+            self.sync()
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
+
+    def clear(self):
+        self.path.unlink()
+        self.sync()
+
+
+class Guard:
+    def __init__(self, bluez, state, config=Path("/etc/sp11/flex-keyboard-address"),
+                 is_attached=attached, sleep=time.sleep):
+        self.bluez, self.state, self.config = bluez, state, Path(config)
+        self.is_attached, self.sleep = is_attached, sleep
+
+    def target(self):
+        if not self.config.exists() or not self.is_attached():
+            return None
+        device = address(self.config.read_text())
+        path, adapter = self.bluez.find(device)
+        return device, path, adapter
+
+    def check(self):
+        target = self.target()
+        if target is None:
+            log("no configured attached keyboard; shutdown action will be skipped")
+            return False
+        props = self.bluez.properties(target[1])
+        log(f"attached Flex Keyboard verified; blocked={bool(props['Blocked'])}; "
+            f"connected={bool(props['Connected'])}")
+        return True
+
+    def restore(self):
+        value = self.state.read()
+        if value is None:
+            log("no owned block to restore")
+            return
+        # BlueZ may not have populated its paired-device objects yet at boot.
+        for attempt in range(5):
+            try:
+                path, _ = self.bluez.find(address(value["device"]), address(value["adapter"]))
+                break
+            except Exception:
+                if attempt == 4:
+                    raise
+                self.sleep(1)
+        self.bluez.block(path, False)
+        if bool(self.bluez.properties(path)["Blocked"]):
+            raise RuntimeError("Unblock did not verify; recovery state retained")
+        self.state.clear()
+        log("restored our keyboard block to false; pairing preserved")
+
+    def prepare(self, test=False):
+        if not test and not self.bluez.poweroff_pending():
+            log("not a poweroff transaction; no Bluetooth change")
+            return False
+        if self.state.read() is not None:
+            raise RuntimeError("Pending restoration exists; refusing another block")
+        target = self.target()
+        if target is None:
+            log("no configured attached keyboard; no Bluetooth change")
+            return False
+        device, path, adapter = target
+        if bool(self.bluez.properties(path)["Blocked"]):
+            log("keyboard was already blocked; preserving user's setting")
+            return False
+        value = {"version": 1, "device": device, "adapter": adapter,
+                 "original_blocked": False,
+                 "boot_id": Path("/proc/sys/kernel/random/boot_id").read_text().strip()}
+        # Durable ownership record BEFORE the persistent BlueZ change.
+        self.state.write(value)
+        try:
+            self.bluez.block(path, True)
+            for _ in range(5):
+                props = self.bluez.properties(path)
+                if bool(props["Blocked"]) and not bool(props["Connected"]):
+                    log("attached keyboard Bluetooth blocked and disconnected for poweroff")
+                    return True
+                self.sleep(0.5)
+            raise RuntimeError("Block/disconnect did not verify")
+        except BaseException:
+            self.restore()
+            raise
+
+    def test(self):
+        if self.state.read() is not None:
+            raise RuntimeError("Pending restoration exists; test refused")
+        try:
+            if not self.prepare(test=True):
+                raise RuntimeError("Test requires an attached, initially unblocked keyboard")
+            self.sleep(2)
+            target = self.target()
+            if target is None:
+                raise RuntimeError("Attached interfaces disappeared during test")
+            props = self.bluez.properties(target[1])
+            if not bool(props["Blocked"]) or bool(props["Connected"]):
+                raise RuntimeError("Keyboard did not remain disconnected during test")
+        finally:
+            self.restore()
+
+
+@contextlib.contextmanager
+def locked_state(directory):
+    directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+    if directory.is_symlink() or directory.stat().st_uid != 0:
+        raise ValueError("State directory must be root-owned and not a symlink")
+    if directory.stat().st_mode & 0o077:
+        raise ValueError("State directory permissions must be 0700")
+    fd = os.open(directory / "lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        yield State(directory)
+    finally:
+        os.close(fd)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("action", choices=("check", "restore", "prepare", "test"))
+    args = parser.parse_args()
+    if os.geteuid() != 0:
+        parser.error("Run through Willshell authorization or the system service")
+    with locked_state(Path("/var/lib/sp11-flex-shutdown")) as state:
+        guard = Guard(Bluez(), state)
+        getattr(guard, args.action)()
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as error:
+        log(f"ERROR: {error}")
+        sys.exit(1)
