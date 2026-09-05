@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Maintainer helper: assemble the exact review20 AArch64 beta candidate payload
+# Maintainer helper: assemble the exact AArch64 beta payload (7.3 port kernel)
 # from audited kernel staging and qualified userspace binaries. This
 # intentionally excludes firmware and initramfs.
 
 set -euo pipefail
 
-release="7.1.3-sp11-suspend-review20"
+release="7.2.0-sp11-73beta1"
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 repo_root="$(cd -- "$script_dir/.." && pwd -P)"
 output_dir="$repo_root/work/payload"
@@ -64,14 +64,14 @@ if [[ -e "$repo_root/BINARY-RELEASE-HOLD.md" ]]; then
 	fi
 fi
 
-expected_image="918ed2560654355555535290fd0d9657e1afc7022b3e46cc8396155d3575f256"
-expected_dtb="5e9009f5bd96a760a33086d1a8842e3228e3d28c413f96d70aca4914f7e397ed"
+expected_image="a2118d41b4edb8f6b11c050d9ca2c6208e30da1472f4f198959f0f0b44fb8bde"
+expected_dtb="54a14d4f6841740e9a911affc58e2b17f097fb900d38472fd0386be311b6cead"
 expected_iptsd="45ce0fcabdda04a9fcf3ce30f7f0c64ba7098fd2351127ef0e54cf0ac0b3f083"
 expected_checker="54fcdaef90b0bd4239df670865cf8b258c3ae6e3988e42b0b9a3b58aaa4b08f5"
 expected_ppd="9e1d72935f2b916de1c44950e425948e60c7bdf83c69bede2a079e7a79a82252"
-expected_videocc="ca449eebd9520ff44473302755fe8760cc11341928db8be6dbf8b2cc5f5957e8"
-expected_module_count=3759
-source_date_epoch=1785076525
+expected_videocc="ae08b71931935955332d3f80e060edde37d1f8084b4011442394c60d3cd47b5b"
+expected_module_count=3767
+source_date_epoch=1788637836
 
 mkdir -p -- "$repo_root/work"
 output_dir="$(realpath -m -- "$output_dir")"
@@ -140,7 +140,7 @@ install -m0644 "$dtb" "$output_dir/x1e80100-microsoft-denali-oled.dtb"
 install -m0755 "$iptsd" "$output_dir/sp11-iptsd"
 install -m0755 "$checker" "$output_dir/sp11-iptsd-check-device"
 install -m0755 "$ppd" "$output_dir/power-profiles-daemon-sp11"
-install -m0644 "$repo_root/kernel/BUILDINFO" "$output_dir/BUILDINFO"
+install -m0644 "$repo_root/kernel/port-7.3/BUILDINFO" "$output_dir/BUILDINFO"
 
 {
 	printf 'path\tbytes\tsha256\n'

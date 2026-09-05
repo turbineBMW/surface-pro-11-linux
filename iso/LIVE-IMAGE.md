@@ -1,3 +1,10 @@
+> **2026-09-05:** the beta image now ships the Linux 7.3 port kernel
+> `7.2.0-sp11-73beta1` (`kernel/port-7.3/`), enables cpufreq boost instead of
+> the deep-idle block, and offers a `cpuidle.off=1` menu entry as the
+> conservative fallback. The build inputs and invocation are in
+> `docs/BUILD-ISO.md`. The sections below describe the review20 engineering
+> images and the 2026-08-28 beta and remain as history.
+
 # Corrected held ARM64 UEFI live image
 
 The first corrected non-installing GNOME engineering image was assembled and

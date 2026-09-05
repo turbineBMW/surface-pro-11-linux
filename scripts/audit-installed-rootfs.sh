@@ -5,8 +5,8 @@
 
 set -euo pipefail
 
-release="7.1.3-sp11-suspend-review20"
-source_date_epoch=1785076525
+release="7.2.0-sp11-73beta1"
+source_date_epoch=1788637836
 expected_wallpaper="1fdc98d786badbf332460460da51496c3674cbead0d501f0e98708c4bb0bb5ac"
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 repo_root="$(cd -- "$script_dir/.." && pwd -P)"
@@ -269,7 +269,7 @@ for enabled_unit in \
 	systemd-resolved.service \
 	power-profiles-daemon.service \
 	sp11-bluetooth-address.service \
-	sp11-noidle.service \
+	sp11-cpufreq-boost.service \
 	sp11-power-profile-cpufreq.service \
 	sp11-charge-limit.service; do
 	[[ "$(systemctl --root="$rootfs" is-enabled "$enabled_unit")" == \
@@ -302,7 +302,7 @@ module_count="$(
 	find "$rootfs/usr/lib/modules/$release" -type f -name '*.ko' -printf . |
 		wc -c
 )"
-[[ "$module_count" -eq 3759 ]] || {
+[[ "$module_count" -eq 3767 ]] || {
 	printf 'Unexpected installed-root module count: %s\n' "$module_count" >&2
 	exit 1
 }

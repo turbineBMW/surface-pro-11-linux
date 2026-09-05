@@ -23,7 +23,7 @@ usage() {
 	exit 2
 }
 build_dir="$(realpath -e -- "$build_dir")"
-iso_source="$build_dir/sp11-beta-review20-aarch64-HELD-local.iso"
+iso_source="$build_dir/sp11-beta-port73-aarch64-HELD-local.iso"
 [[ -f "$iso_source" && -f "$build_dir/ARTIFACTS.tsv" ]] || {
 	printf 'Not an audited build directory: %s\n' "$build_dir" >&2
 	exit 1

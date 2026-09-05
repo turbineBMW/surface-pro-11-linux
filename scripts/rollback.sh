@@ -31,10 +31,10 @@ done
 
 [[ $EUID -eq 0 ]] || { printf 'Run with sudo/root.\n' >&2; exit 1; }
 if [[ $offline_target -eq 1 ]]; then
-	[[ "${SP11_LIVE_OFFLINE_ROLLBACK:-}" == "sp11-beta-review20" &&
+	[[ ( "${SP11_LIVE_OFFLINE_ROLLBACK:-}" == "sp11-beta-review20" || "${SP11_LIVE_OFFLINE_ROLLBACK:-}" == "sp11-beta-port73" ) &&
 		-f /run/sp11-live-offline-rollback-authorized &&
-		"$(cat /run/sp11-live-offline-rollback-authorized)" == \
-		"sp11-beta-review20" ]] || {
+		( "$(cat /run/sp11-live-offline-rollback-authorized)" == "sp11-beta-review20" ||
+		"$(cat /run/sp11-live-offline-rollback-authorized)" == "sp11-beta-port73" ) ]] || {
 		printf 'Offline rollback is restricted to the gated live wrapper.\n' >&2
 		exit 1
 	}
@@ -136,7 +136,7 @@ while IFS= read -r created_file; do
 done <"$state_path/created-files.list"
 while IFS= read -r created_tree; do
 	case "$created_tree" in
-	/boot/sp11-beta|/usr/lib/modules/7.1.3-sp11-suspend-review20) ;;
+	/boot/sp11-beta|/usr/lib/modules/7.1.3-sp11-suspend-review20|/usr/lib/modules/7.2.0-sp11-73beta1) ;;
 	"") ;;
 	*)
 		printf 'Unsafe recorded tree: %s\n' "$created_tree" >&2
@@ -148,7 +148,7 @@ done <"$state_path/created-trees.list"
 running_integration=0
 case "$(uname -r)" in
 7.1.3-sp11-touch-practical8|7.1.3-sp11-sanitized1|7.1.3-sp11-sanitized2|\
-7.1.3-sp11-suspend-review20)
+7.1.3-sp11-suspend-review20|7.2.0-sp11-73beta1)
 	running_integration=1
 	;;
 esac
@@ -200,7 +200,8 @@ if [[ -f "$state_path/created-trees.list" ]]; then
 	tac "$state_path/created-trees.list" | while IFS= read -r created_tree; do
 		case "$created_tree" in
 			/boot/sp11-beta|\
-			/usr/lib/modules/7.1.3-sp11-suspend-review20)
+			/usr/lib/modules/7.1.3-sp11-suspend-review20|\
+			/usr/lib/modules/7.2.0-sp11-73beta1)
 				rm -rf -- "$created_tree"
 				;;
 			"") ;;
@@ -267,7 +268,7 @@ if [[ -f /boot/grub/grubenv ]]; then
 			sed -n 's/^next_entry=//p' |
 			head -n1
 	)"
-	if [[ "$next_entry" == "sp11-beta-review20" ]]; then
+	if [[ "$next_entry" == "sp11-beta-review20" || "$next_entry" == "sp11-beta-port73" ]]; then
 		grub-editenv /boot/grub/grubenv unset next_entry
 	fi
 fi

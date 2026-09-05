@@ -48,10 +48,10 @@ never changes the persistent GRUB default:
 #  /opt/sp11-beta-installer/payload)
 sudo scripts/install.sh --payload /path/to/payload            # read-only preflight
 sudo scripts/install.sh --payload /path/to/payload --apply    # install
-sudo grub-reboot sp11-beta-review20 && sudo reboot            # one-shot test boot
+sudo grub-reboot sp11-beta-port73 && sudo reboot              # one-shot test boot
 ```
 
-Preflight checks the exact hardware, payload hashes, all 3,759 modules,
+Preflight checks the exact hardware, payload hashes, all 3,767 modules,
 root/boot layout, free space, the Windows loader and EFI entry, and that at
 least two GRUB entries remain. `--apply` records an integrity-protected
 transaction under `/var/lib/sp11-beta/` first; `scripts/rollback.sh` (or

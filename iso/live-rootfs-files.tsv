@@ -4,6 +4,7 @@ rootfs/etc/systemd/logind.conf.d/10-sp11-power-key.conf	/etc/systemd/logind.conf
 rootfs/etc/systemd/system/power-profiles-daemon.service.d/10-sp11-platform-profile.conf	/etc/systemd/system/power-profiles-daemon.service.d/10-sp11-platform-profile.conf
 rootfs/etc/systemd/system/sp11-bluetooth-address.service	/etc/systemd/system/sp11-bluetooth-address.service
 rootfs/etc/systemd/system/sp11-iptsd@.service	/etc/systemd/system/sp11-iptsd@.service
+rootfs/etc/systemd/system/sp11-cpufreq-boost.service	/etc/systemd/system/sp11-cpufreq-boost.service
 rootfs/etc/systemd/system/sp11-noidle.service	/etc/systemd/system/sp11-noidle.service
 rootfs/etc/systemd/system/sp11-power-profile-cpufreq.service	/etc/systemd/system/sp11-power-profile-cpufreq.service
 rootfs/etc/systemd/system/systemd-logind.service.d/10-sp11-suspend-watchdog.conf	/etc/systemd/system/systemd-logind.service.d/10-sp11-suspend-watchdog.conf

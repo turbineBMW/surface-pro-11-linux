@@ -6,12 +6,12 @@
 
 set -euo pipefail
 
-release="7.1.3-sp11-suspend-review20"
+release="7.2.0-sp11-73beta1"
 volume_id="SP11BETA"
-source_date_epoch=1785076525
+source_date_epoch=1788637836
 expected_snapshot_manifest="60a1d33fd546985a9a73ce286fb34b1cbd9fb153436f6639a12fa55901e3cf14"
-expected_image="918ed2560654355555535290fd0d9657e1afc7022b3e46cc8396155d3575f256"
-expected_dtb="5e9009f5bd96a760a33086d1a8842e3228e3d28c413f96d70aca4914f7e397ed"
+expected_image="a2118d41b4edb8f6b11c050d9ca2c6208e30da1472f4f198959f0f0b44fb8bde"
+expected_dtb="54a14d4f6841740e9a911affc58e2b17f097fb900d38472fd0386be311b6cead"
 expected_iptsd="45ce0fcabdda04a9fcf3ce30f7f0c64ba7098fd2351127ef0e54cf0ac0b3f083"
 expected_checker="54fcdaef90b0bd4239df670865cf8b258c3ae6e3988e42b0b9a3b58aaa4b08f5"
 expected_ppd="9e1d72935f2b916de1c44950e425948e60c7bdf83c69bede2a079e7a79a82252"
@@ -21,8 +21,8 @@ script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 repo_root="$(cd -- "$script_dir/.." && pwd -P)"
 package_snapshot="$repo_root/work/package-snapshot-rnote-20260729"
 firmware_cache="$repo_root/work/firmware-package-cache-20260622"
-payload="$repo_root/work/payload-review20-installer-qualified-20260729"
-output_dir="$repo_root/work/live-image-review20-held-20260728"
+payload="$repo_root/work/payload-port73-20260905"
+output_dir="$repo_root/work/live-image-port73-20260905"
 local_staging=0
 local_proprietary_firmware_root=""
 audio_topology=""
@@ -547,7 +547,7 @@ for unit in \
 	sp11-boot-trace.service \
 	sp11-firmware-import.service \
 	sp11-live-session.service \
-	sp11-noidle.service \
+	sp11-cpufreq-boost.service \
 	sp11-power-profile-cpufreq.service; do
 	systemctl --root="$rootfs" enable "$unit"
 done
@@ -827,7 +827,7 @@ MTOOLS_SKIP_CHECK=1 "$mcopy" -i "$firmware_image" \
 	::/
 
 printf 'Creating the held hybrid ISO ...\n'
-iso_output="$output_dir/sp11-beta-review20-aarch64-HELD-local.iso"
+iso_output="$output_dir/sp11-beta-port73-aarch64-HELD-local.iso"
 LD_LIBRARY_PATH="$tool_root/usr/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
 	"$xorriso" -as mkisofs \
 	-iso-level 3 \

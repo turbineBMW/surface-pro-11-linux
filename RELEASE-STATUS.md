@@ -9,7 +9,9 @@ honestly instead of blocking the release.
 ## What the beta is
 
 - A live GNOME environment that boots from USB with the project's
-  `7.1.3-sp11-suspend-review20` kernel, copied to RAM.
+  `7.2.0-sp11-73beta1` kernel (the Linux 7.3 forward port, see
+  `kernel/port-7.3/`), copied to RAM. The 2026-08-28 beta shipped the
+  `7.1.3-sp11-suspend-review20` kernel, which stays published as source.
 - A dual-boot / wipe installer ("Install SP11 Linux" in the app grid) that
   was qualified on the maintainer's own tablet, which has run the result as
   its daily system since 2026-08-01.

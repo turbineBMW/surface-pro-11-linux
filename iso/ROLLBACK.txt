@@ -33,7 +33,7 @@ report filename:
       --root-device /dev/nvme0n1p5 \
       --efi-device /dev/nvme0n1p1 \
       --apply \
-      --confirm-held-local-rollback sp11-beta-review20 \
+      --confirm-held-local-rollback sp11-beta-port73 \
       --report /run/media/live/SP11FW/rollback-apply.txt
 
 Apply removes only transaction-recorded new files and trees, restores saved

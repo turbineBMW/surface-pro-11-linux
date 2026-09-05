@@ -1,6 +1,6 @@
 # Known issues and sharp edges
 
-## Beta ISO and installer (2026-08-28)
+## Beta ISO and installer (2026-09-05)
 
 - **Secure Boot must be off.** The live image and the installed GRUB are not
   signed. The installer does not touch Microsoft's keys.
@@ -17,7 +17,10 @@
   2026-08-28 beta was cold-booted on it from a USB 2.0 stick: GRUB firmware
   injection, validation, RAM copy, GNOME, Wi-Fi, Bluetooth, touch, pen,
   cameras, microphones, speakers, and GPU acceleration all worked with
-  zero failed units.
+  zero failed units. The 2026-09-05 image swaps the kernel for the Linux 7.3
+  port that the same unit has run as its installed daily system since
+  2026-08-28; the live image itself was rebuilt with the same package
+  snapshot and has not been re-qualified from USB separately.
 - **The screen goes black for one to two minutes** after the first boot
   messages while the live root is copied into RAM (107 s on a USB 2.0
   stick; faster on USB 3). That is normal; wait for GNOME.
@@ -36,6 +39,12 @@ The reviewed camera branch captured changing frames from the front IMX681,
 rear OV13858, and IR VD55G0 sequentially on one OLED/X Elite unit. Concurrent
 camera use, repeated switching, camera suspend/resume, color processing, and
 normal desktop application integration are not qualified.
+
+The front camera's manual exposure control was inert until 2026-09-05 (the
+driver wrote a register the IMX681 ignores); the shipped kernel writes the
+right one (`kernel/sp11-imx681-exposure.patch`, Leon Silcott's correction), so
+exposure now actually changes brightness. Automatic exposure tuning in
+libcamera is separate and still rough.
 
 Rapid camera switching previously locked the camera path, and review10 corrects
 it. The rear OV13858's first SCCB transaction after power-up intermittently
@@ -82,8 +91,8 @@ directly does work.
 
 ## Half-screen colour tint after resume or screen off/on
 
-Fixed in source and running on the maintainer's 7.3 port kernel
-(`kernel/port-7.3/`), not yet in a published review20 build. With a gamma LUT
+Fixed in the shipped 7.3 port kernel since the 2026-09-05 beta (it was
+"source only" in the 2026-08-28 beta's review20 kernel). With a gamma LUT
 applied by the compositor (night-light tools such as wlsunset), every suspend/resume or DPMS
 off/on left one half of the panel with a random colour tint and artifacts.
 Root cause is in the upstream DPU driver: the gamma LUT SRAM is written during
@@ -122,21 +131,23 @@ GPU observation during its one-shot hardware qualification.
 
 ## Suspend and idle power
 
-The review20 release candidate uses PSCI `SYSTEM_SUSPEND` and enables runtime
-PSCI state1 on all 12 CPUs. Runtime state1 reduced a matched detached
-screen-on measurement by 1.47 W. An unguarded configuration later wedged while
-entering suspend, so unguarded runtime state1 is rejected.
+The shipped kernel (`7.2.0-sp11-73beta1`, the Linux 7.3 port) runs deep CPU
+idle unrestricted: upstream 7.3 merged the PDC and idle-state work the review20
+series carried, the review20 guards were dropped, idle draw fell by about
+3.7 W, deep suspend measured 0.535 W over a 7 h overnight cycle (roughly 90 h
+of standby instead of one day), and the maintainer's unit has run it daily
+with dozens of suspend/resume cycles since 2026-08-28. If you suspect idle
+states, the live menu's "CPU idle states off" entry (`cpuidle.off=1`) is the
+conservative fallback. One hard freeze with automatic reboot happened on
+2026-09-01 during a package upgrade and left no trace; this build therefore
+loads `efi-pstore` as a module (the built-in backend never registered on this
+firmware) and panics on hard lockups so the next one is captured.
 
-The qualified configuration installs a fail-closed suspend guard. It disables
-state1 on all CPUs, forces outstanding residency to exit, and refuses suspend
-unless the aggregate usage count remains flat for two seconds. It restores
-state1 only after resume. This configuration passed repeated short cycles,
-7- and 15-minute endurance cycles, and a 7 h 48 m overnight lid cycle. The
-overnight cycle resumed from the lid with touchscreen, keyboard, touchpad,
-audio, and both cameras working.
-
-Do not enable `sp11_deep_idle=1` without the guard. A boot without that opt-in
-retains the conservative `sp11-noidle.service` state1 block.
+The 2026-08-28 beta's review20 kernel used PSCI `SYSTEM_SUSPEND` with runtime
+PSCI state1 behind a fail-closed suspend guard (`sp11_deep_idle=1`) and a
+`sp11-noidle.service` block by default, because an unguarded configuration
+had wedged while entering suspend. Those units remain in `rootfs/` for that
+kernel; see `docs/SUSPEND.md`.
 
 Ambient light sensor stream (fixed 2026-08-30): with the sensor stack installed,
 a light claim (any `monitor-sensor --light` or desktop auto-brightness client)
@@ -147,21 +158,10 @@ iio-sensor-proxy across sleep. Diagnose future cases with `sp11-suspend-report`
 (a short `slept_s` with IRQ 16 `smp2p-adsp` ticking is this signature). See
 docs/SENSORS.md.
 
-The picture is different on the Linux 7.3 forward port published in
-`kernel/port-7.3/`. Upstream 7.3 merged the PDC and idle-state work the
-review20 series carried, the guards were dropped, and deep idle runs
-unrestricted: idle draw fell by about 3.7 W, deep suspend measured 0.535 W
-over a 7 h overnight cycle (roughly 90 h of standby instead of one day), and a
-full working day with dozens of suspend/resume cycles was clean. That kernel
-is an evaluation build, not the reproducible beta kernel; see its README for
-the remaining open items before relying on it.
-
-Suspend power remains poor. During the overnight cycle APSS was suspended for
-99.986% of the wall interval, but AOSS, CXSD, and DDR-collapse counters stayed
-at zero. Battery capacity fell from 80% to 51%, approximately 3.7 percentage
-points per hour or 1.70--1.81 W. The same hardware-collapse failure is visible
-under Windows. Expect roughly one day of standby, not multi-day standby, until
-platform firmware permits the final collapse state.
+On the review20 kernel suspend power was poor: during its overnight cycle
+APSS was suspended for 99.986% of the wall interval, but AOSS, CXSD, and
+DDR-collapse counters stayed at zero and the battery drained 1.70--1.81 W
+(roughly one day of standby). The 7.3 port kernel reaches 0.535 W.
 
 On the tested systemd 261 host, a lid-triggered suspend longer than three
 minutes can make logind's service watchdog terminate it during resume. The
@@ -278,6 +278,17 @@ mode pairs natively on Linux over the wired connector, with no Windows keys
 LE legacy out-of-band pairing support), which are part of the 7.3 port. A
 udev-triggered service reconnects the keyboard on every detach. No
 machine-specific address or Bluetooth key is distributed here.
+
+**Haptics after poweroff.** With the keyboard attached, its touchpad can keep
+clicking after a *battery-powered* poweroff; AC poweroff and suspend always
+quiesce it. The kernel now issues the suspend report-disable sequence at
+shutdown too (`kernel/sp11-surface-hid-shutdown.patch`), and captures show
+the commands succeed in failing runs as well, so the cause is on the EC/pogo
+power hand-off side and is still open. Detach the keyboard, or use suspend,
+if it bothers you. An opt-in Bluetooth-blocking guard exists but was not
+shown to help reliably; see `docs/BLUETOOTH.md`. Do not leave the keyboard
+`Blocked` in BlueZ while attached: the kernel keeps auto-connecting it and the
+keyboard reboots every ~12 s.
 
 Two caveats. The Bluetooth adapter identity is *not* the
 `MacAddressEmulationAddress` EFI value -- that is the Wi-Fi MAC, and on the

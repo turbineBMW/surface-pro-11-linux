@@ -4,10 +4,10 @@
 
 set -euo pipefail
 
-release="7.1.3-sp11-suspend-review20"
-entry_id="sp11-beta-review20"
-expected_image="918ed2560654355555535290fd0d9657e1afc7022b3e46cc8396155d3575f256"
-expected_dtb="5e9009f5bd96a760a33086d1a8842e3228e3d28c413f96d70aca4914f7e397ed"
+release="7.2.0-sp11-73beta1"
+entry_id="sp11-beta-port73"
+expected_image="a2118d41b4edb8f6b11c050d9ca2c6208e30da1472f4f198959f0f0b44fb8bde"
+expected_dtb="54a14d4f6841740e9a911affc58e2b17f097fb900d38472fd0386be311b6cead"
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 repo_root="$(cd -- "$script_dir/.." && pwd -P)"
@@ -94,7 +94,7 @@ if [[ -f "$state_path/systemd-enable-state-before.tsv" ]] &&
 				exit 1
 			next
 		}
-		$1 !~ /^(power-profiles-daemon|sp11-bluetooth-address|sp11-noidle|sp11-power-profile-cpufreq|sp11-charge-limit)\.service$/ ||
+		$1 !~ /^(power-profiles-daemon|sp11-bluetooth-address|sp11-cpufreq-boost|sp11-power-profile-cpufreq|sp11-charge-limit)\.service$/ ||
 		$2 !~ /^(enabled|enabled-runtime|disabled|static|indirect|masked|masked-runtime|linked|linked-runtime|alias|generated|transient|not-found)$/ ||
 		seen[$1]++ {
 			exit 1
@@ -148,11 +148,11 @@ if [[ -f "$manifest" ]]; then
 			((module_failures += 1))
 		fi
 	done <"$manifest"
-	if [[ "$module_count" -eq 3759 && "$module_failures" -eq 0 ]]; then
+	if [[ "$module_count" -eq 3767 && "$module_failures" -eq 0 ]]; then
 		if [[ "$relocated_modules" -eq 1 ]]; then
-			pass "all 3,759 installed module identities (exact VideoCC promotion relocation accepted)"
+			pass "all 3,767 installed module identities (exact VideoCC promotion relocation accepted)"
 		else
-			pass "all 3,759 installed module identities"
+			pass "all 3,767 installed module identities"
 		fi
 	else
 		fail "installed modules: count=$module_count failures=$module_failures"
@@ -173,10 +173,10 @@ fi
 grub_fragment="/etc/grub.d/09_sp11_beta"
 if [[ -f "$grub_fragment" ]] &&
 	grep -Fq -- "--id '$entry_id'" "$grub_fragment" &&
-	grep -Fq "sp11_deep_idle=1" "$grub_fragment"; then
-	pass "isolated guarded beta GRUB fragment"
+	grep -Fq "cpufreq.default_governor=schedutil" "$grub_fragment"; then
+	pass "isolated beta GRUB fragment"
 else
-	fail "isolated guarded beta GRUB fragment"
+	fail "isolated beta GRUB fragment"
 fi
 if grep -Fq "chainloader /EFI/Microsoft/Boot/bootmgfw.efi" \
 	/boot/grub/grub.cfg; then

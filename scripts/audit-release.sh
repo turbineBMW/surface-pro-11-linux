@@ -161,16 +161,16 @@ for identity_script in scripts/install.sh scripts/assemble-payload.sh scripts/ve
 done
 
 for identity_script in scripts/install.sh scripts/assemble-payload.sh scripts/verify.sh; do
-	rg -qF '918ed2560654355555535290fd0d9657e1afc7022b3e46cc8396155d3575f256' \
+	rg -qF 'a2118d41b4edb8f6b11c050d9ca2c6208e30da1472f4f198959f0f0b44fb8bde' \
 		"$repo_root/$identity_script"
-	rg -qF '5e9009f5bd96a760a33086d1a8842e3228e3d28c413f96d70aca4914f7e397ed' \
+	rg -qF '54a14d4f6841740e9a911affc58e2b17f097fb900d38472fd0386be311b6cead' \
 		"$repo_root/$identity_script"
 done
 
 rg -qF 'SP11_KERNEL_STAGE' "$repo_root/scripts/assemble-payload.sh"
 rg -qF 'LOCAL-STAGING-NOT-FOR-RELEASE' \
 	"$repo_root/scripts/assemble-payload.sh"
-rg -qF 'expected_module_count=3759' \
+rg -qF 'expected_module_count=3767' \
 	"$repo_root/scripts/assemble-payload.sh"
 if rg -q 'SP11_QUALIFIED_BOOT_DIR|-C /usr/lib/modules' \
 	"$repo_root/scripts/assemble-payload.sh"; then

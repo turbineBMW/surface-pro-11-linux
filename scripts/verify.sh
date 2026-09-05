@@ -2,10 +2,10 @@
 
 set -euo pipefail
 
-release="7.1.3-sp11-suspend-review20"
+release="7.2.0-sp11-73beta1"
 boot_dir="${SP11_BOOT_DIR:-/boot/sp11-beta}"
-expected_image="918ed2560654355555535290fd0d9657e1afc7022b3e46cc8396155d3575f256"
-expected_dtb="5e9009f5bd96a760a33086d1a8842e3228e3d28c413f96d70aca4914f7e397ed"
+expected_image="a2118d41b4edb8f6b11c050d9ca2c6208e30da1472f4f198959f0f0b44fb8bde"
+expected_dtb="54a14d4f6841740e9a911affc58e2b17f097fb900d38472fd0386be311b6cead"
 failures=0
 
 pass() { printf 'PASS  %s\n' "$*"; }

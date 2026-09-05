@@ -1,12 +1,56 @@
-# Unreleased source (2026-08-29)
+# Public beta 2 (2026-09-05)
 
-Source-only changes since the beta ISO; no new image has been built.
+Second beta ISO. The big change is the kernel: the image and the installer
+now ship the Linux 7.3 forward port, `7.2.0-sp11-73beta1`, which the
+maintainer's tablet has run as its daily system since 2026-08-28, built
+reproducibly with `scripts/build-kernel.sh --profile port-7.3`
+(`kernel/port-7.3/BUILDINFO`). The 2026-08-28 beta's `7.1.3-sp11-suspend-review20`
+kernel stays published and buildable as the `review20` profile. Everything
+below except the first three items was already on `main` as source; this is
+the first image that contains it.
+
+Image: `sp11-linux-beta-20260905-aarch64.iso`, SHA-256
+`59663df3ef612987556fb4d64c9f1796381722c2081b1ecb15dd8e2b37bbedfd`
+(2,146,113,536 bytes, a single file below GitHub's 2 GiB asset limit).
+Build inputs and the per-stage identities are in `docs/BUILD-ISO.md`,
+`kernel/port-7.3/BUILDINFO` and the release's `BUILD-ARTIFACTS.tsv`.
+
+- **Front-camera exposure works** (`kernel/sp11-imx681-exposure.patch`, Leon
+  Silcott's correction): the IMX681 driver wrote a 16-bit exposure register
+  the sensor ignores; it now writes the 24-bit latch the mode table
+  initialises. Fixed-gain RAW measurements confirmed the old control was inert
+  and the new one responds monotonically; photos, video, lighting changes,
+  reopening and suspend/resume were exercised. Automatic exposure tuning is
+  still separate work.
+- **Attached Flex Keyboard at poweroff:** the kernel now issues the same
+  touchpad report-disable sequence at shutdown as at suspend
+  (`kernel/sp11-surface-hid-shutdown.patch`). That is correct but not
+  sufficient: on battery the keyboard's haptics can still stay on after
+  poweroff, and captures show identical successful commands in failing runs,
+  so the cause sits on the EC/pogo power hand-off side and remains open (see
+  `KNOWN-ISSUES.md`). An experimental Bluetooth-blocking guard
+  (`sp11-flex-shutdown.service`) is included as opt-in source only; it was not
+  shown to help reliably and is not enabled by the installer.
+- **Power-profile helper hardened:** a legitimately lower effective kernel
+  limit (thermal or boost QoS) no longer fails verification; a write failure
+  rolls back every attempted policy; a failed service start keeps those
+  rollback limits while an intentional stop restores the full range. The
+  three profile targets are unchanged. 18 tests. Update the helper and its
+  unit together.
+- **Kernel build and image pipeline** follow the kernel: `sp11-cpufreq-boost`
+  is enabled instead of the review20 `sp11-noidle` block, the live menu
+  offers a `cpuidle.off=1` entry as the conservative fallback, `sp11_deep_idle`
+  and the ipcc diagnostic switch are gone from every command line (they do not
+  exist on 7.3), `efi-pstore` is a module so panics are actually captured on
+  this firmware, and hard lockups panic instead of freezing silently. The
+  rollback tools accept installs of either beta.
+
+Carried over from the source-only changes published between the betas:
 
 - **Linux 7.3 forward port** (`kernel/port-7.3/`): the review20 series on
   mainline 7.3 with the upstreamed PDC/idle commits dropped and deep idle
   unrestricted. About 3.7 W less at idle, 0.535 W in deep suspend, a clean
-  overnight cycle and a full day of suspend/resume. Evaluation source; the
-  reproducible beta kernel is unchanged.
+  overnight cycle and a full day of suspend/resume. Now the shipped kernel.
 - **Flex Keyboard pairs natively over Bluetooth** with no Windows keys:
   `kernel/sp11-flex-bt-oob-pairing.patch` (KIP OOB HID node + LE legacy OOB
   pairing in SMP) and `sp11-flex-pair`, plus a udev hook that reconnects the

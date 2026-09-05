@@ -8,13 +8,22 @@ build. Inputs:
 | --- | --- |
 | Package snapshot (663 signed packages, `PACKAGE-SNAPSHOT.tsv`) | `scripts/cache-locked-packages.sh --local-staging --output work/package-snapshot-…` against `iso/packages.lock.tsv` |
 | Firmware package cache (linux-firmware-atheros/qcom/whence, wireless-regdb 20260622) | `scripts/cache-firmware-packages.sh --local-staging` |
-| Kernel payload (`Image`, DTB, `modules-*.tar.zst`, `MODULES.tsv`, iptsd + PPD binaries, `SHA256SUMS`) | `scripts/build-kernel.sh` + `scripts/assemble-payload.sh --local-staging` |
+| Kernel payload (`Image`, DTB, `modules-*.tar.zst`, `MODULES.tsv`, iptsd + PPD binaries, `SHA256SUMS`) | `scripts/build-kernel.sh --profile port-7.3`, `modules_install` into a staging root (see `docs/BUILD.md`), then `SP11_KERNEL_STAGE=… scripts/assemble-payload.sh --local-staging` |
 | Audio topology `X1E80100-Microsoft-Surface-Pro-11-tplg.bin` (11,320 bytes) | `scripts/build-audio-topology.sh` from the BSD-3 audioreach topology source |
 | Wallpaper `Tux Surface.png` (hash-pinned, not in git) | maintainer-local |
 | Installed-root artifact (`sp11-installed-rootfs.tar.zst` + manifests) | `scripts/build-installed-rootfs.sh --local-staging …` (hash pinned in `sp11-install-executor.py`) |
 
-On the maintainer's machine the current inputs are under
-`work/firmware-v2-rebuild-inputs/` and `work/installed-rootfs-firmware-v2-input-20260813/`.
+On the maintainer's machine the package snapshot, firmware cache, topology
+and wallpaper are under `work/firmware-v2-rebuild-inputs/` (unchanged since
+the 2026-08-28 beta); the 7.3 kernel payload is
+`work/payload-port73-20260905` and the installed-root artifact
+`work/installed-rootfs-port73-20260905`. Every builder and audit script pins
+the kernel release name and the Image/DTB hashes, and
+`scripts/sp11-install-executor.py` pins the installed-root archive and
+manifest hashes, so a new kernel means: build the kernel, update
+`assemble-payload.sh`, build the payload, update the Image/DTB pins in the
+builders/audits/installer, build the installed root, update the executor's
+archive/manifest pins, then build the live image.
 
 Build and audit:
 
@@ -23,10 +32,10 @@ cd public
 sudo scripts/build-held-live-image.sh --local-staging \
   --package-snapshot work/firmware-v2-rebuild-inputs/package-snapshot-rnote-20260729 \
   --firmware-cache   work/firmware-v2-rebuild-inputs/firmware-package-cache-20260622 \
-  --payload          work/firmware-v2-rebuild-inputs/payload-review20-installer-qualified-20260729 \
+  --payload          work/payload-port73-20260905 \
   --audio-topology   work/firmware-v2-rebuild-inputs/X1E80100-Microsoft-Surface-Pro-11-tplg.bin \
   --wallpaper        "work/firmware-v2-rebuild-inputs/Tux Surface.png" \
-  --installed-rootfs-artifact work/installed-rootfs-firmware-v2-input-20260813 \
+  --installed-rootfs-artifact work/installed-rootfs-port73-20260905 \
   --output work/live-image-beta-$(date -u +%Y%m%d)
 # the builder ends by running scripts/audit-held-live-image.sh on the output
 scripts/package-release.sh work/live-image-beta-$(date -u +%Y%m%d)
@@ -64,7 +73,7 @@ markers used by the audit scripts; the public artefact names come from
 
 - `grub-script-check iso/grub.cfg`
 - `/usr/lib/initcpio/busybox ash -n iso/mkinitcpio/hooks/sp11live`
-- `sudo losetup -Pf --show work/…/sp11-beta-review20-aarch64-HELD-local.iso`
+- `sudo losetup -Pf --show work/…/sp11-beta-port73-aarch64-HELD-local.iso`
   exposes the three partitions; mount `p3` to inspect SP11FW, `p1` for the
   ISO tree.
 - `pwsh -File scripts/sp11-collect-firmware.ps1 -WindowsDirectory /mnt/win/Windows -OutputDirectory /tmp/pack`

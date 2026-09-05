@@ -2,12 +2,12 @@
 
 set -euo pipefail
 
-release="7.1.3-sp11-suspend-review20"
-entry_id="sp11-beta-review20"
+release="7.2.0-sp11-73beta1"
+entry_id="sp11-beta-port73"
 expected_dmi="Microsoft Surface Pro, 11th Edition"
 expected_compatible="microsoft,denali"
-expected_image="918ed2560654355555535290fd0d9657e1afc7022b3e46cc8396155d3575f256"
-expected_dtb="5e9009f5bd96a760a33086d1a8842e3228e3d28c413f96d70aca4914f7e397ed"
+expected_image="a2118d41b4edb8f6b11c050d9ca2c6208e30da1472f4f198959f0f0b44fb8bde"
+expected_dtb="54a14d4f6841740e9a911affc58e2b17f097fb900d38472fd0386be311b6cead"
 expected_iptsd="45ce0fcabdda04a9fcf3ce30f7f0c64ba7098fd2351127ef0e54cf0ac0b3f083"
 expected_checker="54fcdaef90b0bd4239df670865cf8b258c3ae6e3988e42b0b9a3b58aaa4b08f5"
 expected_ppd="9e1d72935f2b916de1c44950e425948e60c7bdf83c69bede2a079e7a79a82252"
@@ -26,7 +26,7 @@ arm_one_shot=0
 managed_services=(
 	power-profiles-daemon.service
 	sp11-bluetooth-address.service
-	sp11-noidle.service
+	sp11-cpufreq-boost.service
 	sp11-power-profile-cpufreq.service
 	sp11-charge-limit.service
 )
@@ -163,7 +163,7 @@ awk -F '\t' '
 		exit 1
 	}
 	{ count++ }
-	END { exit count != 3759 }
+	END { exit count != 3767 }
 ' "$payload/MODULES.tsv" || {
 	printf 'Malformed or incomplete module manifest.\n' >&2
 	exit 1
@@ -179,8 +179,8 @@ archive_module_count="$(
 	printf 'Unsafe module archive member.\n' >&2
 	exit 1
 }
-[[ "$archive_module_count" -eq 3759 ]] || {
-	printf 'Module archive contains %s modules, expected 3759.\n' \
+[[ "$archive_module_count" -eq 3767 ]] || {
+	printf 'Module archive contains %s modules, expected 3767.\n' \
 		"$archive_module_count" >&2
 	exit 1
 }
@@ -223,7 +223,7 @@ if [[ -e "$module_dir" || -L "$module_dir" ]]; then
 			"$module_dir" >&2
 		exit 1
 	}
-	printf 'Verifying all 3,759 payload modules in the existing tree ...\n'
+	printf 'Verifying all 3,767 payload modules in the existing tree ...\n'
 	verified_modules=0
 	relocated_modules=0
 	while IFS=$'\t' read -r module_path expected_size expected_sha; do
@@ -252,7 +252,7 @@ if [[ -e "$module_dir" || -L "$module_dir" ]]; then
 		}
 		((verified_modules += 1))
 	done <"$payload/MODULES.tsv"
-	[[ "$verified_modules" -eq 3759 ]]
+	[[ "$verified_modules" -eq 3767 ]]
 	installed_module_count="$(
 		find "$module_dir" -type f -name '*.ko' -printf . | wc -c
 	)"
@@ -336,7 +336,7 @@ boot_free_bytes="$(df -B1 --output=avail /boot | awk 'NR == 2 { print $1 }')"
 	exit 1
 }
 
-printf '\nSP11 review20 beta candidate preflight passed.\n'
+printf '\nSP11 beta candidate preflight passed.\n'
 printf 'DMI:        %s\n' "$dmi"
 printf 'Kernel:     %s\n' "$release"
 printf 'Root:       %s (UUID %s)\n' "$root_source" "$root_uuid"
@@ -513,7 +513,7 @@ menuentry 'Surface Pro 11 Linux beta candidate ($release)' --class arch --class 
     insmod ext2
     search --no-floppy --fs-uuid --set=root $boot_uuid
     echo 'Loading Surface Pro 11 beta candidate ...'
-    linux $grub_boot_dir/Image-$release root=UUID=$root_uuid rw loglevel=7 systemd.tpm2_wait=false efi_pstore.pstore_disable=0 mem_sleep_default=deep cpufreq.default_governor=schedutil qcom_ipcc.mask_summary_on_suspend=1 sp11_deep_idle=1
+    linux $grub_boot_dir/Image-$release root=UUID=$root_uuid rw loglevel=7 systemd.tpm2_wait=false efi_pstore.pstore_disable=0 mem_sleep_default=deep cpufreq.default_governor=schedutil
     devicetree $grub_boot_dir/x1e80100-microsoft-denali-oled.dtb
     echo 'Loading initial ramdisk ...'
     initrd $grub_boot_dir/initramfs-$release.img
@@ -527,10 +527,9 @@ systemctl daemon-reload
 udevadm control --reload
 systemctl enable power-profiles-daemon.service
 systemctl enable sp11-bluetooth-address.service
-systemctl enable sp11-noidle.service
+systemctl enable sp11-cpufreq-boost.service
 systemctl enable sp11-power-profile-cpufreq.service
 systemctl enable sp11-charge-limit.service
-systemctl enable sp11-cpufreq-boost.service
 
 [[ "$(sha256sum "$windows_loader" | awk '{print $1}')" == \
 	"$windows_loader_sha" ]] || {

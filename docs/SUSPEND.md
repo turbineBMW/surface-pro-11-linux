@@ -1,6 +1,14 @@
 # Guarded runtime idle, lid suspend, and the logind watchdog
 
-## Qualified review20 policy
+> **2026-09-05:** the beta now ships the Linux 7.3 port kernel
+> (`7.2.0-sp11-73beta1`), on which deep CPU idle is unrestricted and the
+> guard described in the first section does not exist. The runtime-idle
+> policy below applies only to the review20 kernel of the 2026-08-28 beta.
+> The logind watchdog section still applies to both. Suspend diagnostics for
+> the shipped kernel: `sp11-suspend-report` (see `docs/SENSORS.md` for the
+> ambient-light stream that used to break suspend).
+
+## Qualified review20 policy (2026-08-28 beta kernel only)
 
 The beta release candidate opts into runtime PSCI state1 with
 `sp11_deep_idle=1` because it materially reduces screen-on idle power. The

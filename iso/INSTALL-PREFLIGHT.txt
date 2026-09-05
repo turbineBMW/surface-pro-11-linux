@@ -23,7 +23,7 @@ If either target partition is mounted in Files, unmount it first. Then run:
       --report /run/media/live/SP11FW/install-preflight.txt
 
 The compatible-module option is expected only on the development tablet,
-which already has the qualified review20 module ABI. Omit it for a genuinely
+which already has the matching module ABI. Omit it for a genuinely
 fresh target.
 
 A passing report must show:
@@ -33,7 +33,7 @@ A passing report must show:
 * Windows Boot Manager file and EFI entry present;
 * at least two preserved GRUB entries and no pending one-shot boot;
 * a fresh /boot/sp11-beta namespace; and
-* either a fresh module namespace or all 3,759 payload modules verified.
+* either a fresh module namespace or all 3,767 payload modules verified.
 
 This phase does not authorize --apply, repartitioning, formatting, EFI
 changes, GRUB regeneration, or an internal-system reboot.

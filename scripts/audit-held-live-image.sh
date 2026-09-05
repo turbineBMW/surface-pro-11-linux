@@ -2,9 +2,9 @@
 
 set -euo pipefail
 
-release="7.1.3-sp11-suspend-review20"
-expected_image="918ed2560654355555535290fd0d9657e1afc7022b3e46cc8396155d3575f256"
-expected_dtb="5e9009f5bd96a760a33086d1a8842e3228e3d28c413f96d70aca4914f7e397ed"
+release="7.2.0-sp11-73beta1"
+expected_image="a2118d41b4edb8f6b11c050d9ca2c6208e30da1472f4f198959f0f0b44fb8bde"
+expected_dtb="54a14d4f6841740e9a911affc58e2b17f097fb900d38472fd0386be311b6cead"
 expected_wallpaper="1fdc98d786badbf332460460da51496c3674cbead0d501f0e98708c4bb0bb5ac"
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -32,7 +32,7 @@ esac
 rootfs="$output_dir/rootfs"
 iso_tree="$output_dir/iso-tree"
 tool_root="$output_dir/tool-root"
-iso_file="$output_dir/sp11-beta-review20-aarch64-HELD-local.iso"
+iso_file="$output_dir/sp11-beta-port73-aarch64-HELD-local.iso"
 efi_image="$output_dir/sp11-efiboot.img"
 firmware_image="$output_dir/sp11-firmware.img"
 grub_efi="$output_dir/BOOTAA64.EFI"
@@ -237,7 +237,7 @@ awk -F '\t' '
 		exit 1
 	}
 	{ count++ }
-	END { exit count != 3759 }
+	END { exit count != 3767 }
 ' "$installer_root/payload/MODULES.tsv" || {
 	printf 'Malformed embedded module manifest.\n' >&2
 	exit 1
@@ -608,7 +608,7 @@ module_count="$(
 	find "$rootfs/usr/lib/modules/$release" \
 		-type f -name '*.ko' -printf . | wc -c
 )"
-[[ "$module_count" -eq 3759 ]] || {
+[[ "$module_count" -eq 3767 ]] || {
 	printf 'Unexpected live root module count: %s\n' "$module_count" >&2
 	exit 1
 }
@@ -624,6 +624,7 @@ for binary in \
 done
 systemd-analyze --man=no --root="$rootfs" verify \
 	sp11-bluetooth-address.service \
+	sp11-cpufreq-boost.service \
 	sp11-firmware-import.service \
 	sp11-iptsd@.service \
 	sp11-live-session.service \
@@ -739,7 +740,7 @@ while IFS=$'\t' read -r artifact expected_sha expected_size; do
 	BOOTAA64.EFI) artifact_path="$grub_efi" ;;
 	sp11-efiboot.img) artifact_path="$efi_image" ;;
 	sp11-firmware.img) artifact_path="$firmware_image" ;;
-	sp11-beta-review20-aarch64-HELD-local.iso) artifact_path="$iso_file" ;;
+	sp11-beta-port73-aarch64-HELD-local.iso) artifact_path="$iso_file" ;;
 	*)
 		printf 'Unknown artifact manifest member: %s\n' "$artifact" >&2
 		exit 1
@@ -750,5 +751,5 @@ while IFS=$'\t' read -r artifact expected_sha expected_size; do
 	[[ "$(stat -c '%s' "$artifact_path")" == "$expected_size" ]]
 done <"$manifest"
 
-printf 'Held live-image audit passed: 663 packages (including Rnote), 3,759 modules, %s firmware files, orange GNOME accent, verified local Tux Surface wallpaper, 4 project UCM entries, verified overlay and fresh-machine installer kits, identity-pinned installed root artifact, ARM64 UEFI/GPT with helper-seeded SP11FW partition, clean initramfs policy.\n' \
+printf 'Held live-image audit passed: 663 packages (including Rnote), 3,767 modules, %s firmware files, orange GNOME accent, verified local Tux Surface wallpaper, 4 project UCM entries, verified overlay and fresh-machine installer kits, identity-pinned installed root artifact, ARM64 UEFI/GPT with helper-seeded SP11FW partition, clean initramfs policy.\n' \
 	"$((13 + local_firmware_count))"

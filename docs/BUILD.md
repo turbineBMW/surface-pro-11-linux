@@ -39,18 +39,26 @@ also documents patch reconstruction.
 
 ## Build
 
-The maintained helper verifies the exact source identity, merges the camera
-configuration, and builds with Clang/LLVM and `W=1`:
+The maintained helper has two profiles. `port-7.3` (the default) builds the
+kernel the current beta ships, `7.2.0-sp11-73beta1`, from the `port/sp11-7.3`
+tip in `kernel/port-7.3/` with GCC 16.1.1; `review20` builds the
+`7.1.3-sp11-suspend-review20` kernel of the 2026-08-28 beta with Clang/LLVM.
+Both verify the exact source identity and configuration hash and build with
+`W=1`:
 
 ```sh
 ./scripts/build-kernel.sh \
+  --profile port-7.3 \
   --source /path/to/linux \
   --output /path/to/build \
   --jobs "$(nproc)"
 ```
 
-The resulting kernel release is `7.1.3-sp11-suspend-review20`. Primary
-outputs:
+For the 7.3 profile `/path/to/linux` is the reconstructed `port/sp11-7.3`
+branch (see `kernel/port-7.3/README.md`); the identities to compare against
+are in `kernel/port-7.3/BUILDINFO`. The rest of this section describes the
+review20 profile, whose identities are in `kernel/BUILDINFO`. Primary
+outputs of either profile:
 
 ```text
 /path/to/build/arch/arm64/boot/Image
@@ -136,8 +144,9 @@ distribution.
 ## Linux 7.3 forward port
 
 `kernel/port-7.3/` publishes the series carried forward onto mainline
-`548e7bcd0c54` (7.3 merge window) as a bundle, an end-state patch and the
-running configuration. It is not built by `scripts/build-kernel.sh` and has
-no `BUILDINFO`; see `kernel/port-7.3/README.md` for the identities, what was
-dropped and why, and the command-line and unit changes that accompany it.
+`548e7bcd0c54` (7.3 merge window) as a bundle, an end-state patch, the build
+configuration and `BUILDINFO`. It is the default `scripts/build-kernel.sh`
+profile and the kernel of the current beta; see `kernel/port-7.3/README.md`
+for the identities, what was dropped and why, and the command-line and unit
+changes that accompany it.
 

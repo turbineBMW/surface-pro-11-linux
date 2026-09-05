@@ -44,7 +44,7 @@ for relative in \
 	BOOT-PAYLOAD.tsv \
 	ARTIFACTS.tsv \
 	sp11-installed-rootfs.tar.zst \
-	boot/Image-7.1.3-sp11-suspend-review20 \
+	boot/Image-7.2.0-sp11-73beta1 \
 	boot/x1e80100-microsoft-denali-oled.dtb; do
 	cmp -- "$first/$relative" "$second/$relative" || {
 		printf 'Installed-root reproducibility mismatch: %s\n' \

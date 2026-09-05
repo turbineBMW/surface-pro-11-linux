@@ -17,14 +17,15 @@ From a working boot, the reversible first response is:
 sudo systemctl disable --now sp11-power-profile-cpufreq.service
 sudo systemctl disable --now sp11-charge-limit.service
 sudo systemctl disable --now sp11-bluetooth-address.service
-sudo systemctl disable --now sp11-noidle.service
+sudo systemctl disable --now sp11-cpufreq-boost.service
 sudo systemctl stop 'sp11-iptsd@*.service'
 ```
 
-The runtime-idle guard is a `systemd-suspend.service` drop-in rather than an
-enabled service. Do not remove only the guard while booted with
-`sp11_deep_idle=1`; select the conservative rollback kernel or remove that
-kernel parameter first.
+On the Linux 7.3 port kernel deep CPU idle is unrestricted and there is no
+idle guard. If you suspect idle states, boot with `cpuidle.off=1` (the live
+image has a menu entry for it) rather than editing units. On the older
+review20 kernel the guard is a `systemd-suspend.service` drop-in: do not
+remove only the guard while booted with `sp11_deep_idle=1`.
 
 If a Windows Bluetooth controller identity override was configured for a Flex
 Keyboard, remove `/etc/sp11/bluetooth-address.conf` and reboot. The address
@@ -32,9 +33,8 @@ helper will return to the firmware EFI address; BlueZ bonds stored below the
 override adapter directory will no longer be active.
 
 Stopping the cpufreq companion restores the hardware maximum on every policy.
-Disabling `sp11-noidle.service` does not re-enable state1 until its sysfs values
-are changed or the machine reboots; do not do that on the experimental kernel
-unless you are intentionally diagnosing deep idle.
+Stopping `sp11-cpufreq-boost.service` turns boost off again; the per-profile
+caps then top out at the non-boost maximum until the next profile change.
 
 Disabling the charge-limit service prevents future boot applications, but the
 currently programmed window remains active until firmware resets it. To allow
@@ -96,7 +96,7 @@ sudo sp11-rollback-live \
   --root-device /dev/nvme0n1p5 \
   --efi-device /dev/nvme0n1p1 \
   --apply \
-  --confirm-held-local-rollback sp11-beta-review20 \
+  --confirm-held-local-rollback sp11-beta-port73 \
   --report /run/media/live/SP11FW/rollback-apply.txt
 ```
 

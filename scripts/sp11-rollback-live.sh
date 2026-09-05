@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-entry_id="sp11-beta-review20"
+entry_id="sp11-beta-port73"
 installer_root="${SP11_INSTALLER_ROOT:-/opt/sp11-beta-installer}"
 root_device=""
 efi_device=""
@@ -263,12 +263,14 @@ if [[ "$boot_state" == "fresh" ]]; then
 	}
 fi
 if [[ "$module_state" == "fresh" ]]; then
-	[[ ! -e "$target_root/usr/lib/modules/7.1.3-sp11-suspend-review20" ]] || {
+	[[ ! -e "$target_root/usr/lib/modules/7.1.3-sp11-suspend-review20" &&
+		! -e "$target_root/usr/lib/modules/7.2.0-sp11-73beta1" ]] || {
 		printf 'Fresh candidate module tree remains after live rollback.\n' >&2
 		exit 1
 	}
 else
-	[[ -d "$target_root/usr/lib/modules/7.1.3-sp11-suspend-review20" ]] || {
+	[[ -d "$target_root/usr/lib/modules/7.1.3-sp11-suspend-review20" ||
+		-d "$target_root/usr/lib/modules/7.2.0-sp11-73beta1" ]] || {
 		printf 'Reused compatible module tree was removed by live rollback.\n' >&2
 		exit 1
 	}

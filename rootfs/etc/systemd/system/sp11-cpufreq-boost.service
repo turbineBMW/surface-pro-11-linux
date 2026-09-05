@@ -3,7 +3,7 @@ Description=SP11: enable cpufreq boost (7.3 port kernel only)
 Documentation=man:cpufreq(7)
 # Only on the 7.3 port kernel. review20 is the known-good fallback and is left
 # exactly as it was (boost off).
-ConditionKernelVersion=*-sp11-73wip*
+ConditionKernelVersion=*-sp11-73*
 # Run before the power-profile service so its per-profile scaling_max_freq caps
 # are computed with the boost frequencies already available. Without boost the
 # performance profile tops out at 2515200 instead of 3417600.

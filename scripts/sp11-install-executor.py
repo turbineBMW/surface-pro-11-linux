@@ -37,18 +37,18 @@ LIVE_DUAL_SECOND_CONFIRMATION = (
 LIVE_WIPE_SECOND_CONFIRMATION = (
     "I UNDERSTAND THIS ERASES WINDOWS RECOVERY AND ALL DATA"
 )
-RELEASE = "7.1.3-sp11-suspend-review20"
+RELEASE = "7.2.0-sp11-73beta1"
 EXPECTED_ARCHIVE_SHA = (
-    "fa04efafd4e48a261765f7b008cdb5c961c954a92f41d1a8be278259147674b8"
+    "d2f97d75c0b45be25baab952987204799746b5552298116846bd015c40becb89"
 )
 EXPECTED_ROOT_MANIFEST_SHA = (
-    "dfad2bdf4abfade3f9cf726fe4c3f1284732ed321eb4667d8a2cb9b3df280d7c"
+    "5771dbb4f3fa8b41dc491af4729eb0f52b0d4c3d2f6d3bd75ba554a394ae7a81"
 )
 EXPECTED_IMAGE_SHA = (
-    "918ed2560654355555535290fd0d9657e1afc7022b3e46cc8396155d3575f256"
+    "a2118d41b4edb8f6b11c050d9ca2c6208e30da1472f4f198959f0f0b44fb8bde"
 )
 EXPECTED_DTB_SHA = (
-    "5e9009f5bd96a760a33086d1a8842e3228e3d28c413f96d70aca4914f7e397ed"
+    "54a14d4f6841740e9a911affc58e2b17f097fb900d38472fd0386be311b6cead"
 )
 
 ESP_GUID = "c12a7328-f81f-11d2-ba4b-00a0c93ec93b"
@@ -1643,7 +1643,8 @@ def configure_target(
         ),
         (
             f"    linux /boot/sp11/Image-{RELEASE} "
-            f"root=UUID={root_uuid} rw rootwait quiet systemd.tpm2_wait=false"
+            f"root=UUID={root_uuid} rw rootwait quiet systemd.tpm2_wait=false "
+            "cpufreq.default_governor=schedutil"
         ),
         f"    initrd /boot/sp11/initramfs-{RELEASE}.img",
         "}",
@@ -2034,7 +2035,7 @@ def verify_installed(args: argparse.Namespace, script_dir: Path) -> None:
             for module in (mount_root / f"usr/lib/modules/{RELEASE}").rglob("*.ko")
             if module.is_file()
         )
-        if module_count != 3759:
+        if module_count != 3767:
             refuse(f"installed module count mismatch: {module_count}")
     finally:
         unmount_installation(mount_root)
