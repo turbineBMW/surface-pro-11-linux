@@ -34,6 +34,25 @@ highest advertised hardware frequency below it. It validates every policy
 before changing any of them and rejects unknown profile names. It never changes
 `scaling_min_freq` or the governor.
 
+Every application submits its requested ceiling even if the current readback
+already matches. Readback is the kernel's aggregate QoS limit: a positive value
+below the request is valid when thermal, boost, or another constraint imposes
+a lower ceiling. The helper writes once and polls while the effective ceiling
+is still above its request. Kernel thermal constraints remain in force.
+
+Before application it snapshots all effective maxima. A write or verification
+failure triggers reverse-order rollback of every attempted policy, including
+the failing policy. Rollback continues after an individual failure and reports
+any policy it could not restore. Sysfs does not expose the separate user QoS
+request, so rollback restores the observed effective ceilings conservatively;
+an existing lower constraint may remain as a user cap until the next successful
+profile application. This is best-effort rollback, not an atomic kernel update.
+
+Failed startup and service failure cleanup preserve those rollback limits.
+Intentional service stops restore the full user-requested range. Install the
+updated helper and service unit together: the unit uses `--restore-after-stop`
+and systemd's `SERVICE_RESULT` to distinguish normal stops from failures.
+
 Stop and disable the service to restore full frequency range. The unit's stop
 path performs the restoration automatically; it can also be requested with:
 

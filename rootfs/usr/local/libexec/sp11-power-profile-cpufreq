@@ -50,15 +50,17 @@ def read_text(path: Path) -> str:
 
 
 def write_and_verify(path: Path, value: int) -> None:
-    """Write a cpufreq policy limit and tolerate its asynchronous readback."""
-    if int(read_text(path)) == value:
-        return
+    """Submit our request, then check the aggregate ceiling, not equality.
+
+    A thermal/boost QoS request may keep the effective maximum below ours.
+    Always write: even an equal readback can hide a different user request.
+    """
+    with path.open("w", encoding="ascii") as output:
+        output.write(f"{value}\n")
     actual = -1
     for _attempt in range(10):
-        with path.open("w", encoding="ascii") as output:
-            output.write(f"{value}\n")
         actual = int(read_text(path))
-        if actual == value:
+        if 0 < actual <= value:
             return
         time.sleep(0.05)
     raise RuntimeError(
@@ -108,12 +110,49 @@ def policy_limit(policy: Path, target_khz: int | None) -> int:
     return max(hardware_min, min(hardware_max, target_khz))
 
 
+def apply_limits(planned: list[tuple[Path, int]]) -> list[str]:
+    """Apply a preflighted plan, restoring prior effective ceilings on error.
+
+    Sysfs exposes aggregate limits, not the underlying user QoS requests.
+    Rollback is therefore conservative: it may retain an observed lower cap.
+    """
+    previous = {
+        policy: int(read_text(policy / "scaling_max_freq"))
+        for policy, _limit in planned
+    }
+    if any(value <= 0 for value in previous.values()):
+        raise RuntimeError("cannot snapshot a non-positive CPU frequency limit")
+    attempted: list[Path] = []
+    applied: list[str] = []
+    try:
+        for policy, limit in planned:
+            # Include a failing write: the kernel may have accepted the request
+            # before its readback failed.
+            attempted.append(policy)
+            write_and_verify(policy / "scaling_max_freq", limit)
+            actual = int(read_text(policy / "scaling_max_freq"))
+            applied.append(f"{policy.name}={actual}")
+    except (OSError, RuntimeError, ValueError) as error:
+        rollback_errors = []
+        for policy in reversed(attempted):
+            try:
+                write_and_verify(policy / "scaling_max_freq", previous[policy])
+            except (OSError, RuntimeError, ValueError) as rollback_error:
+                rollback_errors.append(f"{policy.name}: {rollback_error}")
+        if rollback_errors:
+            raise RuntimeError(
+                f"apply failed: {error}; rollback incomplete: "
+                + "; ".join(rollback_errors)
+            ) from error
+        raise
+    return applied
+
+
 def apply(profile: str | None = None) -> None:
     if profile is None:
         profile = read_text(PROFILE_PATH)
     target_khz = profile_target(profile)
     planned: list[tuple[Path, int]] = []
-    applied: list[str] = []
 
     for policy in policies():
         limit = policy_limit(policy, target_khz)
@@ -125,11 +164,7 @@ def apply(profile: str | None = None) -> None:
             )
         planned.append((policy, limit))
 
-    for policy, limit in planned:
-        maximum_path = policy / "scaling_max_freq"
-        write_and_verify(maximum_path, limit)
-        actual = int(read_text(maximum_path))
-        applied.append(f"{policy.name}={actual}")
+    applied = apply_limits(planned)
 
     mode = "full-range" if target_khz is None else f"capped-at-{target_khz}"
     print(f"profile={profile} mode={mode} " + " ".join(applied), flush=True)
@@ -137,11 +172,17 @@ def apply(profile: str | None = None) -> None:
 
 def restore() -> None:
     applied: list[str] = []
+    errors: list[str] = []
     for policy in policies():
-        maximum = int(read_text(policy / "cpuinfo_max_freq"))
-        write_and_verify(policy / "scaling_max_freq", maximum)
-        actual = int(read_text(policy / "scaling_max_freq"))
-        applied.append(f"{policy.name}={actual}")
+        try:
+            maximum = int(read_text(policy / "cpuinfo_max_freq"))
+            write_and_verify(policy / "scaling_max_freq", maximum)
+            actual = int(read_text(policy / "scaling_max_freq"))
+            applied.append(f"{policy.name}={actual}")
+        except (OSError, RuntimeError, ValueError) as error:
+            errors.append(f"{policy.name}: {error}")
+    if errors:
+        raise RuntimeError("restore incomplete: " + "; ".join(errors))
     print("restored " + " ".join(applied), flush=True)
 
 
@@ -151,6 +192,8 @@ def request_stop(_signum: int, _frame: object) -> None:
 
 
 def watch() -> None:
+    global stop_requested
+    stop_requested = False
     import dbus
     from dbus.mainloop.glib import DBusGMainLoop
     from gi.repository import GLib
@@ -168,7 +211,10 @@ def watch() -> None:
         _interface: object, changed: object, _invalidated: object
     ) -> None:
         if "ActiveProfile" in changed:
-            apply(str(changed["ActiveProfile"]))
+            try:
+                apply(str(changed["ActiveProfile"]))
+            except (OSError, RuntimeError, ValueError) as error:
+                print(f"sp11-power-profile-cpufreq: {error}", file=sys.stderr, flush=True)
 
     def apply_after_restart() -> bool:
         try:
@@ -209,7 +255,10 @@ def watch() -> None:
         apply(active_profile())
         loop.run()
     finally:
-        restore()
+        # Keep rollback limits on an application/startup failure. Only an
+        # intentional stop should remove our profile ceilings.
+        if stop_requested:
+            restore()
 
 
 def main() -> int:
@@ -222,6 +271,10 @@ def main() -> int:
     actions.add_argument(
         "--restore", action="store_const", const="restore", dest="action"
     )
+    actions.add_argument(
+        "--restore-after-stop", action="store_const", const="restore-after-stop",
+        dest="action",
+    )
     parser.add_argument("sleep_phase", nargs="?", choices=("pre", "post"))
     parser.add_argument("sleep_operation", nargs="?")
     args = parser.parse_args()
@@ -233,6 +286,9 @@ def main() -> int:
             watch()
         elif action == "restore":
             restore()
+        elif action == "restore-after-stop":
+            if os.environ.get("SERVICE_RESULT") == "success":
+                restore()
         elif action == "pre":
             return 0
         else:

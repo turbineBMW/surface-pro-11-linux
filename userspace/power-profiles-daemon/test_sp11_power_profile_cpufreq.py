@@ -141,6 +141,152 @@ class ProfileMappingTests(unittest.TestCase):
         companion.restore()
         self.assertEqual(self.maximum(policy), 3_417_600)
 
+    def test_lower_aggregate_limit_still_submits_the_requested_ceiling(self) -> None:
+        first = self.add_policy(0)
+        second = self.add_policy(4)
+        original_read = companion.read_text
+
+        def thermal_readback(path: Path) -> str:
+            if path == first / "scaling_max_freq":
+                return "1670400"
+            return original_read(path)
+
+        with mock.patch.object(companion, "read_text", side_effect=thermal_readback):
+            companion.apply("balanced")
+        # The file models our request, while read_text models the aggregate.
+        self.assertEqual(self.maximum(first), 2_515_200)
+        self.assertEqual(self.maximum(second), 2_515_200)
+
+    def test_equal_aggregate_limit_does_not_skip_a_hidden_request(self) -> None:
+        policy = self.add_policy(0, scaling_max=3_417_600)
+        with mock.patch.object(companion, "read_text", return_value="2515200"):
+            companion.write_and_verify(policy / "scaling_max_freq", 2_515_200)
+        self.assertEqual(self.maximum(policy), 2_515_200)
+
+    def test_async_limit_settles_without_repeated_writes(self) -> None:
+        policy = self.add_policy(0)
+        with (
+            mock.patch.object(companion, "read_text", side_effect=["3417600", "1920000"]),
+            mock.patch.object(companion.time, "sleep") as sleep,
+            mock.patch.object(Path, "open", mock.mock_open()) as opened,
+        ):
+            companion.write_and_verify(policy / "scaling_max_freq", 1_920_000)
+        self.assertEqual(opened.call_count, 1)
+        self.assertEqual(sleep.call_count, 1)
+
+    def test_higher_or_invalid_readback_fails(self) -> None:
+        policy = self.add_policy(0)
+        for actual in ("3417600", "0", "-1"):
+            with (
+                self.subTest(actual=actual),
+                mock.patch.object(companion, "read_text", return_value=actual),
+                mock.patch.object(companion.time, "sleep"),
+                self.assertRaises(RuntimeError),
+            ):
+                companion.write_and_verify(policy / "scaling_max_freq", 1_920_000)
+
+    def test_write_time_failure_rolls_back_and_leaves_later_policy_untouched(self) -> None:
+        first, second, third = [self.add_policy(i) for i in (0, 4, 8)]
+        original_write = companion.write_and_verify
+
+        def fail_second(path: Path, value: int) -> None:
+            if path.parent == second and value == 1_920_000:
+                raise OSError("injected failure")
+            original_write(path, value)
+
+        with mock.patch.object(companion, "write_and_verify", side_effect=fail_second) as write:
+            with self.assertRaisesRegex(OSError, "injected failure"):
+                companion.apply("power-saver")
+        self.assertEqual([self.maximum(p) for p in (first, second, third)], [3_417_600] * 3)
+        self.assertFalse(any(call.args[0].parent == third for call in write.call_args_list))
+
+    def test_failed_policy_is_rolled_back_even_after_a_successful_write(self) -> None:
+        first, second = [self.add_policy(i) for i in (0, 4)]
+        original_write = companion.write_and_verify
+
+        def fail_readback(path: Path, value: int) -> None:
+            original_write(path, value)
+            if path.parent == second and value == 1_920_000:
+                raise OSError("readback disappeared")
+
+        with mock.patch.object(companion, "write_and_verify", side_effect=fail_readback):
+            with self.assertRaisesRegex(OSError, "readback disappeared"):
+                companion.apply("power-saver")
+        self.assertEqual([self.maximum(p) for p in (first, second)], [3_417_600] * 2)
+
+    def test_rollback_continues_after_one_policy_cannot_be_restored(self) -> None:
+        first, second = [self.add_policy(i) for i in (0, 4)]
+        original_write = companion.write_and_verify
+
+        def fail_second(path: Path, value: int) -> None:
+            if path.parent == second:
+                raise OSError("policy unavailable")
+            original_write(path, value)
+
+        with mock.patch.object(companion, "write_and_verify", side_effect=fail_second):
+            with self.assertRaisesRegex(RuntimeError, "rollback incomplete: policy4"):
+                companion.apply("power-saver")
+        self.assertEqual(self.maximum(first), 3_417_600)
+
+    def test_snapshot_failure_does_not_write_any_policy(self) -> None:
+        self.add_policy(0)
+        second = self.add_policy(4)
+        (second / "scaling_max_freq").unlink()
+        with mock.patch.object(companion, "write_and_verify") as write:
+            with self.assertRaises(FileNotFoundError):
+                companion.apply("power-saver")
+        write.assert_not_called()
+
+    def test_restore_attempts_remaining_policies_after_failure(self) -> None:
+        first, second = [self.add_policy(i, scaling_max=1_920_000) for i in (0, 4)]
+        original_write = companion.write_and_verify
+
+        def fail_first(path: Path, value: int) -> None:
+            if path.parent == first:
+                raise OSError("policy unavailable")
+            original_write(path, value)
+
+        with mock.patch.object(companion, "write_and_verify", side_effect=fail_first):
+            with self.assertRaisesRegex(RuntimeError, "restore incomplete: policy0"):
+                companion.restore()
+        self.assertEqual(self.maximum(second), 3_417_600)
+
+    def test_service_failure_cleanup_preserves_rollback_limits(self) -> None:
+        for result in ("success", "exit-code", "signal", "timeout", ""):
+            with (
+                self.subTest(result=result),
+                mock.patch.dict(companion.os.environ, {"SERVICE_RESULT": result}),
+                mock.patch.object(companion.sys, "argv", ["helper", "--restore-after-stop"]),
+                mock.patch.object(companion, "restore") as restore,
+            ):
+                self.assertEqual(companion.main(), 0)
+                self.assertEqual(restore.call_count, int(result == "success"))
+
+    def test_watcher_failure_preserves_rollback_but_intentional_stop_restores(self) -> None:
+        fake_modules = {
+            name: mock.MagicMock()
+            for name in ("dbus", "dbus.mainloop", "dbus.mainloop.glib", "gi", "gi.repository")
+        }
+        loop = fake_modules["gi.repository"].GLib.MainLoop.return_value
+        with (
+            mock.patch.dict(companion.sys.modules, fake_modules),
+            mock.patch.object(companion.signal, "signal"),
+            mock.patch.object(companion, "restore") as restore,
+            mock.patch.object(companion, "apply", side_effect=OSError("startup failure")),
+        ):
+            with self.assertRaisesRegex(OSError, "startup failure"):
+                companion.watch()
+            restore.assert_not_called()
+        loop.run.side_effect = lambda: companion.request_stop(15, None)
+        with (
+            mock.patch.dict(companion.sys.modules, fake_modules),
+            mock.patch.object(companion.signal, "signal"),
+            mock.patch.object(companion, "restore") as restore,
+            mock.patch.object(companion, "apply"),
+        ):
+            companion.watch()
+            restore.assert_called_once_with()
+
 
 if __name__ == "__main__":
     unittest.main()
