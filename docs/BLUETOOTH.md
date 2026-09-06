@@ -52,7 +52,10 @@ an explicit connect does, so a detach hook is the practical arrangement.
 
 ### Pairing on Linux
 
-With a kernel carrying `kernel/sp11-flex-bt-oob-pairing.patch` (the 7.3 port
+The desktop entries **Pair Surface Flex Keyboard** and **Pair Surface Slim
+Pen 2** (`rootfs/usr/local/bin/sp11-pair-guide`) walk through both
+procedures in a terminal, including the current caveats, and then run the
+tools below. On the command line, with a kernel carrying `kernel/sp11-flex-bt-oob-pairing.patch` (the 7.3 port
 in `kernel/port-7.3/` includes it), attach the keyboard and run:
 
 ```sh

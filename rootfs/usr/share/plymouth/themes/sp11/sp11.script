@@ -1,0 +1,105 @@
+# SP11 plymouth theme (script plugin).
+# Layout: black background, logo centred, a single status line directly
+# below it. Each new status/message replaces the previous one.
+
+Window.SetBackgroundTopColor(0, 0, 0);
+Window.SetBackgroundBottomColor(0, 0, 0);
+
+# --- geometry ---------------------------------------------------------------
+win.x = Window.GetX();
+win.y = Window.GetY();
+win.w = Window.GetWidth();
+win.h = Window.GetHeight();
+
+# Logo height as a fraction of the screen so it looks the same whatever
+# DeviceScale plymouth picks for the 2880x1920 OLED.
+logo.src = Image("logo.png");
+logo.target_h = Math.Int(win.h * 0.32);
+logo.scale = logo.target_h / logo.src.GetHeight();
+logo.image = logo.src.Scale(Math.Int(logo.src.GetWidth() * logo.scale), logo.target_h);
+logo.w = logo.image.GetWidth();
+logo.h = logo.image.GetHeight();
+logo.x = win.x + win.w / 2 - logo.w / 2;
+logo.y = win.y + win.h / 2 - logo.h / 2;
+logo.sprite = Sprite(logo.image);
+logo.sprite.SetPosition(logo.x, logo.y, 10);
+
+# Gap between logo bottom and the text line, and text style.
+text.gap = Math.Int(win.h * 0.03);
+text.y = logo.y + logo.h + text.gap;
+text.font = "Adwaita Sans 12";
+text.r = 0.75; text.g = 0.75; text.b = 0.75;
+
+status.sprite = Sprite();
+status.sprite.SetZ(20);
+status.current = "";
+
+fun show_line(str)
+  {
+    status.current = str;
+    if (str == "")
+      {
+        status.sprite.SetOpacity(0);
+        return;
+      }
+    img = Image.Text(str, text.r, text.g, text.b, 1, text.font);
+    status.sprite.SetImage(img);
+    status.sprite.SetX(win.x + win.w / 2 - img.GetWidth() / 2);
+    status.sprite.SetY(text.y);
+    status.sprite.SetOpacity(1);
+  }
+
+# --- boot status from systemd -----------------------------------------------
+# systemd sends the id of every service/mount/swap it starts as a plymouth
+# "update" (e.g. "systemd-udevd.service"). Plymouth itself also sends
+# "normal", "fsck:<dev>:<pct>", "cancel" here.
+fun update_status_callback(str)
+  {
+    if (str == "normal" || str == "cancel") return;
+    if (str == "") return;
+    s = str;
+    if (s.SubString(0, 5) == "fsck:")
+      s = "Checking filesystem " + s.SubString(5, s.Length());
+    show_line(s);
+  }
+Plymouth.SetUpdateStatusFunction(update_status_callback);
+
+# Explicit messages (plymouth display-message / systemd notices) take the
+# same line.
+fun display_message_callback(str)
+  {
+    show_line(str);
+  }
+fun hide_message_callback(str)
+  {
+    if (status.current == str) show_line("");
+  }
+Plymouth.SetDisplayMessageFunction(display_message_callback);
+Plymouth.SetHideMessageFunction(hide_message_callback);
+
+# --- password prompt (LUKS etc.) — reuse the same line -----------------------
+fun display_password_callback(prompt, bullets)
+  {
+    if (prompt == "") prompt = "Password";
+    dots = "";
+    for (i = 0; i < bullets; i++) dots += "*";
+    show_line(prompt + ": " + dots);
+  }
+fun display_normal_callback()
+  {
+    show_line("");
+  }
+Plymouth.SetDisplayPasswordFunction(display_password_callback);
+Plymouth.SetDisplayNormalFunction(display_normal_callback);
+
+fun display_question_callback(prompt, entry)
+  {
+    show_line(prompt + " " + entry);
+  }
+Plymouth.SetDisplayQuestionFunction(display_question_callback);
+
+fun quit_callback()
+  {
+    show_line("");
+  }
+Plymouth.SetQuitFunction(quit_callback);

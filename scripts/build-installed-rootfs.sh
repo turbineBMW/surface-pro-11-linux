@@ -7,7 +7,7 @@ set -euo pipefail
 
 release="7.2.0-sp11-73beta1"
 source_date_epoch=1788637836
-expected_snapshot_manifest="60a1d33fd546985a9a73ce286fb34b1cbd9fb153436f6639a12fa55901e3cf14"
+expected_snapshot_manifest="202cc73d932463b06dabd522126e19a1df484e18d259b979e2e454f0021feb07"
 expected_image="a2118d41b4edb8f6b11c050d9ca2c6208e30da1472f4f198959f0f0b44fb8bde"
 expected_dtb="54a14d4f6841740e9a911affc58e2b17f097fb900d38472fd0386be311b6cead"
 expected_iptsd="45ce0fcabdda04a9fcf3ce30f7f0c64ba7098fd2351127ef0e54cf0ac0b3f083"
@@ -205,7 +205,7 @@ mkdir -p -- \
 	"$firmware_extract" \
 	"$pacman_hook_dir"
 
-printf 'Verifying and installing the frozen 663-package GNOME closure ...\n'
+printf 'Verifying and installing the frozen 664-package GNOME closure ...\n'
 package_files=()
 while IFS=$'\t' read -r scope _repository _package _pkgbase _version \
 	_architecture filename expected_sha _compressed _installed _urls; do
@@ -225,7 +225,7 @@ while IFS=$'\t' read -r scope _repository _package _pkgbase _version \
 	pacman-key --verify "$signature" "$package_file" >/dev/null 2>&1
 	package_files+=("$package_file")
 done <"$repo_root/iso/packages.lock.tsv"
-[[ "${#package_files[@]}" -eq 663 ]] || {
+[[ "${#package_files[@]}" -eq 664 ]] || {
 	printf 'Unexpected installed package count: %s\n' \
 		"${#package_files[@]}" >&2
 	exit 1
@@ -413,7 +413,7 @@ fi
 "$script_dir/normalize-installed-rootfs.py" \
 	"$rootfs" \
 	--source-date-epoch "$source_date_epoch" \
-	--expected-packages 663
+	--expected-packages 664
 find "$rootfs/var/cache/pacman/pkg" -mindepth 1 -delete
 find "$rootfs/tmp" "$rootfs/var/tmp" -mindepth 1 -delete
 : >"$rootfs/var/log/pacman.log"

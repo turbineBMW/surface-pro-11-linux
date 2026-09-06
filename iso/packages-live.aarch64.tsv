@@ -86,3 +86,4 @@ man-pages	recovery	Base Linux manual pages
 bash-completion	recovery	Discoverable shell commands
 usbutils	diagnostics	USB topology diagnostics
 pciutils	diagnostics	PCI topology diagnostics
+plymouth	desktop	Boot splash while the live root is copied into RAM and on the installed system

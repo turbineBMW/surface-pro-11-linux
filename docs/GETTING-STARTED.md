@@ -39,13 +39,21 @@ sha256sum -c SHA256SUMS
 
 Write it to the **whole** stick (this erases the stick):
 
+- **Windows, the easy way:** download `sp11-usb-creator-windows-<date>.zip`
+  from the same release, unpack it next to the ISO, right-click
+  `SP11-USB-CREATOR.cmd` and *Run as administrator*. It collects the
+  firmware from your Windows installation, writes the ISO to the stick the
+  way `dd` would (no Rufus), and copies the firmware onto the stick. Step 2
+  below is then already done. (New in the 2026-09-05 beta and not yet
+  exercised on many machines; if it fails, use the next line.)
+- Windows, by hand: Rufus in **DD image** mode (not ISO mode; the image has
+  three partitions and ISO mode breaks it), or balenaEtcher.
 - Linux/macOS: `sudo dd if=sp11-linux-beta-aarch64.iso of=/dev/sdX bs=4M status=progress conv=fsync`
-- Windows: Rufus in *DD image* mode, or `balenaEtcher`.
 
 The stick now has three partitions. Windows only understands one of them,
 **SP11FW** (FAT32). When Windows offers to format the other two, say **no**.
 
-## 2. Copy the firmware (in Windows)
+## 2. Copy the firmware (in Windows; skip if the USB creator did it)
 
 Five Qualcomm/Microsoft firmware files (audio DSP, compute DSP, GPU zap
 shader) cannot be shipped with the ISO. They are copied from your own
@@ -89,6 +97,16 @@ bash /run/media/live/SP11FW/sp11-live-firstboot-capture.sh   # save a diagnostic
 
 The diagnostics report contains device identifiers; review it before
 sharing.
+
+## Pairing the Flex Keyboard and the Slim Pen 2
+
+Attached, the keyboard just works. For detached use, and for the pen's tail
+button, open the app grid and run **Pair Surface Flex Keyboard** or **Pair
+Surface Slim Pen 2**. Each opens a terminal that explains the steps, lists
+the current shortcomings (the keyboard's touchpad can keep clicking after a
+battery-powered shutdown; the pen must be woken with a 7 s tail-button hold
+after it has been docked), and then runs the pairing tool. Both work on the
+live system and on an installed one. Details: `docs/BLUETOOTH.md`.
 
 ## 4. Install (optional)
 

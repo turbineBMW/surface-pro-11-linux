@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Pair Surface Slim Pen 2
+Comment=Pair the Slim Pen 2 so its tail button works (hold the button 7 s until the LED blinks)
+Exec=kgx --wait -- /usr/local/bin/sp11-pair-guide pen
+Icon=input-tablet
+Terminal=false
+Categories=Settings;HardwareSettings;
+Keywords=Surface;pen;stylus;Bluetooth;pair;
+StartupNotify=true

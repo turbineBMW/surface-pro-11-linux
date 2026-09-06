@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+# mkinitcpio install hook: Plymouth boot splash on the Surface Pro 11.
+#
+# Self-contained replacement for the stock "plymouth" hook. It (1) brings the
+# eDP display up inside the initramfs, which on this SoC means the whole
+# ADSP/type-C retimer/pmic_glink chain and the GPU firmware, not just msm, and
+# (2) adds plymouthd, the SP11 theme and its font from the root being built
+# (mkinitcpio -r), so it works both from the live-image builder and inside an
+# installed system. Owner-supplied firmware is added only if it is present;
+# without it the display comes up after switch-root and the splash simply
+# starts later.
+
+build() {
+	local file
+
+	if [[ ! -x "${BASEDIR:-}/usr/bin/plymouthd" ]]; then
+		warning "plymouth is not installed; building without the boot splash"
+		return 0
+	fi
+
+	# Display chain (see plymouth/host/92-sp11-display-early.conf history).
+	map add_module \
+		msm phy-qcom-qmp-combo phy-qcom-edp panel-samsung-atna33xc20 \
+		dispcc-x1e80100 gpucc-x1e80100 ps883x i2c-qcom-geni \
+		qcom_q6v5_pas qcom_pd_mapper qrtr-smd pmic_glink pmic_glink_altmode \
+		ucsi_glink qcom_battmgr rpmsg_ctrl rpmsg_char
+
+	# GPU firmware (redistributable, always present) and the owner-supplied
+	# DSP images / zap shader (present on an installed system after
+	# sp11-firmware; on the live image GRUB appends them to the initramfs).
+	for file in \
+		/usr/lib/firmware/qcom/gen70500_gmu.bin \
+		/usr/lib/firmware/qcom/gen70500_sqe.fw \
+		/usr/lib/firmware/qcom/x1e80100/gen70500_zap.mbn \
+		/usr/lib/firmware/qcom/x1e80100/microsoft/Denali/qcadsp8380.mbn \
+		/usr/lib/firmware/qcom/x1e80100/microsoft/Denali/adsp_dtb.mbn \
+		/usr/lib/firmware/qcom/x1e80100/microsoft/Denali/qccdsp8380.mbn \
+		/usr/lib/firmware/qcom/x1e80100/microsoft/Denali/cdsp_dtb.mbn \
+		/usr/lib/firmware/qcom/x1e80100/microsoft/qcdxkmsuc8380.mbn; do
+		[[ -f "${BASEDIR:-}$file" ]] && add_file "$file"
+	done
+
+	# Plymouth itself.
+	map add_binary \
+		/usr/bin/plymouthd \
+		/usr/bin/plymouth \
+		/usr/lib/plymouth/text.so \
+		/usr/lib/plymouth/details.so \
+		/usr/lib/plymouth/label-freetype.so \
+		/usr/lib/plymouth/script.so \
+		/usr/lib/plymouth/renderers/drm.so \
+		/usr/lib/plymouth/renderers/frame-buffer.so
+	map add_file \
+		/usr/share/plymouth/themes/text/text.plymouth \
+		/usr/share/plymouth/themes/details/details.plymouth \
+		/usr/share/plymouth/plymouthd.defaults \
+		/etc/plymouth/plymouthd.conf
+	add_full_dir /usr/share/plymouth/themes/sp11
+	# The theme names "Adwaita Sans"; label-freetype loads this fixed path.
+	add_file /usr/share/fonts/Adwaita/AdwaitaSans-Regular.ttf /usr/share/fonts/Plymouth.ttf
+	for file in /usr/share/fonts/noto/NotoSansMono-Regular.ttf; do
+		[[ -f "${BASEDIR:-}$file" ]] && add_file "$file" /usr/share/fonts/Plymouth-monospace.ttf
+	done
+	add_udev_rule 71-seat.rules
+	add_runscript
+}
+
+help() {
+	cat <<HELPEOF
+Surface Pro 11 boot splash: loads the eDP display chain (msm plus the ADSP,
+type-C retimer and pmic_glink drivers it depends on, with their firmware when
+present) and starts Plymouth with the SP11 theme from the initramfs. Put it
+after 'udev' in HOOKS. The kernel command line needs 'splash'.
+HELPEOF
+}

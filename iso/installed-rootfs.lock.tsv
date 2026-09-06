@@ -1,6 +1,6 @@
 key	value	rationale
 schema	sp11.installed-rootfs.v1	Immutable installed-system artifact contract
-package-selection	live,live+build	Reuse the exact 663-package qualified GNOME closure without copying the live root
+package-selection	live,live+build	Reuse the exact 664-package qualified GNOME closure without copying the live root
 expected-package-count	663	Fail closed if the locked closure changes
 kernel-release	7.2.0-sp11-73beta1	Qualified SP11 kernel ABI
 external-firmware-policy	excluded-required-at-install	Five owner-supplied files must be imported and verified by the future executor

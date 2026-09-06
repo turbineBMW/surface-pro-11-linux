@@ -513,7 +513,7 @@ menuentry 'Surface Pro 11 Linux beta candidate ($release)' --class arch --class 
     insmod ext2
     search --no-floppy --fs-uuid --set=root $boot_uuid
     echo 'Loading Surface Pro 11 beta candidate ...'
-    linux $grub_boot_dir/Image-$release root=UUID=$root_uuid rw loglevel=7 systemd.tpm2_wait=false efi_pstore.pstore_disable=0 mem_sleep_default=deep cpufreq.default_governor=schedutil
+    linux $grub_boot_dir/Image-$release root=UUID=$root_uuid rw loglevel=7 systemd.tpm2_wait=false efi_pstore.pstore_disable=0 mem_sleep_default=deep cpufreq.default_governor=schedutil quiet splash
     devicetree $grub_boot_dir/x1e80100-microsoft-denali-oled.dtb
     echo 'Loading initial ramdisk ...'
     initrd $grub_boot_dir/initramfs-$release.img

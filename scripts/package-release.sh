@@ -36,6 +36,37 @@ release_dir="$repo_root/work/release-$date_tag"
 }
 mkdir -p -- "$release_dir"
 
+printf 'Packing the Windows USB creator ...\n'
+creator_dir="$release_dir/sp11-usb-creator-windows"
+mkdir -p -- "$creator_dir"
+install -m0644 "$repo_root/scripts/SP11-USB-CREATOR.cmd" \
+	"$repo_root/scripts/sp11-usb-creator.ps1" \
+	"$repo_root/scripts/RUN-IN-WINDOWS.cmd" \
+	"$repo_root/scripts/sp11-collect-firmware.ps1" \
+	"$repo_root/docs/GETTING-STARTED.md" \
+	"$creator_dir/"
+cat >"$creator_dir/README.txt" <<EOF
+Surface Pro 11 Linux USB creator (Windows)
+
+1. Put the downloaded $release_name.iso (and SHA256SUMS) in this folder.
+2. Plug in a USB stick of at least 4 GB. Everything on it will be erased.
+3. Right-click SP11-USB-CREATOR.cmd > Run as administrator.
+   It collects the firmware from this Windows installation, writes the ISO
+   to the stick sector by sector (no Rufus needed), and copies the firmware
+   onto the stick's SP11FW partition.
+4. Safely eject, then boot the Surface with Volume-Down + Power
+   (Secure Boot must be off).
+
+RUN-IN-WINDOWS.cmd is the firmware step alone, for a stick written some
+other way (Rufus in "DD image" mode works; ISO mode does not).
+EOF
+(
+	cd -- "$release_dir"
+	rm -f -- "sp11-usb-creator-windows-$date_tag.zip"
+	zip -q -r -X "sp11-usb-creator-windows-$date_tag.zip" sp11-usb-creator-windows
+)
+rm -r -- "$creator_dir"
+
 printf 'Copying ISO ...\n'
 cp --reflink=auto -- "$iso_source" "$release_dir/$release_name.iso"
 iso_bytes="$(stat -c '%s' "$release_dir/$release_name.iso")"
@@ -49,14 +80,16 @@ cp -- "$build_dir/ARTIFACTS.tsv" "$release_dir/BUILD-ARTIFACTS.tsv"
 		split --bytes="$part_size" --suffix-length=2 \
 			-- "$release_name.iso" "$release_name.iso.part-"
 	fi
-	sha256sum -- "$release_name.iso" "$release_name.iso.part-"* 2>/dev/null >SHA256SUMS ||
-		sha256sum -- "$release_name.iso" >SHA256SUMS
+	sha256sum -- "$release_name.iso" "$release_name.iso.part-"* "sp11-usb-creator-windows-$date_tag.zip" 2>/dev/null >SHA256SUMS ||
+		sha256sum -- "$release_name.iso" "sp11-usb-creator-windows-$date_tag.zip" >SHA256SUMS
 	cat >README.txt <<EOF
 Surface Pro 11 Linux beta $date_tag (aarch64)
 
 Files:
   $release_name.iso            hybrid UEFI ISO, write it to a whole USB stick
   $release_name.iso.part-*     the same ISO split for GitHub's 2 GiB limit (if present)
+  sp11-usb-creator-windows-$date_tag.zip
+                                Windows: makes the stick and adds the firmware in one go
   SHA256SUMS                    checksums of everything above
 
 Join the parts (if you downloaded them) and verify:

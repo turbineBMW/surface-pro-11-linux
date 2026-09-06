@@ -1,0 +1,10 @@
+[Plymouth Theme]
+Name=SP11
+Description=Surface Pro 11 Linux boot splash: centred Tux-with-window logo, one boot status line beneath it.
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/sp11
+ScriptFile=/usr/share/plymouth/themes/sp11/sp11.script
+Font=Adwaita Sans 12
+MonospaceFont=Noto Sans Mono 12

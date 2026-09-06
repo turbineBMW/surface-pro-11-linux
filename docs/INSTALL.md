@@ -51,6 +51,11 @@ sudo scripts/install.sh --payload /path/to/payload --apply    # install
 sudo grub-reboot sp11-beta-port73 && sudo reboot              # one-shot test boot
 ```
 
+The overlay now includes the Plymouth boot splash: install the `plymouth`
+package first (the initramfs hook skips the splash, with a warning, if it is
+missing) and add `quiet splash` to the kernel command line, which the
+generated GRUB entry already does.
+
 Preflight checks the exact hardware, payload hashes, all 3,767 modules,
 root/boot layout, free space, the Windows loader and EFI entry, and that at
 least two GRUB entries remain. `--apply` records an integrity-protected

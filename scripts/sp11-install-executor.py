@@ -39,10 +39,10 @@ LIVE_WIPE_SECOND_CONFIRMATION = (
 )
 RELEASE = "7.2.0-sp11-73beta1"
 EXPECTED_ARCHIVE_SHA = (
-    "d2f97d75c0b45be25baab952987204799746b5552298116846bd015c40becb89"
+    "002193303edd3aca279cbcd27d7fdd74642238365ac78f1e7f616481fb1eed98"
 )
 EXPECTED_ROOT_MANIFEST_SHA = (
-    "5771dbb4f3fa8b41dc491af4729eb0f52b0d4c3d2f6d3bd75ba554a394ae7a81"
+    "730676b42ef6439c3c1168c0961d7207a4a48c9c77a6616f15d60751a45ecdae"
 )
 EXPECTED_IMAGE_SHA = (
     "a2118d41b4edb8f6b11c050d9ca2c6208e30da1472f4f198959f0f0b44fb8bde"
@@ -1644,7 +1644,7 @@ def configure_target(
         (
             f"    linux /boot/sp11/Image-{RELEASE} "
             f"root=UUID={root_uuid} rw rootwait quiet systemd.tpm2_wait=false "
-            "cpufreq.default_governor=schedutil"
+            "cpufreq.default_governor=schedutil splash"
         ),
         f"    initrd /boot/sp11/initramfs-{RELEASE}.img",
         "}",

@@ -10,8 +10,10 @@ below except the first three items was already on `main` as source; this is
 the first image that contains it.
 
 Image: `sp11-linux-beta-20260905-aarch64.iso`, SHA-256
-`59663df3ef612987556fb4d64c9f1796381722c2081b1ecb15dd8e2b37bbedfd`
-(2,146,113,536 bytes, a single file below GitHub's 2 GiB asset limit).
+`594b9b96843ce9cebcc9a3687e0c443db6db3563eb5b47c1dac480b98a627e4b`
+(2,161,037,312 bytes; the release carries it split in two parts for
+GitHub's 2 GiB asset limit, join them with `cat` as the release README
+says). Windows USB creator: `sp11-usb-creator-windows-20260905.zip`.
 Build inputs and the per-stage identities are in `docs/BUILD-ISO.md`,
 `kernel/port-7.3/BUILDINFO` and the release's `BUILD-ARTIFACTS.tsv`.
 
@@ -44,6 +46,22 @@ Build inputs and the per-stage identities are in `docs/BUILD-ISO.md`,
   exist on 7.3), `efi-pstore` is a module so panics are actually captured on
   this firmware, and hard lockups panic instead of freezing silently. The
   rollback tools accept installs of either beta.
+
+- **Boot splash:** Plymouth with the SP11 theme now covers the RAM copy on
+  the live image and the boot of an installed system. The initramfs hook
+  (`rootfs/etc/initcpio/install/sp11plymouth`) brings the whole display
+  chain up early (msm plus the ADSP, type-C retimer and pmic_glink drivers
+  and firmware it needs), so the panel lights up a few seconds into boot
+  when the owner firmware is present. Package `plymouth 26.134.222-2` joins
+  the frozen July package snapshot (664 live packages).
+- **Windows USB creator** (`sp11-usb-creator-windows-<date>.zip`): one
+  script that collects the firmware, writes the ISO to the stick sector by
+  sector and copies the firmware onto it. Written because Rufus in ISO mode
+  breaks the three-partition image. Reviewed, not yet widely run.
+- **Guided pairing:** "Pair Surface Flex Keyboard" and "Pair Surface Slim
+  Pen 2" in the app grid explain the steps and the current shortcomings,
+  then run the pairing tools. The live image now carries the pairing tools
+  and the detach-reconnect hook too.
 
 Carried over from the source-only changes published between the betas:
 

@@ -43,9 +43,11 @@ Removing it again: [docs/UNINSTALL.md](docs/UNINSTALL.md).
   lifecycle, charge limit, power profiles, cpufreq boost, Bluetooth address,
   sensor and suspend hooks, …) and the Bluetooth pairing tools for the
   detached Flex Keyboard (`sp11-flex-pair`) and the Slim Pen 2
-  (`sp11-pen-pair`).
-- `scripts/`: firmware collectors (`sp11-collect-firmware.ps1`,
-  `sp11-firmware.py`), the installer (`sp11-install-plan.py`,
+  (`sp11-pen-pair`), with guided desktop entries for both, and the Plymouth
+  boot splash (theme plus the initramfs hook that brings the display up
+  early).
+- `scripts/`: the Windows USB creator (`SP11-USB-CREATOR.cmd`), firmware
+  collectors (`sp11-collect-firmware.ps1`, `sp11-firmware.py`), the installer (`sp11-install-plan.py`,
   `sp11-install-executor.py`, `sp11-installer-ui.py`), the live-image builder
   and audits, and the overlay installer for existing Arch Linux ARM systems.
 - Only redistributable firmware (`firmware/allowlist.tsv`). No Windows

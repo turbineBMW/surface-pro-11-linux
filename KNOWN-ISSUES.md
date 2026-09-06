@@ -21,9 +21,14 @@
   port that the same unit has run as its installed daily system since
   2026-08-28; the live image itself was rebuilt with the same package
   snapshot and has not been re-qualified from USB separately.
-- **The screen goes black for one to two minutes** after the first boot
-  messages while the live root is copied into RAM (107 s on a USB 2.0
-  stick; faster on USB 3). That is normal; wait for GNOME.
+- **The live root is copied into RAM** before GNOME appears (107 s on a
+  USB 2.0 stick; faster on USB 3). Since the 2026-09-05 image a Plymouth
+  splash (Tux logo and a status line) covers that wait when the owner
+  firmware is on the stick; without it the display cannot come up early and
+  the screen stays black or shows console text until GNOME. That is normal.
+- **Windows USB creator** (`SP11-USB-CREATOR.cmd`) is new and has only been
+  reviewed, not run on many Windows machines yet. If it fails, Rufus in DD
+  image mode plus `RUN-IN-WINDOWS.cmd` is the known-good path.
 - **Wipe mode** was exercised on loop devices, not on the maintainer's NVMe.
 - **ISO size.** Release assets larger than 2 GiB are split; join them with
   `cat` before writing (see the release README).

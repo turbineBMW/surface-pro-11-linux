@@ -474,6 +474,9 @@ done <"$repo_root/iso/audio-ucm.tsv"
 lsinitcpio "$initramfs" >"$initramfs_members"
 for required_member in \
 	hooks/sp11live \
+	hooks/sp11plymouth \
+	usr/bin/plymouthd \
+	usr/share/plymouth/themes/sp11/sp11.script \
 	"usr/lib/modules/$release/kernel/drivers/clk/qcom/videocc-sm8550.ko" \
 	"usr/lib/modules/$release/kernel/drivers/gpu/drm/msm/msm.ko" \
 	"usr/lib/modules/$release/kernel/drivers/gpu/drm/panel/panel-samsung-atna33xc20.ko" \
@@ -600,7 +603,7 @@ package_count="$(
 		--dbpath "$rootfs/var/lib/pacman" \
 		-Qq 2>/dev/null | wc -l
 )"
-[[ "$package_count" -eq 663 ]] || {
+[[ "$package_count" -eq 664 ]] || {
 	printf 'Unexpected live root package count: %s\n' "$package_count" >&2
 	exit 1
 }
@@ -751,5 +754,5 @@ while IFS=$'\t' read -r artifact expected_sha expected_size; do
 	[[ "$(stat -c '%s' "$artifact_path")" == "$expected_size" ]]
 done <"$manifest"
 
-printf 'Held live-image audit passed: 663 packages (including Rnote), 3,767 modules, %s firmware files, orange GNOME accent, verified local Tux Surface wallpaper, 4 project UCM entries, verified overlay and fresh-machine installer kits, identity-pinned installed root artifact, ARM64 UEFI/GPT with helper-seeded SP11FW partition, clean initramfs policy.\n' \
+printf 'Held live-image audit passed: 664 packages (including Rnote and Plymouth), 3,767 modules, %s firmware files, orange GNOME accent, verified local Tux Surface wallpaper, 4 project UCM entries, verified overlay and fresh-machine installer kits, identity-pinned installed root artifact, ARM64 UEFI/GPT with helper-seeded SP11FW partition, clean initramfs policy.\n' \
 	"$((13 + local_firmware_count))"

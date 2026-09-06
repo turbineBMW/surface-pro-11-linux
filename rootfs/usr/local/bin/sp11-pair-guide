@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+# Guided pairing for the Surface Flex Keyboard (detached Bluetooth use) and
+# the Surface Slim Pen 2 (tail button). Launched from the desktop entries
+# "Pair Surface Flex Keyboard" / "Pair Surface Slim Pen 2" in a terminal.
+#   sp11-pair-guide keyboard | pen
+set -u
+what="${1:-}"
+bold=$'\e[1m'; dim=$'\e[2m'; off=$'\e[0m'
+
+pause() { printf '\n%s' "${dim}Press Enter to continue, Ctrl+C to stop.${off}"; read -r _ </dev/tty; printf '\n'; }
+finish() { printf '\n%s' "${dim}Press Enter to close this window.${off}"; read -r _ </dev/tty; }
+
+case "$what" in
+keyboard)
+	cat <<'TEXT'
+Surface Flex Keyboard: pair it for detached (Bluetooth) use
+============================================================
+
+While the keyboard is attached it works over the connector and needs no
+pairing at all. Pairing is only for using it detached. It is done over the
+connector: Linux hands the keyboard a fresh key, you detach, and the
+keyboard bonds over Bluetooth with that key. No Windows step is needed.
+
+What to do:
+  1. Attach the keyboard now, if it is not attached already.
+  2. Continue. The tool talks to the keyboard for a few seconds.
+  3. When it prints "DETACH THE KEYBOARD NOW", lift the keyboard off.
+     Pairing completes a few seconds later.
+  4. From then on, the keyboard reconnects on its own every time you detach.
+     Reattach it whenever you like; the wired link always wins.
+
+Known shortcomings (work in progress):
+  * Windows re-pairs the keyboard on its own schedule. After booting Windows,
+    Linux may have to pair again. Just run this once more; it is harmless.
+  * After a shutdown on battery, the attached keyboard's touchpad may keep
+    clicking (haptics stay on). Shutdown on AC and suspend are fine. This is
+    being investigated; it is not caused by pairing.
+  * Reconnect after detaching can take a few seconds.
+
+Details: docs/BLUETOOTH.md in the project repository.
+TEXT
+	pause
+	if [[ $EUID -eq 0 ]]; then /usr/local/bin/sp11-flex-pair; else sudo /usr/local/bin/sp11-flex-pair; fi
+	status=$?
+	if [[ $status -eq 0 ]]; then
+		printf '\n%sPaired.%s Detach the keyboard at any time; it reconnects by itself.\n' "$bold" "$off"
+	else
+		printf '\n%sPairing did not complete%s (exit %s). Reattach the keyboard, wait a\nfew seconds and run this again. If it keeps failing, the kernel may be\nmissing the OOB pairing support; see docs/BLUETOOTH.md.\n' "$bold" "$off" "$status"
+	fi
+	finish
+	;;
+pen)
+	cat <<'TEXT'
+Surface Slim Pen 2: pair it for the tail button
+===============================================
+
+Writing, pressure and the eraser work without any pairing. Only the tail
+(eraser-end) button needs Bluetooth. Once paired it arrives as a keyboard
+shortcut: Meta+F19 for a click, Meta+F20 for a double click. Bind those to
+whatever you like in your desktop's keyboard settings.
+
+What to do:
+  1. Continue. The tool watches for the pen for up to two minutes.
+  2. Hold the tail button for about 7 seconds until the LED blinks. That is
+     the pen's pairing mode; it only advertises during that window.
+  3. Keep the pen next to the tablet. Pairing takes about 15 seconds.
+
+Known shortcomings (work in progress):
+  * The pen goes silent after it has been docked in the keyboard. To get the
+    button back, hold the tail button ~7 s until the LED lights; the existing
+    bond reconnects in 10-15 s. There is no automatic pickup yet.
+  * A pen that never shows an LED needs Microsoft's reset: hold the tail
+    button 10 s, release, then do the 7 s hold.
+  * Windows keeps working with the pen; this bond is Linux-only.
+
+Details: docs/BLUETOOTH.md in the project repository.
+TEXT
+	pause
+	/usr/local/bin/sp11-pen-pair
+	status=$?
+	if [[ $status -eq 0 ]]; then
+		printf '\n%sDone.%s Try the tail button; bind Meta+F19 / Meta+F20 in Settings > Keyboard.\n' "$bold" "$off"
+	else
+		printf '\n%sThe pen was not paired%s (exit %s). Make sure the LED was blinking when the\ntool was watching, then run this again.\n' "$bold" "$off" "$status"
+	fi
+	finish
+	;;
+*)
+	printf 'usage: sp11-pair-guide keyboard|pen\n' >&2
+	exit 2
+	;;
+esac

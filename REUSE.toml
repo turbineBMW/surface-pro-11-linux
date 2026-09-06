@@ -29,6 +29,8 @@ path = [
   "rootfs/etc/**",
   "rootfs/usr/lib/**",
   "rootfs/usr/local/**",
+  "rootfs/usr/share/applications/**",
+  "rootfs/usr/share/plymouth/**",
   "scripts/**",
   "userspace/power/**",
   "userspace/**/README.md",

@@ -1,0 +1,21 @@
+#!/usr/bin/ash
+# SPDX-License-Identifier: MIT
+# Runtime side of the sp11plymouth mkinitcpio hook (busybox init). Mirrors
+# the stock plymouth hook: start the daemon once /dev is populated, hand the
+# new root over before switch_root, and quit cleanly on an emergency shell.
+
+run_hook() {
+	mkdir -m755 -p /dev/pts
+	mount -t devpts devpts /dev/pts -o nosuid,noexec,gid=5,mode=620
+	mkdir -p /run/plymouth
+	plymouthd --mode=boot --pid-file=/run/plymouth/pid --attach-to-session
+	plymouth show-splash
+}
+
+run_latehook() {
+	plymouth update-root-fs --new-root-dir=/new_root
+}
+
+run_emergencyhook() {
+	plymouth --wait quit
+}

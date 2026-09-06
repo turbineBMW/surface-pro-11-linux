@@ -6,16 +6,16 @@ build. Inputs:
 
 | Input | Where it comes from |
 | --- | --- |
-| Package snapshot (663 signed packages, `PACKAGE-SNAPSHOT.tsv`) | `scripts/cache-locked-packages.sh --local-staging --output work/package-snapshot-…` against `iso/packages.lock.tsv` |
+| Package snapshot (664 signed packages, `PACKAGE-SNAPSHOT.tsv`) | `scripts/cache-locked-packages.sh --local-staging --output work/package-snapshot-…` against `iso/packages.lock.tsv`; the 2026-09-05 snapshot is the July one plus `plymouth`, taken from the same frozen `extra.db` |
 | Firmware package cache (linux-firmware-atheros/qcom/whence, wireless-regdb 20260622) | `scripts/cache-firmware-packages.sh --local-staging` |
 | Kernel payload (`Image`, DTB, `modules-*.tar.zst`, `MODULES.tsv`, iptsd + PPD binaries, `SHA256SUMS`) | `scripts/build-kernel.sh --profile port-7.3`, `modules_install` into a staging root (see `docs/BUILD.md`), then `SP11_KERNEL_STAGE=… scripts/assemble-payload.sh --local-staging` |
 | Audio topology `X1E80100-Microsoft-Surface-Pro-11-tplg.bin` (11,320 bytes) | `scripts/build-audio-topology.sh` from the BSD-3 audioreach topology source |
 | Wallpaper `Tux Surface.png` (hash-pinned, not in git) | maintainer-local |
 | Installed-root artifact (`sp11-installed-rootfs.tar.zst` + manifests) | `scripts/build-installed-rootfs.sh --local-staging …` (hash pinned in `sp11-install-executor.py`) |
 
-On the maintainer's machine the package snapshot, firmware cache, topology
-and wallpaper are under `work/firmware-v2-rebuild-inputs/` (unchanged since
-the 2026-08-28 beta); the 7.3 kernel payload is
+On the maintainer's machine the firmware cache, topology and wallpaper are
+under `work/firmware-v2-rebuild-inputs/` (unchanged since the 2026-08-28
+beta) and the package snapshot is `work/package-snapshot-plymouth-20260905`; the 7.3 kernel payload is
 `work/payload-port73-20260905` and the installed-root artifact
 `work/installed-rootfs-port73-20260905`. Every builder and audit script pins
 the kernel release name and the Image/DTB hashes, and
@@ -30,7 +30,7 @@ Build and audit:
 ```sh
 cd public
 sudo scripts/build-held-live-image.sh --local-staging \
-  --package-snapshot work/firmware-v2-rebuild-inputs/package-snapshot-rnote-20260729 \
+  --package-snapshot work/package-snapshot-plymouth-20260905 \
   --firmware-cache   work/firmware-v2-rebuild-inputs/firmware-package-cache-20260622 \
   --payload          work/payload-port73-20260905 \
   --audio-topology   work/firmware-v2-rebuild-inputs/X1E80100-Microsoft-Surface-Pro-11-tplg.bin \

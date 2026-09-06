@@ -226,7 +226,7 @@ if find "$rootfs/var/cache/fontconfig" \
 fi
 
 package_descriptions=("$rootfs"/var/lib/pacman/local/*/desc)
-[[ "${#package_descriptions[@]}" -eq 663 ]] || {
+[[ "${#package_descriptions[@]}" -eq 664 ]] || {
 	printf 'Unexpected installed package database count: %s\n' \
 		"${#package_descriptions[@]}" >&2
 	exit 1

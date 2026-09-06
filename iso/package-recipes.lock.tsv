@@ -489,6 +489,7 @@ extra	pcaudiolib	1.3-1	3771e318544c5a8da4489068125e713a2197ab450320b2a3195c47b12
 extra	pcsclite	2.5.1-1	9e3835c4e38d6b41fe48e4e713b524b6058a5c36d5d267771b0aff586e83df91	pcsclite	https://archlinuxarm.org/packages/aarch64/pcsclite/files
 extra	pipewire	1:1.6.8-1	c6d30a9c90b788e7d02adcd008ca00f8131104e9b5170d5ef48d53e2ad6ce339	alsa-card-profiles,gst-plugin-pipewire,libpipewire,pipewire,pipewire-alsa,pipewire-audio,pipewire-libcamera,pipewire-pulse	https://archlinuxarm.org/packages/aarch64/alsa-card-profiles/files
 extra	pixman	0.46.4-1.1	0dae4177ceaf0de01261515ecf305795bd3075b8632a7c954af9a1870ef1914d	pixman	https://archlinuxarm.org/packages/aarch64/pixman/files
+extra	plymouth	26.134.222-2	f674bd6ea80980a23df9838afb8ff73ac7e8353cf17b6b96388759b00b890c09	plymouth	https://archlinuxarm.org/packages/aarch64/plymouth/files
 extra	polkit	127-3	dd1cdda2e6a30b4c34a970e750c3f3ccef011a76d52389aec3e957b3c9d21ca1	polkit	https://archlinuxarm.org/packages/aarch64/polkit/files
 extra	poppler	26.07.0-1	909493bdab44aab3b7ab95497dd0ad9a2fc367e33553c922bbfaa93889a1062b	poppler,poppler-glib	https://archlinuxarm.org/packages/aarch64/poppler/files
 extra	portaudio	1:19.7.0-4	cc5c32c9b0e730c3b141e3ff1a85b2d9aba60bf26c2d5e791aa329151048e9ad	portaudio	https://archlinuxarm.org/packages/aarch64/portaudio/files

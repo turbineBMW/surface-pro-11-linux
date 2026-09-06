@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Pair Surface Flex Keyboard
+Comment=Pair the Flex Keyboard for detached Bluetooth use (attach it first)
+Exec=kgx --wait -- /usr/local/bin/sp11-pair-guide keyboard
+Icon=input-keyboard
+Terminal=false
+Categories=Settings;HardwareSettings;
+Keywords=Surface;Flex;keyboard;Bluetooth;pair;detach;
+StartupNotify=true
